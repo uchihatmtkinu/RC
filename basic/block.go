@@ -3,8 +3,11 @@ package basic
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 	"time"
 )
 
@@ -19,21 +22,60 @@ func HashTxBlock(a *TxBlock, b *[32]byte) {
 	DoubleHash256(&tmp1, b)
 }
 
+//GenMerkTree generates the merkleroot tree given the transactions
+func GenMerkTree(d *[]RawTransaction, out *[32]byte) error {
+	if len(*d) == 1 {
+		tmp := (*d)[0].Hash[:]
+		DoubleHash256(&tmp, out)
+	} else {
+		l := len(*d)
+		d1 := (*d)[:l/2]
+		d2 := (*d)[l/2:]
+		var out1, out2 [32]byte
+		GenMerkTree(&d1, &out1)
+		GenMerkTree(&d2, &out2)
+		tmp := append(out1[:], out2[:]...)
+		DoubleHash256(&tmp, out)
+	}
+	return nil
+}
+
+//VerifyTxBlock verify the signature of transaction a
+func VerifyTxBlock(a *TxBlock) (bool, error) {
+
+	var tmp [32]byte
+	HashTxBlock(a, &tmp)
+	//Verify the hash, the cnt of in and out address
+	if tmp != a.HashID || a.TxCnt != uint32(len(a.TxArray)) {
+		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
+	}
+	if !ecdsa.Verify(&a.Prk, a.HashID[:], a.SignR, a.SignS) {
+		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
+	}
+	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
+}
+
 //MakeTxBlock creates the transaction blocks given verified transactions
-func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32) *TxBlock {
-	tmp := new(TxBlock)
-	tmp.PrevHash = preHash
-	tmp.Timestamp = time.Now().Unix()
-	tmp.TxCnt = uint32(len(*a))
-	tmp.Height = h
-	HashTxBlock(tmp, &tmp.HashID)
-	tmp.TxArray = []RawTransaction{}
-	for i := 0; i < int(tmp.TxCnt); i++ {
-		tmp.TxArray = append(tmp.TxArray, (*a)[i])
+func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, out *TxBlock) error {
+	if out == nil {
+		return fmt.Errorf("Basic.MakeTxBlock, null block")
 	}
 
-	//tmp.Signature, _ = ecdsa.Sign(rand.Reader, prk, tmp.HashID[:])
-	return tmp
+	out.PrevHash = preHash
+	out.Timestamp = time.Now().Unix()
+	out.TxCnt = uint32(len(*a))
+	out.Height = h
+	out.TxArray = []RawTransaction{}
+	for i := 0; i < int(out.TxCnt); i++ {
+		out.TxArray = append(out.TxArray, (*a)[i])
+	}
+	GenMerkTree(&out.TxArray, &out.MerkleRoot)
+
+	HashTxBlock(out, &out.HashID)
+	out.Prk = prk.PublicKey
+	out.SignR, out.SignS, _ = ecdsa.Sign(rand.Reader, prk, out.HashID[:])
+
+	return nil
 }
 
 //BlockToData converts the block data into bytes
@@ -50,13 +92,13 @@ func BlockToData(b *TxBlock) []byte {
 	EncodeByteL(&tmp, &tmp1, 32)
 	tmp1 = b.MerkleRoot[:]
 	EncodeByteL(&tmp, &tmp1, 32)
-
+	EncodeDoubleBig(&tmp, b.SignR, b.SignS)
+	EncodeDoubleBig(&tmp, b.Prk.X, b.Prk.Y)
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmpTxData := TxToData(&b.TxArray[i])
 		EncodeByte(&tmp, &tmpTxData)
 	}
 
-	//EncodeByte(&tmp, &b.Signature)
 	return tmp
 }
 
@@ -92,6 +134,21 @@ func DataToBlock(data *[]byte) (TxBlock, error) {
 		return b, fmt.Errorf("DataToBlock MerkleRoot failed %s", err)
 	}
 	copy(b.MerkleRoot[:], tmp[:32])
+	big1 := new(big.Int)
+	big2 := new(big.Int)
+	err = DecodeDoubleBig(&buf, big1, big2)
+	if err != nil {
+		return b, fmt.Errorf("DataToBlock Signature failed %s", err)
+	}
+	*b.SignR = *big1
+	*b.SignS = *big2
+	err = DecodeDoubleBig(&buf, big1, big2)
+	if err != nil {
+		return b, fmt.Errorf("DataToBlock Public Key failed %s", err)
+	}
+	b.Prk.Curve = elliptic.P256()
+	*b.Prk.X = *big1
+	*b.Prk.Y = *big2
 	for i := uint32(0); i < b.TxCnt; i++ {
 		var tmpBuf []byte
 		err = DecodeByte(&buf, &tmpBuf)

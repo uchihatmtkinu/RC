@@ -41,6 +41,7 @@ type TxBlock struct {
 	Height     uint32
 	SignR      *big.Int
 	SignS      *big.Int
+	Prk        ecdsa.PublicKey
 	HashID     [32]byte
 	MerkleRoot [32]byte
 }
@@ -49,4 +50,11 @@ type TxBlock struct {
 type TxDB struct {
 	data RawTransaction
 	used []int
+}
+
+//UserClient is the struct for miner and client
+type UserClient struct {
+	IPaddress string
+	Prk       ecdsa.PublicKey
+	kind      int
 }

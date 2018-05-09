@@ -122,19 +122,22 @@ func VerifyTx(a *RawTransaction, db *[]TxDB) (bool, error) {
 }
 
 //MakeTx implements the method to create a new transaction
-func MakeTx(a *[]InType, b *[]OutType, out *RawTransaction, value *[]int, kind int) {
-	tmp := new(RawTransaction)
-	tmp.Timestamp = time.Now().Unix()
-	tmp.TxinCnt = uint32(len(*a))
-	tmp.TxoutCnt = uint32(len(*b))
-	tmp.Kind = uint32(kind)
-	tmp.In = []InType{}
-	for i := 0; i < int(tmp.TxinCnt); i++ {
-		tmp.In = append(tmp.In, (*a)[i])
+func MakeTx(a *[]InType, b *[]OutType, out *RawTransaction, kind int) error {
+	if out == nil {
+		return fmt.Errorf("Basic.MakeTx, null transaction")
 	}
-	tmp.Out = []OutType{}
-	for i := 0; i < int(tmp.TxoutCnt); i++ {
-		tmp.Out = append(tmp.Out, (*b)[i])
+	out.Timestamp = time.Now().Unix()
+	out.TxinCnt = uint32(len(*a))
+	out.TxoutCnt = uint32(len(*b))
+	out.Kind = uint32(kind)
+	out.In = []InType{}
+	for i := 0; i < int(out.TxinCnt); i++ {
+		out.In = append(out.In, (*a)[i])
 	}
-	HashTx(tmp, &tmp.Hash)
+	out.Out = []OutType{}
+	for i := 0; i < int(out.TxoutCnt); i++ {
+		out.Out = append(out.Out, (*b)[i])
+	}
+	HashTx(out, &out.Hash)
+	return nil
 }
