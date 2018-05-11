@@ -1,9 +1,9 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
-
-	"github.com/uchihatmtkinu/RC/basic"
+	"time"
 )
 
 //"crypto/sha512"
@@ -50,15 +50,14 @@ func main() {
 		tmp := acc[i].Puk.X.Bytes()
 		fmt.Println(len(tmp))
 	}*/
-	tmp := []byte{4, 4, 4, 4}
-	tmp1 := []byte{3, 3, 3}
-	var xxx, yyy []byte
-	basic.EncodeByte(&xxx, &tmp)
-	basic.EncodeByte(&yyy, &tmp1)
-	xxx = append(xxx, yyy...)
-	fmt.Println(xxx)
-	var test []byte
-	basic.DecodeByte(&xxx, &test)
-	fmt.Println(test)
-	fmt.Println(xxx)
+
+	test := []byte("123456789192387519837591837591375981273501234567890")
+	t1 := time.Now()
+	for i := 0; i < 2000000; i++ {
+		sha256.Sum256(test)
+
+	}
+	elapsed := time.Since(t1)
+
+	fmt.Println(elapsed)
 }
