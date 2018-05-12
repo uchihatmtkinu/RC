@@ -3,7 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"os"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/account"
 )
 
 //"crypto/sha512"
@@ -32,7 +35,7 @@ func main() {
 		}
 	*/
 
-	/*file, _ := os.Open("output.dat")
+	file, _ := os.Open("output.dat")
 	defer file.Close()
 	var acc [10]account.RcAcc
 	for i := 1; i < 10; i++ {
@@ -49,7 +52,7 @@ func main() {
 		//fmt.Println(cryptonew.Verify(acc[i].Puk, acc[i].AddrReal))
 		tmp := acc[i].Puk.X.Bytes()
 		fmt.Println(len(tmp))
-	}*/
+	}
 
 	test := []byte("123456789192387519837591837591375981273501234567890")
 	t1 := time.Now()

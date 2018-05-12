@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"crypto/elliptic"
 	"crypto/sha256"
 	"math/big"
 	"testing"
@@ -27,13 +26,12 @@ func TestInToData(t *testing.T) {
 	tmp.Index = 10
 	tmp.SignR = new(big.Int)
 	tmp.SignS = new(big.Int)
-	tmp.Puk.X = new(big.Int)
-	tmp.Puk.Y = new(big.Int)
+	tmp.PrkX = new(big.Int)
+	tmp.PrkY = new(big.Int)
 	tmp.SignR.SetString("123123123123", 10)
 	tmp.SignS.SetString("12345", 10)
-	tmp.Puk.X.SetString("1234567890", 10)
-	tmp.Puk.Y.SetString("123123123123", 10)
-	tmp.Puk.Curve = elliptic.P256()
+	tmp.PrkX.SetString("1234567890", 10)
+	tmp.PrkY.SetString("123123123123", 10)
 	xxx := DataToIn(InToData(&tmp))
 	if tmp.PrevTx != xxx.PrevTx {
 		t.Error(`Prev Hash is wrong`)
@@ -47,10 +45,10 @@ func TestInToData(t *testing.T) {
 	if tmp.SignS.Cmp(xxx.SignS) != 0 {
 		t.Error(`Sig S is wrong`)
 	}
-	if tmp.Puk.X.Cmp(xxx.Puk.X) != 0 {
+	if tmp.PrkX.Cmp(xxx.PrkX) != 0 {
 		t.Error(`Puk X is wrong`)
 	}
-	if tmp.Puk.Y.Cmp(xxx.Puk.Y) != 0 {
+	if tmp.PrkY.Cmp(xxx.PrkY) != 0 {
 		t.Error(`Puk Y is wrong`)
 	}
 }

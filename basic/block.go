@@ -5,11 +5,25 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"encoding/binary"
+	"encoding/gob"
 	"fmt"
-	"math/big"
 	"time"
 )
+
+//Prk returns the public key
+func (b *TxBlock) Prk() ecdsa.PublicKey {
+	var tmp ecdsa.PublicKey
+	tmp.Curve = elliptic.P256()
+	tmp.X = b.PrkX
+	tmp.Y = b.PrkY
+	return tmp
+}
+
+//NewPrk sets the public key
+func (b *TxBlock) NewPrk(x ecdsa.PublicKey) {
+	b.PrkX.Set(x.X)
+	b.PrkY.Set(x.Y)
+}
 
 //HashTxBlock generates the 32bits hash of one Tx block
 func HashTxBlock(a *TxBlock, b *[32]byte) {
@@ -49,7 +63,8 @@ func VerifyTxBlock(a *TxBlock) (bool, error) {
 	if tmp != a.HashID || a.TxCnt != uint32(len(a.TxArray)) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
-	if !ecdsa.Verify(&a.Prk, a.HashID[:], a.SignR, a.SignS) {
+	tmpPrk := a.Prk()
+	if !ecdsa.Verify(&tmpPrk, a.HashID[:], a.SignR, a.SignS) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
 	}
 	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
@@ -72,7 +87,7 @@ func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h
 	GenMerkTree(&out.TxArray, &out.MerkleRoot)
 
 	HashTxBlock(out, &out.HashID)
-	out.Prk = prk.PublicKey
+	out.NewPrk(prk.PublicKey)
 	out.SignR, out.SignS, _ = ecdsa.Sign(rand.Reader, prk, out.HashID[:])
 
 	return nil
@@ -80,7 +95,7 @@ func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h
 
 //BlockToData converts the block data into bytes
 func BlockToData(b *TxBlock) []byte {
-	tmp := []byte{}
+	/*tmp := []byte{}
 	tmp1 := b.PrevHash[:]
 	EncodeByteL(&tmp, &tmp1, 32)
 	buf := new(bytes.Buffer)
@@ -99,12 +114,20 @@ func BlockToData(b *TxBlock) []byte {
 		EncodeByte(&tmp, &tmpTxData)
 	}
 
-	return tmp
+	return tmp*/
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(b)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result.Bytes()
 }
 
 //DataToBlock converts bytes into block data
 func DataToBlock(data *[]byte) (TxBlock, error) {
-	buf := *data
+	/*buf := *data
 	var b TxBlock
 	var tmp []byte
 	err := DecodeByteL(&buf, &tmp, 32)
@@ -159,5 +182,12 @@ func DataToBlock(data *[]byte) (TxBlock, error) {
 		b.TxArray = append(b.TxArray, tmpTx)
 	}
 	//DecodeByte(&buf, &b.Signature)
-	return b, nil
+	return b, nil*/
+	var tmp TxBlock
+	decoder := gob.NewDecoder(bytes.NewReader(*data))
+	err := decoder.Decode(&tmp)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return tmp, nil
 }

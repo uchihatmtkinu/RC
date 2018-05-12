@@ -17,7 +17,8 @@ type InType struct {
 	Index  uint32
 	SignR  *big.Int
 	SignS  *big.Int
-	Puk    ecdsa.PublicKey
+	PrkX   *big.Int
+	PrkY   *big.Int
 }
 
 //RawTransaction is the transaction data which sent by the sender
@@ -41,7 +42,8 @@ type TxBlock struct {
 	Height     uint32
 	SignR      *big.Int
 	SignS      *big.Int
-	Prk        ecdsa.PublicKey
+	PrkX       *big.Int
+	PrkY       *big.Int
 	HashID     [32]byte
 	MerkleRoot [32]byte
 }

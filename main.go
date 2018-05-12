@@ -1,6 +1,8 @@
 package main
+
+/*
 import (
-	"RC/Reputation"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 
 func main() {
@@ -10,3 +12,4 @@ func main() {
 	cli := Reputation.CLI{bc}
 	cli.Run()
 }
+*/

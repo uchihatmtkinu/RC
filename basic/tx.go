@@ -1,14 +1,16 @@
 package basic
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"fmt"
 	"time"
 )
 
 //TxToData converts the transaction into bytes
 func TxToData(tx *RawTransaction) []byte {
-	tmp := []byte{}
+	/*tmp := []byte{}
 	EncodeInt(&tmp, tx.Timestamp)
 	EncodeInt(&tmp, tx.TxinCnt)
 	EncodeInt(&tmp, tx.TxoutCnt)
@@ -21,14 +23,20 @@ func TxToData(tx *RawTransaction) []byte {
 	for i := uint32(0); i < tx.TxoutCnt; i++ {
 		xxx := OutToData(&tx.Out[i])
 		tmp = append(tmp, xxx...)
+	}*/
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(*tx)
+	if err != nil {
+		fmt.Println(err)
 	}
-	return tmp
+	return result.Bytes()
 }
 
 //DataToTx decodes the packets into transaction format
 func DataToTx(data *[]byte) RawTransaction {
 	var tmp RawTransaction
-	buf := *data
+	/*buf := *data
 	err := DecodeInt(&buf, &tmp.Timestamp)
 	if err != nil {
 		fmt.Println("TX timestamp Read failed:", err)
@@ -66,6 +74,11 @@ func DataToTx(data *[]byte) RawTransaction {
 		}
 		tmpOut := DataToOut(*tmpArray)
 		tmp.Out = append(tmp.Out, tmpOut)
+	}*/
+	decoder := gob.NewDecoder(bytes.NewReader(*data))
+	err := decoder.Decode(&tmp)
+	if err != nil {
+		fmt.Println(err)
 	}
 	return tmp
 }

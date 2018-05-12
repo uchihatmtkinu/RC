@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"math/big"
 
@@ -28,6 +29,15 @@ func SearchUTXO(index uint32, h *[32]byte, out *OutType, db *[]TxDB) int {
 	return -1
 }
 
+//Prk returns the public key
+func (b *InType) Prk() ecdsa.PublicKey {
+	var tmp ecdsa.PublicKey
+	tmp.Curve = elliptic.P256()
+	tmp.X = b.PrkX
+	tmp.Y = b.PrkY
+	return tmp
+}
+
 //VerifyTxIn implements the function to verify the signature to use the current UTXO
 func VerifyTxIn(a *InType, out uint32, db *[]TxDB) bool {
 	var b *OutType
@@ -35,7 +45,8 @@ func VerifyTxIn(a *InType, out uint32, db *[]TxDB) bool {
 	if err != 0 {
 		return false
 	}
-	if !cryptonew.Verify(a.Puk, b.Address) {
+
+	if !cryptonew.Verify(a.Prk(), b.Address) {
 		return false
 	}
 	buf := new(bytes.Buffer)
@@ -43,7 +54,8 @@ func VerifyTxIn(a *InType, out uint32, db *[]TxDB) bool {
 	tmp := append(a.PrevTx[:], buf.Bytes()...)
 	tmpHash := new([32]byte)
 	DoubleHash256(&tmp, tmpHash)
-	if !ecdsa.Verify(&a.Puk, tmpHash[:], a.SignR, a.SignS) {
+	tmpx := a.Prk()
+	if !ecdsa.Verify(&tmpx, tmpHash[:], a.SignR, a.SignS) {
 		return false
 	}
 	return true
@@ -63,15 +75,23 @@ func SignTxIn(a *InType, prk *ecdsa.PrivateKey) {
 
 //OutToData converts the output address data into bytes
 func OutToData(a *OutType) []byte {
-	buf := new(bytes.Buffer)
+	/*buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, a.Value)
 	tmp := append(buf.Bytes(), a.Address[:]...)
-	return tmp
+	return tmp*/
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(a)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result.Bytes()
 }
 
 //DataToOut converts bytes into output address data
 func DataToOut(data []byte) OutType {
-	var tmp OutType
+	/*var tmp OutType
 	buf := bytes.NewReader(data)
 	err := binary.Read(buf, binary.LittleEndian, &tmp.Value)
 	if err != nil {
@@ -81,24 +101,39 @@ func DataToOut(data []byte) OutType {
 	if err != nil {
 		fmt.Println("binary.Read failed:", err)
 	}
+	return tmp*/
+	var tmp OutType
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&tmp)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return tmp
 }
 
 //InToData converts the input address data into bytes
 func InToData(a *InType) []byte {
-	tmp := []byte{}
+	/*tmp := []byte{}
 	tmp1 := a.PrevTx[:]
 	EncodeByteL(&tmp, &tmp1, 32)
 	EncodeInt(&tmp, a.Index)
 	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
 	EncodeDoubleBig(&tmp, a.Puk.X, a.Puk.Y)
 	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
-	return tmp
+	return tmp*/
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(a)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result.Bytes()
 }
 
 //DataToIn converts bytes into input address data
 func DataToIn(data []byte) InType {
-	var tmp InType
+	/*var tmp InType
 	var tmp1 []byte
 	DecodeByteL(&data, &tmp1, 32)
 	copy(tmp.PrevTx[:], tmp1[:32])
@@ -110,5 +145,13 @@ func DataToIn(data []byte) InType {
 	tmp.Puk.X = new(big.Int)
 	tmp.Puk.Y = new(big.Int)
 	DecodeDoubleBig(&data, tmp.Puk.X, tmp.Puk.Y)
+	return tmp*/
+	var tmp InType
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&tmp)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(tmp.Index, tmp.SignR)
 	return tmp
 }
