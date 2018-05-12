@@ -20,6 +20,7 @@ type RcAcc struct {
 	Addr     string
 	AddrReal [32]byte
 	AccType  int
+	ID       string
 }
 
 //New generate a new wallet with different type, 0 is client and 1 is miner

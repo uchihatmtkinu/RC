@@ -5,6 +5,13 @@ import (
 	"math/big"
 )
 
+//Miner is the miner
+type Miner struct {
+	ID  string
+	Rep int
+	Prk ecdsa.PublicKey
+}
+
 //OutType is the format of the output address data in the transaction
 type OutType struct {
 	Value   uint32
