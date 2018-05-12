@@ -4,6 +4,8 @@ import (
 
 	"github.com/boltdb/bolt"
 	"log"
+	"os"
+	"fmt"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -21,34 +23,13 @@ type RepBlockchainIterator struct {
 }
 
 
-// AddBlock saves provided data as a block in the Repblockchain
-func (bc *RepBlockchain) AddBlock(data string) {
-	var lastHash []byte
 
-	err := bc.Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
-		lastHash = b.Get([]byte("l"))
-
-		return nil
-	})
-	if err != nil {
-		log.Panic(err)
-	}
-	newBlock := NewRepBlock(data, lastHash)
-
-	err = bc.Db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
-		err = b.Put(newBlock.Hash, newBlock.Serialize())
-		err = b.Put([]byte("l"), newBlock.Hash)
-		bc.Tip = newBlock.Hash
-		return nil
-	})
-	if err != nil {
-		log.Panic(err)
-	}
-}
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewRepBlockchain() *RepBlockchain {
+	if dbExists() == false {
+		fmt.Println("No existing blockchain found. Create one first.")
+		os.Exit(1)
+	}
 	var tip []byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
@@ -83,12 +64,60 @@ func NewRepBlockchain() *RepBlockchain {
 	bc := RepBlockchain{tip, db}
 	return &bc
 }
+
+
+// CreateRepBlockchain creates a new blockchain DB
+func CreateRepBlockchain(address string) *RepBlockchain {
+	if dbExists() {
+		fmt.Println("Blockchain already exists.")
+		os.Exit(1)
+	}
+
+	var tip []byte
+	db, err := bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		genesis := NewGenesisRepBlock()
+
+		b, err := tx.CreateBucket([]byte(blocksBucket))
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put(genesis.Hash, genesis.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put([]byte("l"), genesis.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+		tip = genesis.Hash
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	bc := RepBlockchain{tip, db}
+
+	return &bc
+}
+
+
 func (bc *RepBlockchain) Iterator() *RepBlockchainIterator {
 	bci := &RepBlockchainIterator{bc.Tip, bc.Db}
 
 	return bci
 }
 
+// Next returns next block starting from the tip
 func (i *RepBlockchainIterator) Next() *RepBlock {
 	var block *RepBlock
 
@@ -105,4 +134,13 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 	i.currentHash = block.PrevRepBlockHash
 
 	return block
+}
+
+
+func dbExists() bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }
