@@ -14,7 +14,7 @@ import (
 	"github.com/uchihatmtkinu/RC/crypto"
 )
 
-//RcAcc the wallet of a user
+//RcAcc the wallet of a user1
 type RcAcc struct {
 	pri      ecdsa.PrivateKey
 	Puk      ecdsa.PublicKey
