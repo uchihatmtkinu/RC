@@ -14,19 +14,19 @@ import (
 )
 
 //SearchUTXO find the specific out address given the hash of the transaction and index
-func SearchUTXO(index uint32, h *[32]byte, out *OutType, db *[]TxDB) int {
+func SearchUTXO(index uint32, h *[32]byte, out *OutType, db *[]TxDB) uint32 {
 	//We implement O(n) search at current, future change it into O(nlogn)
 	for i := range *db {
-		if (*db)[i].data.Hash == *h {
-			if (*db)[i].data.TxoutCnt > uint32(index) {
-				out = &(*db)[i].data.Out[index]
-				return (*db)[i].used[index]
+		if (*db)[i].Data.Hash == *h {
+			if (*db)[i].Data.TxoutCnt > uint32(index) {
+				out = &(*db)[i].Data.Out[index]
+				return (*db)[i].Used[index]
 			}
-			return -2
+			return 20
 		}
 	}
 	out = nil
-	return -1
+	return 10
 }
 
 //Prk returns the public key
@@ -36,6 +36,23 @@ func (b *InType) Prk() ecdsa.PublicKey {
 	tmp.X = b.PrkX
 	tmp.Y = b.PrkY
 	return tmp
+}
+
+//VerifyIn using the UTXO to verify the in address
+func (b *InType) VerifyIn(a *OutType) bool {
+	if !cryptonew.Verify(b.Prk(), a.Address) {
+		return false
+	}
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, b.Index)
+	tmp := append(b.PrevTx[:], buf.Bytes()...)
+	tmpHash := new([32]byte)
+	DoubleHash256(&tmp, tmpHash)
+	tmpx := b.Prk()
+	if !ecdsa.Verify(&tmpx, tmpHash[:], b.SignR, b.SignS) {
+		return false
+	}
+	return true
 }
 
 //VerifyTxIn implements the function to verify the signature to use the current UTXO

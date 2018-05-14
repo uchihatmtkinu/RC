@@ -7,9 +7,10 @@ import (
 
 //Miner is the miner
 type Miner struct {
-	ID  string
-	Rep int
-	Prk ecdsa.PublicKey
+	ID        string
+	Rep       int
+	Prk       ecdsa.PublicKey
+	LastGroup int
 }
 
 //OutType is the format of the output address data in the transaction
@@ -26,6 +27,7 @@ type InType struct {
 	SignS  *big.Int
 	PrkX   *big.Int
 	PrkY   *big.Int
+	Acc    bool
 }
 
 //RawTransaction is the transaction data which sent by the sender
@@ -57,8 +59,9 @@ type TxBlock struct {
 
 //TxDB is the database of cache
 type TxDB struct {
-	data RawTransaction
-	used []int
+	Data RawTransaction
+	Used []uint32
+	Res  int8
 }
 
 //UserClient is the struct for miner and client
