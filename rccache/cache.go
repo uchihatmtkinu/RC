@@ -1,7 +1,6 @@
 package rccache
 
 import (
-	"crypto/sha256"
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -22,7 +21,7 @@ type dbRef struct {
 	TXLen   uint32
 }
 
-func (d *dbRef) findTX(a *basic.RawTransaction, index int) int {
+func (d *dbRef) findTX(a *basic.Transaction, index int) int {
 
 	x, ok := d.TXIndex[a.In[index].PrevTx]
 	if !ok {
@@ -38,7 +37,7 @@ func (d *dbRef) findTX(a *basic.RawTransaction, index int) int {
 
 }
 
-func (d *dbRef) AddTX(a *basic.RawTransaction) {
+func (d *dbRef) AddTX(a *basic.Transaction) {
 	var xxx basic.TxDB
 	xxx.Data = *a
 	xxx.Used = make([]uint32, a.TxoutCnt)
@@ -48,8 +47,8 @@ func (d *dbRef) AddTX(a *basic.RawTransaction) {
 	d.TXLen++
 }
 
-func (d *dbRef) Verify(a *basic.RawTransaction) (bool, error) {
-	tmp := sha256.Sum256(basic.TxToData(a))
+func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
+	tmp := a.HashTx()
 	if tmp != a.Hash || a.TxinCnt != uint32(len(a.In)) || a.TxoutCnt != uint32(len(a.Out)) {
 		return false, fmt.Errorf("Invalid parameter")
 	}
@@ -68,7 +67,7 @@ func (d *dbRef) Verify(a *basic.RawTransaction) (bool, error) {
 			tmpArr[i] = uint32(x)
 			if (*d.TX)[x].Data.Kind == 1 {
 				tmpOut = (*d.TX)[x].Data.Out[0]
-				if !a.In[i].VerifyIn(&tmpOut) {
+				if !a.In[i].VerifyIn(&tmpOut, a.Hash) {
 					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
 				}
 				if (*d.TX)[x].Used[0]+a.In[i].Index > (*d.TX)[x].Data.Out[0].Value {
@@ -77,7 +76,7 @@ func (d *dbRef) Verify(a *basic.RawTransaction) (bool, error) {
 				tmpInt = a.In[i].Index
 			} else {
 				tmpOut = (*d.TX)[x].Data.Out[a.In[i].Index]
-				if !a.In[i].VerifyIn(&tmpOut) {
+				if !a.In[i].VerifyIn(&tmpOut, a.Hash) {
 					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
 				}
 				if (*d.TX)[x].Used[a.In[i].Index] != 0 {

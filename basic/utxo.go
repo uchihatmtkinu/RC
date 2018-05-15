@@ -39,17 +39,12 @@ func (b *InType) Prk() ecdsa.PublicKey {
 }
 
 //VerifyIn using the UTXO to verify the in address
-func (b *InType) VerifyIn(a *OutType) bool {
+func (b *InType) VerifyIn(a *OutType, h [32]byte) bool {
 	if !cryptonew.Verify(b.Prk(), a.Address) {
 		return false
 	}
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, b.Index)
-	tmp := append(b.PrevTx[:], buf.Bytes()...)
-	tmpHash := new([32]byte)
-	DoubleHash256(&tmp, tmpHash)
 	tmpx := b.Prk()
-	if !ecdsa.Verify(&tmpx, tmpHash[:], b.SignR, b.SignS) {
+	if !ecdsa.Verify(&tmpx, h[:], b.SignR, b.SignS) {
 		return false
 	}
 	return true
@@ -79,15 +74,10 @@ func VerifyTxIn(a *InType, out uint32, db *[]TxDB) bool {
 }
 
 //SignTxIn make the signature given the transaction
-func SignTxIn(a *InType, prk *ecdsa.PrivateKey) {
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, a.Index)
-	tmpHash := new([32]byte)
-	tmp := append(a.PrevTx[:], buf.Bytes()...)
-	DoubleHash256(&tmp, tmpHash)
+func SignTxIn(a *InType, prk *ecdsa.PrivateKey, h [32]byte) {
 	a.SignR = new(big.Int)
 	a.SignS = new(big.Int)
-	a.SignR, a.SignS, _ = ecdsa.Sign(rand.Reader, prk, tmpHash[:])
+	a.SignR, a.SignS, _ = ecdsa.Sign(rand.Reader, prk, h[:])
 }
 
 //OutToData converts the output address data into bytes

@@ -8,8 +8,37 @@ import (
 	"time"
 )
 
+//HashTx is come out the hash
+func (a *Transaction) HashTx() [32]byte {
+	var tmp TransactionPure
+	tmp.Timestamp = a.Timestamp
+	tmp.TxinCnt = a.TxinCnt
+	tmp.TxoutCnt = a.TxoutCnt
+	tmp.Kind = a.Kind
+	tmp.Locktime = a.Locktime
+	tmp.Out = a.Out
+	tmp.In = nil
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		var xxx InTypePure
+		xxx.Acc = a.In[i].Acc
+		xxx.Index = a.In[i].Index
+		xxx.PreTx = a.In[i].PrevTx
+		tmp.In = append(tmp.In, xxx)
+	}
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(a)
+	if err != nil {
+		fmt.Println(err)
+	}
+	h := result.Bytes()
+	tmpHash := new([32]byte)
+	DoubleHash256(&h, tmpHash)
+	return *tmpHash
+}
+
 //TxToData converts the transaction into bytes
-func TxToData(tx *RawTransaction) []byte {
+func TxToData(tx *Transaction) []byte {
 	/*tmp := []byte{}
 	EncodeInt(&tmp, tx.Timestamp)
 	EncodeInt(&tmp, tx.TxinCnt)
@@ -34,8 +63,8 @@ func TxToData(tx *RawTransaction) []byte {
 }
 
 //DataToTx decodes the packets into transaction format
-func DataToTx(data *[]byte) RawTransaction {
-	var tmp RawTransaction
+func DataToTx(data *[]byte) Transaction {
+	var tmp Transaction
 	/*buf := *data
 	err := DecodeInt(&buf, &tmp.Timestamp)
 	if err != nil {
@@ -83,14 +112,8 @@ func DataToTx(data *[]byte) RawTransaction {
 	return tmp
 }
 
-//HashTx generates the 32bits hash of one transaction
-func HashTx(a *RawTransaction, b *[32]byte) {
-	tmp1 := TxToData(a)
-	DoubleHash256(&tmp1, b)
-}
-
 //VerifyTx verify the signature of transaction a
-func VerifyTx(a *RawTransaction, db *[]TxDB) (bool, error) {
+func VerifyTx(a *Transaction, db *[]TxDB) (bool, error) {
 
 	tmp := sha256.Sum256(TxToData(a))
 	//Verify the hash, the cnt of in and out address
@@ -111,7 +134,7 @@ func VerifyTx(a *RawTransaction, db *[]TxDB) (bool, error) {
 		for i := uint32(0); i < a.TxoutCnt; i++ {
 			value -= a.Out[i].Value
 		}
-		if value*100 < total {
+		if value < total {
 			return false, fmt.Errorf("VerifyTx.Invalid outcome value")
 		}
 		return true, nil
@@ -135,7 +158,7 @@ func VerifyTx(a *RawTransaction, db *[]TxDB) (bool, error) {
 }
 
 //MakeTx implements the method to create a new transaction
-func MakeTx(a *[]InType, b *[]OutType, out *RawTransaction, kind int) error {
+func MakeTx(a *[]InType, b *[]OutType, out *Transaction, kind int) error {
 	if out == nil {
 		return fmt.Errorf("Basic.MakeTx, null transaction")
 	}
@@ -151,6 +174,6 @@ func MakeTx(a *[]InType, b *[]OutType, out *RawTransaction, kind int) error {
 	for i := 0; i < int(out.TxoutCnt); i++ {
 		out.Out = append(out.Out, (*b)[i])
 	}
-	HashTx(out, &out.Hash)
+	out.Hash = out.HashTx()
 	return nil
 }

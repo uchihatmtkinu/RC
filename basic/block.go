@@ -37,7 +37,7 @@ func HashTxBlock(a *TxBlock, b *[32]byte) {
 }
 
 //GenMerkTree generates the merkleroot tree given the transactions
-func GenMerkTree(d *[]RawTransaction, out *[32]byte) error {
+func GenMerkTree(d *[]Transaction, out *[32]byte) error {
 	if len(*d) == 1 {
 		tmp := (*d)[0].Hash[:]
 		DoubleHash256(&tmp, out)
@@ -71,7 +71,7 @@ func VerifyTxBlock(a *TxBlock) (bool, error) {
 }
 
 //MakeTxBlock creates the transaction blocks given verified transactions
-func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, out *TxBlock) error {
+func MakeTxBlock(a *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, out *TxBlock) error {
 	if out == nil {
 		return fmt.Errorf("Basic.MakeTxBlock, null block")
 	}
@@ -80,7 +80,7 @@ func MakeTxBlock(a *[]RawTransaction, preHash [32]byte, prk *ecdsa.PrivateKey, h
 	out.Timestamp = time.Now().Unix()
 	out.TxCnt = uint32(len(*a))
 	out.Height = h
-	out.TxArray = []RawTransaction{}
+	out.TxArray = []Transaction{}
 	for i := 0; i < int(out.TxCnt); i++ {
 		out.TxArray = append(out.TxArray, (*a)[i])
 	}

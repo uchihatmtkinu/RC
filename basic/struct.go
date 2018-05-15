@@ -30,8 +30,15 @@ type InType struct {
 	Acc    bool
 }
 
-//RawTransaction is the transaction data which sent by the sender
-type RawTransaction struct {
+//InTypePure is the format without signature which is used to make a signature
+type InTypePure struct {
+	PreTx [32]byte
+	Index uint32
+	Acc   bool
+}
+
+//Transaction is the transaction data which sent by the sender
+type Transaction struct {
 	Timestamp int64
 	TxinCnt   uint32
 	In        []InType
@@ -42,11 +49,22 @@ type RawTransaction struct {
 	Hash      [32]byte
 }
 
+//TransactionPure is the transaction data which sent by the sender
+type TransactionPure struct {
+	Timestamp int64
+	TxinCnt   uint32
+	In        []InTypePure
+	TxoutCnt  uint32
+	Out       []OutType
+	Kind      uint32
+	Locktime  uint32
+}
+
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
 	PrevHash   [32]byte
 	TxCnt      uint32
-	TxArray    []RawTransaction
+	TxArray    []Transaction
 	Timestamp  int64
 	Height     uint32
 	SignR      *big.Int
@@ -59,7 +77,7 @@ type TxBlock struct {
 
 //TxDB is the database of cache
 type TxDB struct {
-	Data RawTransaction
+	Data Transaction
 	Used []uint32
 	Res  int8
 }
