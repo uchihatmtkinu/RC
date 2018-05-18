@@ -14,15 +14,15 @@ import (
 func (b *TxBlock) Prk() ecdsa.PublicKey {
 	var tmp ecdsa.PublicKey
 	tmp.Curve = elliptic.P256()
-	tmp.X = b.PrkX
-	tmp.Y = b.PrkY
+	tmp.X = b.PukX
+	tmp.Y = b.PukY
 	return tmp
 }
 
-//NewPrk sets the public key
-func (b *TxBlock) NewPrk(x ecdsa.PublicKey) {
-	b.PrkX.Set(x.X)
-	b.PrkY.Set(x.Y)
+//NewPuk sets the public key
+func (b *TxBlock) NewPuk(x ecdsa.PublicKey) {
+	b.PukX.Set(x.X)
+	b.PukY.Set(x.Y)
 }
 
 //HashTxBlock generates the 32bits hash of one Tx block
@@ -87,7 +87,7 @@ func MakeTxBlock(a *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h ui
 	GenMerkTree(&out.TxArray, &out.MerkleRoot)
 
 	HashTxBlock(out, &out.HashID)
-	out.NewPrk(prk.PublicKey)
+	out.NewPuk(prk.PublicKey)
 	out.SignR, out.SignS, _ = ecdsa.Sign(rand.Reader, prk, out.HashID[:])
 
 	return nil

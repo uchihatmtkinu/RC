@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"math/big"
@@ -13,68 +12,33 @@ import (
 	"github.com/uchihatmtkinu/RC/crypto"
 )
 
-//SearchUTXO find the specific out address given the hash of the transaction and index
-func SearchUTXO(index uint32, h *[32]byte, out *OutType, db *[]TxDB) uint32 {
-	//We implement O(n) search at current, future change it into O(nlogn)
-	for i := range *db {
-		if (*db)[i].Data.Hash == *h {
-			if (*db)[i].Data.TxoutCnt > uint32(index) {
-				out = &(*db)[i].Data.Out[index]
-				return (*db)[i].Used[index]
-			}
-			return 20
-		}
-	}
-	out = nil
-	return 10
-}
-
-//Prk returns the public key
-func (b *InType) Prk() ecdsa.PublicKey {
+//Puk returns the public key
+func (a *InType) Puk() ecdsa.PublicKey {
 	var tmp ecdsa.PublicKey
 	tmp.Curve = elliptic.P256()
-	tmp.X = b.PrkX
-	tmp.Y = b.PrkY
+	tmp.X = a.PukX
+	tmp.Y = a.PukY
 	return tmp
 }
 
 //VerifyIn using the UTXO to verify the in address
-func (b *InType) VerifyIn(a *OutType, h [32]byte) bool {
-	if !cryptonew.Verify(b.Prk(), a.Address) {
+func (a *InType) VerifyIn(b *OutType, h [32]byte) bool {
+	if !cryptonew.Verify(a.Puk(), b.Address) {
+		fmt.Println("UTXO.VerifyIn address doesn't match")
 		return false
 	}
-	tmpx := b.Prk()
-	if !ecdsa.Verify(&tmpx, h[:], b.SignR, b.SignS) {
-		return false
-	}
-	return true
-}
-
-//VerifyTxIn implements the function to verify the signature to use the current UTXO
-func VerifyTxIn(a *InType, out uint32, db *[]TxDB) bool {
-	var b *OutType
-	err := SearchUTXO(a.Index, &a.PrevTx, b, db)
-	if err != 0 {
-		return false
-	}
-
-	if !cryptonew.Verify(a.Prk(), b.Address) {
-		return false
-	}
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, a.Index)
-	tmp := append(a.PrevTx[:], buf.Bytes()...)
-	tmpHash := new([32]byte)
-	DoubleHash256(&tmp, tmpHash)
-	tmpx := a.Prk()
-	if !ecdsa.Verify(&tmpx, tmpHash[:], a.SignR, a.SignS) {
+	tmpPuk := a.Puk()
+	if !ecdsa.Verify(&tmpPuk, h[:], a.SignR, a.SignS) {
+		fmt.Println("UTXO.VerifyIn signature incorrect")
 		return false
 	}
 	return true
 }
 
 //SignTxIn make the signature given the transaction
-func SignTxIn(a *InType, prk *ecdsa.PrivateKey, h [32]byte) {
+func (a *InType) SignTxIn(prk *ecdsa.PrivateKey, h [32]byte) {
+	a.PukX.Set(prk.PublicKey.X)
+	a.PukY.Set(prk.PublicKey.Y)
 	a.SignR = new(big.Int)
 	a.SignS = new(big.Int)
 	a.SignR, a.SignS, _ = ecdsa.Sign(rand.Reader, prk, h[:])

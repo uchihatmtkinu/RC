@@ -48,9 +48,12 @@ func (d *dbRef) AddTX(a *basic.Transaction) {
 }
 
 func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
+	if a.TxinCnt != uint32(len(a.In)) || a.TxoutCnt != uint32(len(a.Out)) {
+		return false, fmt.Errorf("Invalid input,output parameter")
+	}
 	tmp := a.HashTx()
-	if tmp != a.Hash || a.TxinCnt != uint32(len(a.In)) || a.TxoutCnt != uint32(len(a.Out)) {
-		return false, fmt.Errorf("Invalid parameter")
+	if tmp != a.Hash {
+		return false, fmt.Errorf("Hashvalue not match")
 	}
 	d.AddTX(a)
 	if a.Kind == 0 {
@@ -67,7 +70,7 @@ func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
 			tmpArr[i] = uint32(x)
 			if (*d.TX)[x].Data.Kind == 1 {
 				tmpOut = (*d.TX)[x].Data.Out[0]
-				if !a.In[i].VerifyIn(&tmpOut, a.Hash) {
+				if !a.VerifyTx(i, &tmpOut) {
 					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
 				}
 				if (*d.TX)[x].Used[0]+a.In[i].Index > (*d.TX)[x].Data.Out[0].Value {
@@ -76,7 +79,7 @@ func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
 				tmpInt = a.In[i].Index
 			} else {
 				tmpOut = (*d.TX)[x].Data.Out[a.In[i].Index]
-				if !a.In[i].VerifyIn(&tmpOut, a.Hash) {
+				if !a.VerifyTx(i, &tmpOut) {
 					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
 				}
 				if (*d.TX)[x].Used[a.In[i].Index] != 0 {
@@ -95,7 +98,7 @@ func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
 		}
 
 		if check {
-			(*d.TX)[len(*d.TX)-1].Res = 0
+			(*d.TX)[len(*d.TX)-1].Res = 1
 			for i := uint32(0); i < a.TxinCnt; i++ {
 				if (*d.TX)[tmpArr[i]].Data.Kind == 0 {
 					(*d.TX)[tmpArr[i]].Used[a.In[i].Index] = d.TXLen

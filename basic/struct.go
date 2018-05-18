@@ -25,8 +25,8 @@ type InType struct {
 	Index  uint32
 	SignR  *big.Int
 	SignS  *big.Int
-	PrkX   *big.Int
-	PrkY   *big.Int
+	PukX   *big.Int
+	PukY   *big.Int
 	Acc    bool
 }
 
@@ -60,6 +60,47 @@ type TransactionPure struct {
 	Locktime  uint32
 }
 
+//TxList is the list of tx sent by Leader to miner for their verification
+type TxList struct {
+	ID       [32]byte
+	HashID   [32]byte
+	PrevHash [32]byte
+	TxCnt    uint32
+	TxArray  []Transaction
+	SignR    *big.Int
+	SignS    *big.Int
+}
+
+//TxDecision is the decisions based on given TxList
+type TxDecision struct {
+	ID       [32]byte
+	HashID   [32]byte
+	TxCnt    uint32
+	Decision []bool
+	SignR    *big.Int
+	SignS    *big.Int
+}
+
+//TxDecSet is the set of all decisions from one shard, signed by leader
+type TxDecSet struct {
+	ID       [32]byte
+	HashID   [32]byte
+	PrevHash [32]byte
+	MemCnt   uint32
+	MemD     []TxDecision
+	SignR    *big.Int
+	SignS    *big.Int
+}
+
+//TxDecSetSet is the set of TxDecSet
+type TxDecSetSet struct {
+	ID       [32]byte
+	HashID   [32]byte
+	PrebHash [32]byte
+	SetCnt   uint32
+	Set      []TxDecSet
+}
+
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
 	PrevHash   [32]byte
@@ -69,8 +110,8 @@ type TxBlock struct {
 	Height     uint32
 	SignR      *big.Int
 	SignS      *big.Int
-	PrkX       *big.Int
-	PrkY       *big.Int
+	PukX       *big.Int
+	PukY       *big.Int
 	HashID     [32]byte
 	MerkleRoot [32]byte
 }
@@ -79,7 +120,14 @@ type TxBlock struct {
 type TxDB struct {
 	Data Transaction
 	Used []uint32
-	Res  int8
+	/*0 not checked(the first time),
+	1: Correct part in the shard,
+	-1: fail due to not correct format
+	-2: fail due to double spend
+	*/
+	InCheck    []bool
+	Res        int8
+	InCheckSum int
 }
 
 //UserClient is the struct for miner and client

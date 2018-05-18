@@ -2,7 +2,7 @@ package basic
 
 import (
 	"bytes"
-	"crypto/sha256"
+	"crypto/ecdsa"
 	"encoding/gob"
 	"fmt"
 	"time"
@@ -35,6 +35,25 @@ func (a *Transaction) HashTx() [32]byte {
 	tmpHash := new([32]byte)
 	DoubleHash256(&h, tmpHash)
 	return *tmpHash
+}
+
+//SignTx sign the ith in-address with the private key
+func (a *Transaction) SignTx(i uint32, prk *ecdsa.PrivateKey) error {
+	if a.TxinCnt <= i {
+		return fmt.Errorf("Tx.SignTx in-address outrange")
+	}
+	a.In[i].SignTxIn(prk, a.Hash)
+	return nil
+}
+
+//VerifyTx sign the ith in-address with the private key
+func (a *Transaction) VerifyTx(i uint32, b *OutType) bool {
+	if a.TxinCnt <= i {
+		fmt.Println("Tx.VerifyTx in-address outrange")
+		return false
+	}
+
+	return a.In[i].VerifyIn(b, a.Hash)
 }
 
 //TxToData converts the transaction into bytes
@@ -110,51 +129,6 @@ func DataToTx(data *[]byte) Transaction {
 		fmt.Println(err)
 	}
 	return tmp
-}
-
-//VerifyTx verify the signature of transaction a
-func VerifyTx(a *Transaction, db *[]TxDB) (bool, error) {
-
-	tmp := sha256.Sum256(TxToData(a))
-	//Verify the hash, the cnt of in and out address
-	if tmp != a.Hash || a.TxinCnt != uint32(len(a.In)) || a.TxoutCnt != uint32(len(a.Out)) {
-		return false, fmt.Errorf("Invalid parameter")
-	}
-	//Verify when it is a normal transaction
-	if a.Kind == 0 {
-		var value uint32
-		var tmpInt uint32
-		for i := uint32(0); i < a.TxinCnt; i++ {
-			if !VerifyTxIn(&a.In[i], tmpInt, db) {
-				return false, fmt.Errorf("VerifyTx.Invalid UTXO of %d", &i)
-			}
-			value += tmpInt
-		}
-		total := value
-		for i := uint32(0); i < a.TxoutCnt; i++ {
-			value -= a.Out[i].Value
-		}
-		if value < total {
-			return false, fmt.Errorf("VerifyTx.Invalid outcome value")
-		}
-		return true, nil
-	} else if a.Kind == 1 { //Verify when it is a transafer transaction
-		if a.TxoutCnt != 1 {
-			return false, fmt.Errorf("VerifyTx.The out address should be 1")
-		}
-		for i := uint32(0); i < a.TxinCnt; i++ {
-			var b *OutType
-			tmp := SearchUTXO(a.In[i].Index, &a.In[i].PrevTx, b, db)
-			if tmp != 0 {
-				return false, fmt.Errorf("VerifyTx.Invalid out address")
-			}
-			if b.Address != a.Out[0].Address {
-				return false, fmt.Errorf("VerifyTx.Unmatch income address")
-			}
-		}
-		return true, nil
-	}
-	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
 }
 
 //MakeTx implements the method to create a new transaction

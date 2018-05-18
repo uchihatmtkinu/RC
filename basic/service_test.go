@@ -26,12 +26,12 @@ func TestInToData(t *testing.T) {
 	tmp.Index = 10
 	tmp.SignR = new(big.Int)
 	tmp.SignS = new(big.Int)
-	tmp.PrkX = new(big.Int)
-	tmp.PrkY = new(big.Int)
+	tmp.PukX = new(big.Int)
+	tmp.PukY = new(big.Int)
 	tmp.SignR.SetString("123123123123", 10)
 	tmp.SignS.SetString("12345", 10)
-	tmp.PrkX.SetString("1234567890", 10)
-	tmp.PrkY.SetString("123123123123", 10)
+	tmp.PukX.SetString("1234567890", 10)
+	tmp.PukY.SetString("123123123123", 10)
 	xxx := DataToIn(InToData(&tmp))
 	if tmp.PrevTx != xxx.PrevTx {
 		t.Error(`Prev Hash is wrong`)
@@ -45,10 +45,10 @@ func TestInToData(t *testing.T) {
 	if tmp.SignS.Cmp(xxx.SignS) != 0 {
 		t.Error(`Sig S is wrong`)
 	}
-	if tmp.PrkX.Cmp(xxx.PrkX) != 0 {
+	if tmp.PukX.Cmp(xxx.PukX) != 0 {
 		t.Error(`Puk X is wrong`)
 	}
-	if tmp.PrkY.Cmp(xxx.PrkY) != 0 {
+	if tmp.PukY.Cmp(xxx.PukY) != 0 {
 		t.Error(`Puk Y is wrong`)
 	}
 }
