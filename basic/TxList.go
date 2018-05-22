@@ -87,6 +87,8 @@ func (a *TxList) DataToTL(buf *[]byte) error {
 		}
 		a.AddTx(&xxx)
 	}
+	a.SignR = new(big.Int)
+	a.SignS = new(big.Int)
 	err = DecodeDoubleBig(buf, a.SignR, a.SignS)
 	if err != nil {
 		return fmt.Errorf("TxList signature decode failed %s", err)

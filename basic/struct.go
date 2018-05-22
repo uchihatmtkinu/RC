@@ -88,6 +88,8 @@ type TxDecSet struct {
 	PrevHash [32]byte
 	MemCnt   uint32
 	MemD     []TxDecision
+	TxCnt    uint32
+	TxArray  [][32]byte
 	SignR    *big.Int
 	SignS    *big.Int
 }
