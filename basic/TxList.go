@@ -11,7 +11,7 @@ import (
 //Hash returns the ID of the TxList
 func (a *TxList) Hash() [32]byte {
 	tmp := a.TxArray[0].Hash[:]
-	for i := uint32(1); i < a.TxCnt; i++ {
+	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp = append(tmp, a.TxArray[i].Hash[:]...)
 	}
 	return sha256.Sum256(tmp)
@@ -44,17 +44,15 @@ func (a *TxList) AddTx(tx *Transaction) {
 }
 
 //TLToData returns the byte of a TxList
-func (a *TxList) TLToData() []byte {
-	var tmp []byte
-	EncodeByteL(&tmp, a.ID[:], 32)
-	EncodeByteL(&tmp, a.HashID[:], 32)
-	EncodeByteL(&tmp, a.PrevHash[:], 32)
-	EncodeInt(&tmp, a.TxCnt)
+func (a *TxList) TLToData(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
+	EncodeByteL(tmp, a.PrevHash[:], 32)
+	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp = append(tmp, a.TxArray[i].TxToData()...)
+		a.TxArray[i].TxToData(tmp)
 	}
-	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
-	return tmp
+	EncodeDoubleBig(tmp, a.SignR, a.SignS)
 }
 
 //DataToTL decodes the TxList with []byte
@@ -85,7 +83,7 @@ func (a *TxList) DataToTL(buf *[]byte) error {
 		if err != nil {
 			return fmt.Errorf("TxList Tx decode failed %s", err)
 		}
-		a.AddTx(&xxx)
+		a.TxArray = append(a.TxArray, xxx)
 	}
 	a.SignR = new(big.Int)
 	a.SignS = new(big.Int)

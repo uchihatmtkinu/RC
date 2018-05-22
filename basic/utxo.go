@@ -21,12 +21,10 @@ func (a *InType) Init() {
 }
 
 //Byte return the []byte of the input address used for hash
-func (a *InType) Byte() []byte {
-	var tmp []byte
-	EncodeByteL(&tmp, a.PrevTx[:], 32)
-	EncodeInt(&tmp, a.Index)
-	EncodeInt(&tmp, a.Acc)
-	return tmp
+func (a *InType) Byte(b *[]byte) {
+	EncodeByteL(b, a.PrevTx[:], 32)
+	EncodeInt(b, a.Index)
+	EncodeInt(b, a.Acc)
 }
 
 //Puk returns the public key
@@ -62,11 +60,11 @@ func (a *InType) SignTxIn(prk *ecdsa.PrivateKey, h [32]byte) {
 }
 
 //OutToData converts the output address data into bytes
-func (a *OutType) OutToData() []byte {
+func (a *OutType) OutToData(b *[]byte) {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, a.Value)
-	tmp := append(buf.Bytes(), a.Address[:]...)
-	return tmp
+	*b = append(*b, buf.Bytes()...)
+	*b = append(*b, a.Address[:]...)
 }
 
 //DataToOut converts bytes into output address data
@@ -85,15 +83,13 @@ func (a *OutType) DataToOut(data *[]byte) error {
 }
 
 //InToData converts the input address data into bytes
-func (a *InType) InToData() []byte {
-	tmp := []byte{}
-	EncodeByteL(&tmp, a.PrevTx[:], 32)
-	EncodeInt(&tmp, a.Index)
-	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
-	EncodeDoubleBig(&tmp, a.PukX, a.PukY)
-	EncodeInt(&tmp, a.Acc)
+func (a *InType) InToData(b *[]byte) {
+	EncodeByteL(b, a.PrevTx[:], 32)
+	EncodeInt(b, a.Index)
+	EncodeDoubleBig(b, a.SignR, a.SignS)
+	EncodeDoubleBig(b, a.PukX, a.PukY)
+	EncodeInt(b, a.Acc)
 	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
-	return tmp
 }
 
 //DataToIn converts bytes into input address data

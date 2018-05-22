@@ -51,14 +51,12 @@ func (a *TxDecision) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //TDToData encodes the TxDecision into []byte
-func (a *TxDecision) TDToData() []byte {
-	var tmp []byte
-	EncodeByteL(&tmp, a.ID[:], 32)
-	EncodeByteL(&tmp, a.HashID[:], 32)
-	EncodeInt(&tmp, a.TxCnt)
-	EncodeByte(&tmp, &a.Decision)
-	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
-	return tmp
+func (a *TxDecision) TDToData(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
+	EncodeInt(tmp, a.TxCnt)
+	EncodeByte(tmp, &a.Decision)
+	EncodeDoubleBig(tmp, a.SignR, a.SignS)
 }
 
 //DataToTD decodes the []byte into TxDecision

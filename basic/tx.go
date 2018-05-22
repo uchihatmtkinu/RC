@@ -15,10 +15,10 @@ func (a *Transaction) HashTx() [32]byte {
 	EncodeInt(&tmp, a.Kind)
 	EncodeInt(&tmp, a.Locktime)
 	for i := uint32(0); i < a.TxinCnt; i++ {
-		tmp = append(tmp, a.In[i].Byte()...)
+		a.In[i].Byte(&tmp)
 	}
 	for i := uint32(0); i < a.TxoutCnt; i++ {
-		tmp = append(tmp, a.Out[i].OutToData()...)
+		a.Out[i].OutToData(&tmp)
 	}
 	tmpHash := new([32]byte)
 	DoubleHash256(&tmp, tmpHash)
@@ -45,24 +45,20 @@ func (a *Transaction) VerifyTx(i uint32, b *OutType) bool {
 }
 
 //TxToData converts the transaction into bytes
-func (a *Transaction) TxToData() []byte {
-	tmp := []byte{}
-	EncodeInt(&tmp, a.Timestamp)
-	EncodeInt(&tmp, a.TxinCnt)
-	EncodeInt(&tmp, a.TxoutCnt)
-	EncodeInt(&tmp, a.Kind)
-	EncodeInt(&tmp, a.Locktime)
-	EncodeByteL(&tmp, a.Hash[:], 32)
+func (a *Transaction) TxToData(tmp *[]byte) {
+	EncodeInt(tmp, a.Timestamp)
+	EncodeInt(tmp, a.TxinCnt)
+	EncodeInt(tmp, a.TxoutCnt)
+	EncodeInt(tmp, a.Kind)
+	EncodeInt(tmp, a.Locktime)
+	EncodeByteL(tmp, a.Hash[:], 32)
 	for i := uint32(0); i < a.TxinCnt; i++ {
-		xxx := a.In[i].InToData()
+		a.In[i].InToData(tmp)
 		//EncodeByte(&tmp, &xxx)
-		tmp = append(tmp, xxx...)
 	}
 	for i := uint32(0); i < a.TxoutCnt; i++ {
-		xxx := a.Out[i].OutToData()
-		tmp = append(tmp, xxx...)
+		a.Out[i].OutToData(tmp)
 	}
-	return tmp
 }
 
 //DataToTx decodes the packets into transaction format

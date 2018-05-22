@@ -12,7 +12,8 @@ func TestOutToData(t *testing.T) {
 	xxx := sha256.Sum256([]byte("test2"))
 	tmp.Address = xxx
 	tmp.Value = 15
-	tmpOut := tmp.OutToData()
+	var tmpOut []byte
+	tmp.OutToData(&tmpOut)
 
 	yyy.DataToOut(&tmpOut)
 	if yyy.Address != tmp.Address {
@@ -36,7 +37,8 @@ func TestInToData(t *testing.T) {
 	tmp.PukX.SetString("1234567890", 10)
 	tmp.PukY.SetString("123123123123", 10)
 	for i := 1; i < 500; i++ {
-		tmpIn := tmp.InToData()
+		var tmpIn []byte
+		tmp.InToData(&tmpIn)
 		xxx.DataToIn(&tmpIn)
 		if tmp.PrevTx != xxx.PrevTx {
 			t.Error(`Prev Hash is wrong`)
@@ -85,8 +87,8 @@ func TestTxtoData(t *testing.T) {
 	}
 	var tmpTx, tmp1 Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
-
-	tmp := tmpTx.TxToData()
+	var tmp []byte
+	tmpTx.TxToData(&tmp)
 	tmp1.DataToTx(&tmp)
 	if tmp1.Timestamp != tmpTx.Timestamp {
 		t.Error(`Timestamp is wrong`)
@@ -113,4 +115,62 @@ func TestTxtoData(t *testing.T) {
 		t.Error(`Hash is wrong`)
 	}
 
+}
+
+func TestTxList(t *testing.T) {
+	numIn := 2
+	numOut := 2
+	var tmpIn []InType
+	var tmpOut []OutType
+	for i := 0; i < numIn; i++ {
+		var tmpInx InType
+		tmpInx.PrevTx = FindByte32(i * 1000)
+		tmpInx.Index = uint32(i)
+		tmpInx.Init()
+		*tmpInx.PukX = FindBigInt((i+1)*1000 + 1)
+		*tmpInx.PukY = FindBigInt((i+1)*1000 + 2)
+		*tmpInx.SignR = FindBigInt((i+1)*1000 + 3)
+		*tmpInx.SignS = FindBigInt((i+1)*1000 + 4)
+		tmpInx.Acc = false
+		tmpIn = append(tmpIn, tmpInx)
+	}
+
+	for i := 0; i < numOut; i++ {
+		var tmpOutx OutType
+		tmpOutx.Address = FindByte32(i * 2000)
+		tmpOutx.Value = uint32(i)
+		tmpOut = append(tmpOut, tmpOutx)
+	}
+	var tmpTx Transaction
+	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
+	id := FindByte32(123)
+	preH := FindByte32(123)
+	var tmp1, tmp3 TxList
+	tmp1.Set(id, preH)
+	for i := 0; i < 5; i++ {
+		tmp1.AddTx(&tmpTx)
+	}
+	tmp1.HashID = tmp1.Hash()
+	tmp1.SignR = new(big.Int)
+	tmp1.SignS = new(big.Int)
+	tmp1.SignR.SetString("123123", 10)
+	tmp1.SignS.SetString("123123123", 10)
+	var tmp2 []byte
+	tmp1.TLToData(&tmp2)
+	err := tmp3.DataToTL(&tmp2)
+	if err != nil {
+		t.Error(err)
+	}
+	if tmp1.ID != tmp3.ID {
+		t.Error(`ID is wrong`)
+	}
+	if tmp1.PrevHash != tmp3.PrevHash {
+		t.Error(`PrevHash is wrong`)
+	}
+	if tmp1.TxCnt != tmp3.TxCnt {
+		t.Error(`TxCnt is wrong`, tmp1.TxCnt, tmp3.TxCnt)
+	}
+	if tmp1.Hash() != tmp3.Hash() {
+		t.Error(`Hash is wrong`)
+	}
 }

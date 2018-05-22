@@ -12,7 +12,7 @@ import (
 func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
 	tmp := append(a.ID[:], a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
-		tmp = append(tmp, a.MemD[i].TDToData()...)
+		a.MemD[i].TDToData(&tmp)
 	}
 	tmpHash := sha256.Sum256(tmp)
 	a.SignR = new(big.Int)
@@ -24,7 +24,7 @@ func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
 func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 	tmp := append(a.ID[:], a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
-		tmp = append(tmp, a.MemD[i].TDToData()...)
+		a.MemD[i].TDToData(&tmp)
 	}
 	tmpHash := sha256.Sum256(tmp)
 	return ecdsa.Verify(puk, tmpHash[:], a.SignR, a.SignS)
@@ -49,22 +49,19 @@ func (a *TxDecSet) Add(b *TxDecision) {
 }
 
 //TDSToData encode the TxDecSet into []byte
-func (a *TxDecSet) TDSToData() []byte {
-	var tmp []byte
-	EncodeByteL(&tmp, a.ID[:], 32)
-	EncodeByteL(&tmp, a.ID[:], 32)
-	EncodeByteL(&tmp, a.ID[:], 32)
-	EncodeInt(&tmp, a.MemCnt)
-	EncodeInt(&tmp, a.TxCnt)
+func (a *TxDecSet) TDSToData(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.MemCnt)
+	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.MemCnt; i++ {
-		tmp1 := a.MemD[i].TDToData()
-		tmp = append(tmp, tmp1...)
+		a.MemD[i].TDToData(tmp)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp = append(tmp, a.TxArray[i][:]...)
+		*tmp = append(*tmp, a.TxArray[i][:]...)
 	}
-	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
-	return tmp
+	EncodeDoubleBig(tmp, a.SignR, a.SignS)
 }
 
 //DataToTDS encode the TxDecSet into []byte
