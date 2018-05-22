@@ -39,7 +39,7 @@ type InTypePure struct {
 
 //Transaction is the transaction data which sent by the sender
 type Transaction struct {
-	Timestamp int64
+	Timestamp uint64
 	TxinCnt   uint32
 	In        []InType
 	TxoutCnt  uint32
@@ -51,7 +51,7 @@ type Transaction struct {
 
 //TransactionPure is the transaction data which sent by the sender
 type TransactionPure struct {
-	Timestamp int64
+	Timestamp uint64
 	TxinCnt   uint32
 	In        []InTypePure
 	TxoutCnt  uint32
@@ -76,7 +76,7 @@ type TxDecision struct {
 	ID       [32]byte
 	HashID   [32]byte
 	TxCnt    uint32
-	Decision []bool
+	Decision []byte
 	SignR    *big.Int
 	SignS    *big.Int
 }

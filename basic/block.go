@@ -11,7 +11,7 @@ import (
 )
 
 //Prk returns the public key
-func (b *TxBlock) Prk() ecdsa.PublicKey {
+func (b *TxBlock) Puk() ecdsa.PublicKey {
 	var tmp ecdsa.PublicKey
 	tmp.Curve = elliptic.P256()
 	tmp.X = b.PukX
@@ -63,8 +63,8 @@ func VerifyTxBlock(a *TxBlock) (bool, error) {
 	if tmp != a.HashID || a.TxCnt != uint32(len(a.TxArray)) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
-	tmpPrk := a.Prk()
-	if !ecdsa.Verify(&tmpPrk, a.HashID[:], a.SignR, a.SignS) {
+	tmpPuk := a.Puk()
+	if !ecdsa.Verify(&tmpPuk, a.HashID[:], a.SignR, a.SignS) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
 	}
 	return false, fmt.Errorf("VerifyTx.Invalid transaction type")

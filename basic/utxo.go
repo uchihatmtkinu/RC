@@ -5,12 +5,29 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"encoding/gob"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 
 	"github.com/uchihatmtkinu/RC/crypto"
 )
+
+//Init initial the big.Int parameters
+func (a *InType) Init() {
+	a.PukX = new(big.Int)
+	a.PukY = new(big.Int)
+	a.SignR = new(big.Int)
+	a.SignS = new(big.Int)
+}
+
+//Byte return the []byte of the input address used for hash
+func (a *InType) Byte() []byte {
+	var tmp []byte
+	EncodeByteL(&tmp, a.PrevTx[:], 32)
+	EncodeInt(&tmp, a.Index)
+	EncodeInt(&tmp, a.Acc)
+	return tmp
+}
 
 //Puk returns the public key
 func (a *InType) Puk() ecdsa.PublicKey {
@@ -45,84 +62,65 @@ func (a *InType) SignTxIn(prk *ecdsa.PrivateKey, h [32]byte) {
 }
 
 //OutToData converts the output address data into bytes
-func OutToData(a *OutType) []byte {
-	/*buf := new(bytes.Buffer)
+func (a *OutType) OutToData() []byte {
+	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, a.Value)
 	tmp := append(buf.Bytes(), a.Address[:]...)
-	return tmp*/
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return result.Bytes()
+	return tmp
 }
 
 //DataToOut converts bytes into output address data
-func DataToOut(data []byte) OutType {
-	/*var tmp OutType
-	buf := bytes.NewReader(data)
-	err := binary.Read(buf, binary.LittleEndian, &tmp.Value)
+func (a *OutType) DataToOut(data *[]byte) error {
+	var tmp1 []byte
+	err := DecodeInt(data, &a.Value)
 	if err != nil {
-		fmt.Println("binary.Read failed:", err)
+		return fmt.Errorf("Out Value read failed")
 	}
-	err = binary.Read(buf, binary.LittleEndian, &tmp.Address)
+	err = DecodeByteL(data, &tmp1, 32)
 	if err != nil {
-		fmt.Println("binary.Read failed:", err)
+		return fmt.Errorf("Out Address read failed")
 	}
-	return tmp*/
-	var tmp OutType
-	decoder := gob.NewDecoder(bytes.NewReader(data))
-	err := decoder.Decode(&tmp)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return tmp
+	copy(a.Address[:], tmp1[:32])
+	return nil
 }
 
 //InToData converts the input address data into bytes
-func InToData(a *InType) []byte {
-	/*tmp := []byte{}
-	tmp1 := a.PrevTx[:]
-	EncodeByteL(&tmp, &tmp1, 32)
+func (a *InType) InToData() []byte {
+	tmp := []byte{}
+	EncodeByteL(&tmp, a.PrevTx[:], 32)
 	EncodeInt(&tmp, a.Index)
 	EncodeDoubleBig(&tmp, a.SignR, a.SignS)
-	EncodeDoubleBig(&tmp, a.Puk.X, a.Puk.Y)
+	EncodeDoubleBig(&tmp, a.PukX, a.PukY)
+	EncodeInt(&tmp, a.Acc)
 	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
-	return tmp*/
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return result.Bytes()
+	return tmp
 }
 
 //DataToIn converts bytes into input address data
-func DataToIn(data []byte) InType {
-	/*var tmp InType
+func (a *InType) DataToIn(data *[]byte) error {
 	var tmp1 []byte
-	DecodeByteL(&data, &tmp1, 32)
-	copy(tmp.PrevTx[:], tmp1[:32])
-	DecodeInt(&data, &tmp.Index)
-	tmp.SignR = new(big.Int)
-	tmp.SignS = new(big.Int)
-	DecodeDoubleBig(&data, tmp.SignR, tmp.SignS)
-	tmp.Puk.Curve = elliptic.P256()
-	tmp.Puk.X = new(big.Int)
-	tmp.Puk.Y = new(big.Int)
-	DecodeDoubleBig(&data, tmp.Puk.X, tmp.Puk.Y)
-	return tmp*/
-	var tmp InType
-	decoder := gob.NewDecoder(bytes.NewReader(data))
-	err := decoder.Decode(&tmp)
+	a.Init()
+	err := DecodeByteL(data, &tmp1, 32)
 	if err != nil {
-		fmt.Println(err)
+		return fmt.Errorf("Input PrevHash read failed %s", err)
 	}
-	fmt.Println(tmp.Index, tmp.SignR)
-	return tmp
+	copy(a.PrevTx[:], tmp1[:32])
+	err = DecodeInt(data, &a.Index)
+	if err != nil {
+		return fmt.Errorf("Input Index read failed %s", err)
+	}
+	err = DecodeDoubleBig(data, a.SignR, a.SignS)
+	if err != nil {
+		return fmt.Errorf("Input Signature read failed %s", err)
+	}
+	err = DecodeDoubleBig(data, a.PukX, a.PukY)
+	if err != nil {
+		return fmt.Errorf("Input Publick Key read failed %s", err)
+	}
+	err = DecodeInt(data, &a.Acc)
+	if err != nil {
+		return fmt.Errorf("Input Account type read failed %s", err)
+	}
+	return nil
+
 }

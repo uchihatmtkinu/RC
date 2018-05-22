@@ -32,11 +32,11 @@ func DecodeByte(d *[]byte, out *[]byte) error {
 }
 
 //EncodeByteL add length bit at the head of the byte array with specific length
-func EncodeByteL(current *[]byte, d *[]byte, l int) error {
-	if len(*d) != l {
+func EncodeByteL(current *[]byte, d []byte, l int) error {
+	if len(d) != l {
 		return fmt.Errorf("Basic.EncodeByteL length is not right")
 	}
-	*current = append(*current, *d...)
+	*current = append(*current, d...)
 	return nil
 }
 
@@ -68,20 +68,32 @@ func DecodeInt(d *[]byte, out interface{}) error {
 	switch out := out.(type) {
 	case *uint32:
 		bitlen = 4
-		tmpBit := binary.LittleEndian.Uint32((*d)[:bitlen])
-		if bitlen+tmpBit > uint32(len(*d)) {
+		if bitlen > uint32(len(*d)) {
 			return fmt.Errorf("Basic.DecodeInt length not enough")
 		}
+		tmpBit := binary.LittleEndian.Uint32((*d)[:bitlen])
 		*out = tmpBit
 	case *uint64:
 		bitlen = 8
-		tmpBit := binary.LittleEndian.Uint64((*d)[:bitlen])
-		if bitlen+uint32(tmpBit) > uint32(len(*d)) {
+		if bitlen > uint32(len(*d)) {
 			return fmt.Errorf("Basic.DecodeInt length not enough")
 		}
+		tmpBit := binary.LittleEndian.Uint64((*d)[:bitlen])
 		*out = tmpBit
+	case *bool:
+		bitlen = 1
+		if bitlen > uint32(len(*d)) {
+			return fmt.Errorf("Basic.DecodeInt length not enough")
+		}
+		tmpBit := (*d)[0]
+		if tmpBit == 0 {
+			*out = false
+		} else {
+			*out = true
+		}
 	default:
 		bitlen = 0
+		return fmt.Errorf("Basic.DecodeInt not known type")
 	}
 
 	*d = (*d)[bitlen:]
@@ -94,6 +106,7 @@ func EncodeBig(current *[]byte, d *big.Int) error {
 	tmp := uint32(len(d.Bytes()))
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, tmp)
+	//fmt.Println(tmp)
 	if err != nil {
 		return fmt.Errorf("Basic.EncodeBig write failed, %s", err)
 	}
@@ -105,16 +118,20 @@ func EncodeBig(current *[]byte, d *big.Int) error {
 //DecodeBig decodes a byte[] into a big number
 func DecodeBig(current *[]byte, out *big.Int) error {
 	var bitlen uint32
+	//fmt.Println(len(*current))
 	err := DecodeInt(current, &bitlen)
+	//out = new(big.Int)
 	if err != nil {
 		return err
 	}
+	//fmt.Println(bitlen)
 	if uint32(len(*current)) < bitlen {
 		return fmt.Errorf("Basic.DecodeBig not enough length")
 	}
 	out.SetBytes((*current)[:bitlen][:])
-	fmt.Println(*out)
+	//fmt.Println(*out)
 	*current = (*current)[bitlen:]
+	//fmt.Println(len(*current))
 	return nil
 }
 

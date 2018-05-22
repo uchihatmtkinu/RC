@@ -1,39 +1,27 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
-	"encoding/gob"
 	"fmt"
 	"time"
 )
 
 //HashTx is come out the hash
 func (a *Transaction) HashTx() [32]byte {
-	var tmp TransactionPure
-	tmp.Timestamp = a.Timestamp
-	tmp.TxinCnt = a.TxinCnt
-	tmp.TxoutCnt = a.TxoutCnt
-	tmp.Kind = a.Kind
-	tmp.Locktime = a.Locktime
-	tmp.Out = a.Out
-	tmp.In = nil
+	var tmp []byte
+	EncodeInt(&tmp, a.Timestamp)
+	EncodeInt(&tmp, a.TxinCnt)
+	EncodeInt(&tmp, a.TxoutCnt)
+	EncodeInt(&tmp, a.Kind)
+	EncodeInt(&tmp, a.Locktime)
 	for i := uint32(0); i < a.TxinCnt; i++ {
-		var xxx InTypePure
-		xxx.Acc = a.In[i].Acc
-		xxx.Index = a.In[i].Index
-		xxx.PreTx = a.In[i].PrevTx
-		tmp.In = append(tmp.In, xxx)
+		tmp = append(tmp, a.In[i].Byte()...)
 	}
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err != nil {
-		fmt.Println(err)
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		tmp = append(tmp, a.Out[i].OutToData()...)
 	}
-	h := result.Bytes()
 	tmpHash := new([32]byte)
-	DoubleHash256(&h, tmpHash)
+	DoubleHash256(&tmp, tmpHash)
 	return *tmpHash
 }
 
@@ -57,78 +45,76 @@ func (a *Transaction) VerifyTx(i uint32, b *OutType) bool {
 }
 
 //TxToData converts the transaction into bytes
-func TxToData(tx *Transaction) []byte {
-	/*tmp := []byte{}
-	EncodeInt(&tmp, tx.Timestamp)
-	EncodeInt(&tmp, tx.TxinCnt)
-	EncodeInt(&tmp, tx.TxoutCnt)
-	EncodeInt(&tmp, tx.Kind)
-	EncodeInt(&tmp, tx.Locktime)
-	for i := uint32(0); i < tx.TxinCnt; i++ {
-		xxx := InToData(&tx.In[i])
-		EncodeByte(&tmp, &xxx)
-	}
-	for i := uint32(0); i < tx.TxoutCnt; i++ {
-		xxx := OutToData(&tx.Out[i])
+func (a *Transaction) TxToData() []byte {
+	tmp := []byte{}
+	EncodeInt(&tmp, a.Timestamp)
+	EncodeInt(&tmp, a.TxinCnt)
+	EncodeInt(&tmp, a.TxoutCnt)
+	EncodeInt(&tmp, a.Kind)
+	EncodeInt(&tmp, a.Locktime)
+	EncodeByteL(&tmp, a.Hash[:], 32)
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		xxx := a.In[i].InToData()
+		//EncodeByte(&tmp, &xxx)
 		tmp = append(tmp, xxx...)
-	}*/
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(*tx)
-	if err != nil {
-		fmt.Println(err)
 	}
-	return result.Bytes()
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		xxx := a.Out[i].OutToData()
+		tmp = append(tmp, xxx...)
+	}
+	return tmp
 }
 
 //DataToTx decodes the packets into transaction format
-func DataToTx(data *[]byte) Transaction {
-	var tmp Transaction
-	/*buf := *data
-	err := DecodeInt(&buf, &tmp.Timestamp)
+func (a *Transaction) DataToTx(buf *[]byte) error {
+	//buf := *data
+
+	err := DecodeInt(buf, &a.Timestamp)
 	if err != nil {
-		fmt.Println("TX timestamp Read failed:", err)
+		return fmt.Errorf("TX timestamp Read failed %s", err)
 	}
-	err = DecodeInt(&buf, &tmp.TxinCnt)
+	err = DecodeInt(buf, &a.TxinCnt)
 	if err != nil {
-		fmt.Println("TX TxinCnt Read failed:", err)
+		return fmt.Errorf("TX TxinCnt Read failed %s", err)
 	}
-	err = DecodeInt(&buf, &tmp.TxoutCnt)
+	err = DecodeInt(buf, &a.TxoutCnt)
 	if err != nil {
-		fmt.Println("TX TxoutCnt Read failed:", err)
+		return fmt.Errorf("TX TxoutCnt Read failed %s", err)
 	}
-	err = DecodeInt(&buf, &tmp.Kind)
+	err = DecodeInt(buf, &a.Kind)
 	if err != nil {
-		fmt.Println("TX Kind Read failed:", err)
+		return fmt.Errorf("TX Kind Read failed %s", err)
 	}
-	err = DecodeInt(&buf, &tmp.Locktime)
+	err = DecodeInt(buf, &a.Locktime)
 	if err != nil {
-		fmt.Println("TX Locktime Readfailed:", err)
+		return fmt.Errorf("TX Locktime Readfailed %s", err)
 	}
-	for i := uint32(0); i < tmp.TxinCnt; i++ {
-		var tmpArray *[]byte
-		err = DecodeByte(&buf, tmpArray)
+	var tmp1 []byte
+	err = DecodeByteL(buf, &tmp1, 32)
+	if err != nil {
+		return fmt.Errorf("TX hash Readfailed %s", err)
+	}
+	copy(a.Hash[:], tmp1[:32])
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		//var tmpArray *[]byte
+		var tmpIn InType
+		err = tmpIn.DataToIn(buf)
 		if err != nil {
-			fmt.Println("Input Address Readfailed:", err)
+			return fmt.Errorf("Input Address Readfailed %s", err)
 		}
-		tmpIn := DataToIn(*tmpArray)
-		tmp.In = append(tmp.In, tmpIn)
+		a.In = append(a.In, tmpIn)
 	}
-	for i := uint32(0); i < tmp.TxoutCnt; i++ {
-		var tmpArray *[]byte
-		err = DecodeByteL(&buf, tmpArray, 36)
+
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		//var tmpArray *[]byte
+		var tmpOut OutType
+		err = tmpOut.DataToOut(buf)
 		if err != nil {
-			fmt.Println("Output Address Readfailed:", err)
+			return fmt.Errorf("Output Address Readfailed %s", err)
 		}
-		tmpOut := DataToOut(*tmpArray)
-		tmp.Out = append(tmp.Out, tmpOut)
-	}*/
-	decoder := gob.NewDecoder(bytes.NewReader(*data))
-	err := decoder.Decode(&tmp)
-	if err != nil {
-		fmt.Println(err)
+		a.Out = append(a.Out, tmpOut)
 	}
-	return tmp
+	return nil
 }
 
 //MakeTx implements the method to create a new transaction
@@ -136,7 +122,7 @@ func MakeTx(a *[]InType, b *[]OutType, out *Transaction, kind int) error {
 	if out == nil {
 		return fmt.Errorf("Basic.MakeTx, null transaction")
 	}
-	out.Timestamp = time.Now().Unix()
+	out.Timestamp = uint64(time.Now().Unix())
 	out.TxinCnt = uint32(len(*a))
 	out.TxoutCnt = uint32(len(*b))
 	out.Kind = uint32(kind)
@@ -150,4 +136,16 @@ func MakeTx(a *[]InType, b *[]OutType, out *Transaction, kind int) error {
 	}
 	out.Hash = out.HashTx()
 	return nil
+}
+
+//AddIn increases one input of transaction a
+func (a *Transaction) AddIn(b InType) {
+	a.TxinCnt++
+	a.In = append(a.In, b)
+}
+
+//AddOut increases one output of transaction a
+func (a *Transaction) AddOut(b OutType) {
+	a.TxoutCnt++
+	a.Out = append(a.Out, b)
 }
