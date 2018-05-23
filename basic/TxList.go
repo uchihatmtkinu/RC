@@ -1,11 +1,10 @@
 package basic
 
 import (
+	"bytes"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
-	"math/big"
+	"encoding/gob"
 )
 
 //Hash returns the ID of the TxList
@@ -19,14 +18,12 @@ func (a *TxList) Hash() [32]byte {
 
 //Sign signs the TxList with the leader's private key
 func (a *TxList) Sign(prk *ecdsa.PrivateKey) {
-	a.SignR = new(big.Int)
-	a.SignS = new(big.Int)
-	a.SignR, a.SignS, _ = ecdsa.Sign(rand.Reader, prk, a.HashID[:])
+	a.Sig.Sign(a.HashID[:], prk)
 }
 
 //Verify verify the signature
 func (a *TxList) Verify(puk *ecdsa.PublicKey) bool {
-	return ecdsa.Verify(puk, a.HashID[:], a.SignR, a.SignS)
+	return a.Sig.Verify(a.HashID[:], puk)
 }
 
 //Set init an instance of TxList given those parameters
@@ -43,56 +40,20 @@ func (a *TxList) AddTx(tx *Transaction) {
 	a.TxArray = append(a.TxArray, *tx)
 }
 
-//TLToData returns the byte of a TxList
-func (a *TxList) TLToData(tmp *[]byte) {
-	EncodeByteL(tmp, a.ID[:], 32)
-	EncodeByteL(tmp, a.HashID[:], 32)
-	EncodeByteL(tmp, a.PrevHash[:], 32)
-	EncodeInt(tmp, a.TxCnt)
-	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray[i].TxToData(tmp)
+//Encode returns the byte of a TxList
+func (a *TxList) Encode(tmp *[]byte) error {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(a)
+	if err == nil {
+		*tmp = result.Bytes()
 	}
-	EncodeDoubleBig(tmp, a.SignR, a.SignS)
+	return err
 }
 
-//DataToTL decodes the TxList with []byte
-func (a *TxList) DataToTL(buf *[]byte) error {
-	var tmp []byte
-	err := DecodeByteL(buf, &tmp, 32)
-	if err != nil {
-		return fmt.Errorf("TxList ID decode failed %s", err)
-	}
-	copy(a.ID[:], tmp[:32])
-	err = DecodeByteL(buf, &tmp, 32)
-	if err != nil {
-		return fmt.Errorf("TxList HashID decode failed %s", err)
-	}
-	copy(a.HashID[:], tmp[:32])
-	err = DecodeByteL(buf, &tmp, 32)
-	if err != nil {
-		return fmt.Errorf("TxList PrevHash decode failed %s", err)
-	}
-	copy(a.PrevHash[:], tmp[:32])
-	err = DecodeInt(buf, &a.TxCnt)
-	if err != nil {
-		return fmt.Errorf("TxList TxCnt decode failed %s", err)
-	}
-	for i := uint32(0); i < a.TxCnt; i++ {
-		var xxx Transaction
-		err = xxx.DataToTx(buf)
-		if err != nil {
-			return fmt.Errorf("TxList Tx decode failed %s", err)
-		}
-		a.TxArray = append(a.TxArray, xxx)
-	}
-	a.SignR = new(big.Int)
-	a.SignS = new(big.Int)
-	err = DecodeDoubleBig(buf, a.SignR, a.SignS)
-	if err != nil {
-		return fmt.Errorf("TxList signature decode failed %s", err)
-	}
-	if len(*buf) != 0 {
-		return fmt.Errorf("TxList decode failed: With extra bits %s", err)
-	}
-	return nil
+//Decode decodes the TxList with []byte
+func (a *TxList) Decode(buf *[]byte) error {
+	decoder := gob.NewDecoder(bytes.NewReader(*buf))
+	err := decoder.Decode(a)
+	return err
 }

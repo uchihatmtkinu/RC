@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
 	"encoding/gob"
 	"fmt"
 	"time"
 )
 
-//Prk returns the public key
+//Puk returns the public key
 func (b *TxBlock) Puk() ecdsa.PublicKey {
 	var tmp ecdsa.PublicKey
 	tmp.Curve = elliptic.P256()
@@ -64,7 +63,7 @@ func VerifyTxBlock(a *TxBlock) (bool, error) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
 	tmpPuk := a.Puk()
-	if !ecdsa.Verify(&tmpPuk, a.HashID[:], a.SignR, a.SignS) {
+	if !a.Sig.Verify(a.HashID[:], &tmpPuk) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
 	}
 	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
@@ -88,8 +87,7 @@ func MakeTxBlock(a *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h ui
 
 	HashTxBlock(out, &out.HashID)
 	out.NewPuk(prk.PublicKey)
-	out.SignR, out.SignS, _ = ecdsa.Sign(rand.Reader, prk, out.HashID[:])
-
+	out.Sig.Sign(out.HashID[:], prk)
 	return nil
 }
 

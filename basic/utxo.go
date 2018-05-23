@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -16,8 +15,6 @@ import (
 func (a *InType) Init() {
 	a.PukX = new(big.Int)
 	a.PukY = new(big.Int)
-	a.SignR = new(big.Int)
-	a.SignS = new(big.Int)
 }
 
 //Byte return the []byte of the input address used for hash
@@ -43,7 +40,7 @@ func (a *InType) VerifyIn(b *OutType, h [32]byte) bool {
 		return false
 	}
 	tmpPuk := a.Puk()
-	if !ecdsa.Verify(&tmpPuk, h[:], a.SignR, a.SignS) {
+	if !a.Sig.Verify(h[:], &tmpPuk) {
 		fmt.Println("UTXO.VerifyIn signature incorrect")
 		return false
 	}
@@ -54,9 +51,7 @@ func (a *InType) VerifyIn(b *OutType, h [32]byte) bool {
 func (a *InType) SignTxIn(prk *ecdsa.PrivateKey, h [32]byte) {
 	a.PukX.Set(prk.PublicKey.X)
 	a.PukY.Set(prk.PublicKey.Y)
-	a.SignR = new(big.Int)
-	a.SignS = new(big.Int)
-	a.SignR, a.SignS, _ = ecdsa.Sign(rand.Reader, prk, h[:])
+	a.Sig.Sign(h[:], prk)
 }
 
 //OutToData converts the output address data into bytes
@@ -86,7 +81,7 @@ func (a *OutType) DataToOut(data *[]byte) error {
 func (a *InType) InToData(b *[]byte) {
 	EncodeByteL(b, a.PrevTx[:], 32)
 	EncodeInt(b, a.Index)
-	EncodeDoubleBig(b, a.SignR, a.SignS)
+	a.Sig.SignToData(b)
 	EncodeDoubleBig(b, a.PukX, a.PukY)
 	EncodeInt(b, a.Acc)
 	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
@@ -105,7 +100,7 @@ func (a *InType) DataToIn(data *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("Input Index read failed %s", err)
 	}
-	err = DecodeDoubleBig(data, a.SignR, a.SignS)
+	err = a.Sig.DataToSign(data)
 	if err != nil {
 		return fmt.Errorf("Input Signature read failed %s", err)
 	}

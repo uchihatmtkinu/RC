@@ -5,6 +5,12 @@ import (
 	"math/big"
 )
 
+//RCSign is the signature type in our design
+type RCSign struct {
+	R *big.Int
+	S *big.Int
+}
+
 //Miner is the miner
 type Miner struct {
 	ID        string
@@ -23,18 +29,10 @@ type OutType struct {
 type InType struct {
 	PrevTx [32]byte
 	Index  uint32
-	SignR  *big.Int
-	SignS  *big.Int
+	Sig    RCSign
 	PukX   *big.Int
 	PukY   *big.Int
 	Acc    bool
-}
-
-//InTypePure is the format without signature which is used to make a signature
-type InTypePure struct {
-	PreTx [32]byte
-	Index uint32
-	Acc   bool
 }
 
 //Transaction is the transaction data which sent by the sender
@@ -49,17 +47,6 @@ type Transaction struct {
 	Hash      [32]byte
 }
 
-//TransactionPure is the transaction data which sent by the sender
-type TransactionPure struct {
-	Timestamp uint64
-	TxinCnt   uint32
-	In        []InTypePure
-	TxoutCnt  uint32
-	Out       []OutType
-	Kind      uint32
-	Locktime  uint32
-}
-
 //TxList is the list of tx sent by Leader to miner for their verification
 type TxList struct {
 	ID       [32]byte
@@ -67,8 +54,7 @@ type TxList struct {
 	PrevHash [32]byte
 	TxCnt    uint32
 	TxArray  []Transaction
-	SignR    *big.Int
-	SignS    *big.Int
+	Sig      RCSign
 }
 
 //TxDecision is the decisions based on given TxList
@@ -77,8 +63,7 @@ type TxDecision struct {
 	HashID   [32]byte
 	TxCnt    uint32
 	Decision []byte
-	SignR    *big.Int
-	SignS    *big.Int
+	Sig      RCSign
 }
 
 //TxDecSet is the set of all decisions from one shard, signed by leader
@@ -90,17 +75,32 @@ type TxDecSet struct {
 	MemD     []TxDecision
 	TxCnt    uint32
 	TxArray  [][32]byte
-	SignR    *big.Int
-	SignS    *big.Int
+	Sig      RCSign
 }
 
-//TxDecSetSet is the set of TxDecSet
-type TxDecSetSet struct {
+//TxDPure is the pure struct of the TxDecision
+type TxDPure struct {
+	ID       [32]byte
+	Decision []byte
+	Sig      RCSign
+}
+
+//TDSHeader is The Header part of TxDecSS
+type TDSHeader struct {
 	ID       [32]byte
 	HashID   [32]byte
-	PrebHash [32]byte
-	SetCnt   uint32
-	Set      []TxDecSet
+	PrevHash [32]byte
+	MemCnt   uint32
+	List     []byte
+	MemD     []TxDPure
+	Sig      RCSign
+}
+
+//TxDecSS is the set of TxDecSet
+type TxDecSS struct {
+	ShardNum uint32
+	Header   []TDSHeader
+	Tx       [][32]byte
 }
 
 //TxBlock introduce the struct of the transaction block
@@ -110,8 +110,7 @@ type TxBlock struct {
 	TxArray    []Transaction
 	Timestamp  int64
 	Height     uint32
-	SignR      *big.Int
-	SignS      *big.Int
+	Sig        RCSign
 	PukX       *big.Int
 	PukY       *big.Int
 	HashID     [32]byte

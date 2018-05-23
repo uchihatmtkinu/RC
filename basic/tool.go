@@ -3,6 +3,7 @@ package basic
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"math/big"
 )
@@ -161,4 +162,22 @@ func DecodeDoubleBig(current *[]byte, a *big.Int, b *big.Int) error {
 		return err
 	}
 	return nil
+}
+
+//Serialize is the general encoding function
+func Serialize(a interface{}, b *[]byte) error {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(a)
+	if err == nil {
+		*b = result.Bytes()
+	}
+	return err
+}
+
+//Deserialize is the general encoding function
+func Deserialize(buf *[]byte, a interface{}) error {
+	decoder := gob.NewDecoder(bytes.NewReader(*buf))
+	err := decoder.Decode(a)
+	return err
 }

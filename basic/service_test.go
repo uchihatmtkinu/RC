@@ -28,12 +28,12 @@ func TestInToData(t *testing.T) {
 	var tmp, xxx InType
 	tmp.PrevTx = sha256.Sum256([]byte("test2"))
 	tmp.Index = 10
-	tmp.SignR = new(big.Int)
-	tmp.SignS = new(big.Int)
+	tmp.Sig.R = new(big.Int)
+	tmp.Sig.S = new(big.Int)
 	tmp.PukX = new(big.Int)
 	tmp.PukY = new(big.Int)
-	tmp.SignR.SetString("123123123123", 10)
-	tmp.SignS.SetString("12345", 10)
+	tmp.Sig.R.SetString("123123123123", 10)
+	tmp.Sig.S.SetString("12345", 10)
 	tmp.PukX.SetString("1234567890", 10)
 	tmp.PukY.SetString("123123123123", 10)
 	for i := 1; i < 500; i++ {
@@ -46,10 +46,10 @@ func TestInToData(t *testing.T) {
 		if tmp.Index != xxx.Index {
 			t.Error(`Index is wrong`, tmp.Index, xxx.Index)
 		}
-		if tmp.SignR.Cmp(xxx.SignR) != 0 {
-			t.Error(`Sig R is wrong`, tmp.SignR, xxx.SignR)
+		if tmp.Sig.R.Cmp(xxx.Sig.R) != 0 {
+			t.Error(`Sig R is wrong`, tmp.Sig.R, xxx.Sig.R)
 		}
-		if tmp.SignS.Cmp(xxx.SignS) != 0 {
+		if tmp.Sig.S.Cmp(xxx.Sig.S) != 0 {
 			t.Error(`Sig S is wrong`)
 		}
 		if tmp.PukX.Cmp(xxx.PukX) != 0 {
@@ -71,10 +71,12 @@ func TestTxtoData(t *testing.T) {
 		tmpInx.PrevTx = FindByte32(i * 1000)
 		tmpInx.Index = uint32(i)
 		tmpInx.Init()
+		tmpInx.Sig.R = new(big.Int)
+		tmpInx.Sig.S = new(big.Int)
 		*tmpInx.PukX = FindBigInt((i+1)*1000 + 1)
 		*tmpInx.PukY = FindBigInt((i+1)*1000 + 2)
-		*tmpInx.SignR = FindBigInt((i+1)*1000 + 3)
-		*tmpInx.SignS = FindBigInt((i+1)*1000 + 4)
+		*tmpInx.Sig.R = FindBigInt((i+1)*1000 + 3)
+		*tmpInx.Sig.S = FindBigInt((i+1)*1000 + 4)
 		tmpInx.Acc = false
 		tmpIn = append(tmpIn, tmpInx)
 	}
@@ -88,8 +90,8 @@ func TestTxtoData(t *testing.T) {
 	var tmpTx, tmp1 Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
 	var tmp []byte
-	tmpTx.TxToData(&tmp)
-	tmp1.DataToTx(&tmp)
+	tmpTx.Encode(&tmp)
+	tmp1.Decode(&tmp)
 	if tmp1.Timestamp != tmpTx.Timestamp {
 		t.Error(`Timestamp is wrong`)
 	}
@@ -126,11 +128,13 @@ func TestTxList(t *testing.T) {
 		var tmpInx InType
 		tmpInx.PrevTx = FindByte32(i * 1000)
 		tmpInx.Index = uint32(i)
+		tmpInx.Sig.R = new(big.Int)
+		tmpInx.Sig.S = new(big.Int)
 		tmpInx.Init()
 		*tmpInx.PukX = FindBigInt((i+1)*1000 + 1)
 		*tmpInx.PukY = FindBigInt((i+1)*1000 + 2)
-		*tmpInx.SignR = FindBigInt((i+1)*1000 + 3)
-		*tmpInx.SignS = FindBigInt((i+1)*1000 + 4)
+		*tmpInx.Sig.R = FindBigInt((i+1)*1000 + 3)
+		*tmpInx.Sig.S = FindBigInt((i+1)*1000 + 4)
 		tmpInx.Acc = false
 		tmpIn = append(tmpIn, tmpInx)
 	}
@@ -151,17 +155,21 @@ func TestTxList(t *testing.T) {
 		tmp1.AddTx(&tmpTx)
 	}
 	tmp1.HashID = tmp1.Hash()
-	tmp1.SignR = new(big.Int)
-	tmp1.SignS = new(big.Int)
-	tmp1.SignR.SetString("123123", 10)
-	tmp1.SignS.SetString("123123123", 10)
+	tmp1.Sig.R = new(big.Int)
+	tmp1.Sig.S = new(big.Int)
+	tmp1.Sig.R.SetString("123123", 10)
+	tmp1.Sig.S.SetString("123123123", 10)
 	var tmp2 []byte
-	tmp1.TLToData(&tmp2)
-	err := tmp3.DataToTL(&tmp2)
+	tmp1.Encode(&tmp2)
+	err := tmp3.Decode(&tmp2)
+	//Serialize(&tmp1, &tmp2)
+	fmt.Println(len(tmp2))
+	//err := Deserialize(&tmp2, &tmp3)
+	fmt.Println(tmp3.ID)
 	if err != nil {
 		t.Error(err)
 	}
-	if tmp1.ID != tmp3.ID {
+	if tmp1.ID == tmp3.ID {
 		t.Error(`ID is wrong`)
 	}
 	if tmp1.PrevHash != tmp3.PrevHash {
