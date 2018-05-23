@@ -57,7 +57,10 @@ func NewGenesisRepBlock() *RepBlock {
 //RepMatrix to Similarity score TODO
 func SimCal(RepMatrix [][]int)[]float32{
 	n := len(RepMatrix[1])
-	var sim [n][n]float32
+	sim := make([][]float32,n)
+	for i:= range sim{
+		sim[i] = make([]float32,n)
+	}
 	var tmp float32
 	for i:=0; i < n; i++{
 		for j:=0; j< n; j++{
@@ -71,8 +74,8 @@ func SimCal(RepMatrix [][]int)[]float32{
 			sim[i][j] = float32(1.0 - math.Sqrt(float64(tmp/float32(n))))
 		}
 	}
-	var sumSim [n]float32
-	var minSim [n]float32
+	sumSim := make([]float32, n)
+	minSim := make([]float32, n)
 	var tmpmin float32
 	var trustiness []float32
 	for i:=0; i < n; i++{
@@ -126,8 +129,8 @@ func (b *RepBlock) Serialize() []byte {
 	return result.Bytes()
 }
 
-//decode block
-func DeserializeBlock(d []byte) *RepBlock {
+//decode Repblock
+func DeserializeRepBlock(d []byte) *RepBlock {
 	var block RepBlock
 	decoder := gob.NewDecoder(bytes.NewReader(d))
 	err := decoder.Decode(&block)
