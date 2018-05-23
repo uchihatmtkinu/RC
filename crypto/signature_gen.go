@@ -1,4 +1,4 @@
-package cryptonew
+package crypto
 
 import (
 	"crypto/ecdsa"

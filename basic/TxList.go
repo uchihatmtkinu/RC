@@ -1,10 +1,9 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
-	"encoding/gob"
+	"fmt"
 )
 
 //Hash returns the ID of the TxList
@@ -41,19 +40,53 @@ func (a *TxList) AddTx(tx *Transaction) {
 }
 
 //Encode returns the byte of a TxList
-func (a *TxList) Encode(tmp *[]byte) error {
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err == nil {
-		*tmp = result.Bytes()
+func (a *TxList) Encode(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
+	EncodeByteL(tmp, a.PrevHash[:], 32)
+	EncodeInt(tmp, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArray[i].Encode(tmp)
 	}
-	return err
+	a.Sig.SignToData(tmp)
 }
 
 //Decode decodes the TxList with []byte
 func (a *TxList) Decode(buf *[]byte) error {
-	decoder := gob.NewDecoder(bytes.NewReader(*buf))
-	err := decoder.Decode(a)
-	return err
+	var tmp []byte
+	err := DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxList ID decode failed %s", err)
+	}
+	copy(a.ID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxList HashID decode failed %s", err)
+	}
+	copy(a.HashID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxList PrevHash decode failed %s", err)
+	}
+	copy(a.PrevHash[:], tmp[:32])
+	err = DecodeInt(buf, &a.TxCnt)
+	if err != nil {
+		return fmt.Errorf("TxList TxCnt decode failed %s", err)
+	}
+	for i := uint32(0); i < a.TxCnt; i++ {
+		var xxx Transaction
+		err = xxx.Decode(buf)
+		if err != nil {
+			return fmt.Errorf("TxList Tx decode failed %s", err)
+		}
+		a.TxArray = append(a.TxArray, xxx)
+	}
+	err = a.Sig.DataToSign(buf)
+	if err != nil {
+		return fmt.Errorf("TxList signature decode failed %s", err)
+	}
+	if len(*buf) != 0 {
+		return fmt.Errorf("TxList decode failed: With extra bits %s", err)
+	}
+	return nil
 }

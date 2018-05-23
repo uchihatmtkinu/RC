@@ -35,7 +35,7 @@ func (a *InType) Puk() ecdsa.PublicKey {
 
 //VerifyIn using the UTXO to verify the in address
 func (a *InType) VerifyIn(b *OutType, h [32]byte) bool {
-	if !cryptonew.Verify(a.Puk(), b.Address) {
+	if !crypto.Verify(a.Puk(), b.Address) {
 		fmt.Println("UTXO.VerifyIn address doesn't match")
 		return false
 	}

@@ -90,6 +90,8 @@ type TDSHeader struct {
 	ID       [32]byte
 	HashID   [32]byte
 	PrevHash [32]byte
+	TxCnt    uint32
+	TxIndex  []uint32
 	MemCnt   uint32
 	List     []byte
 	MemD     []TxDPure
@@ -100,6 +102,7 @@ type TDSHeader struct {
 type TxDecSS struct {
 	ShardNum uint32
 	Header   []TDSHeader
+	TxCnt    uint32
 	Tx       [][32]byte
 }
 

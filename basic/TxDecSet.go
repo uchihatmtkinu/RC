@@ -1,10 +1,9 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
-	"encoding/gob"
+	"fmt"
 )
 
 //Sign signs the TxDecSet
@@ -48,19 +47,70 @@ func (a *TxDecSet) Add(b *TxDecision) {
 }
 
 //Encode encode the TxDecSet into []byte
-func (a *TxDecSet) Encode(tmp *[]byte) error {
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err == nil {
-		*tmp = result.Bytes()
+func (a *TxDecSet) Encode(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.MemCnt)
+	EncodeInt(tmp, a.TxCnt)
+	for i := uint32(0); i < a.MemCnt; i++ {
+		a.MemD[i].Encode(tmp)
 	}
-	return err
+	for i := uint32(0); i < a.TxCnt; i++ {
+		*tmp = append(*tmp, a.TxArray[i][:]...)
+	}
+	a.Sig.SignToData(tmp)
 }
 
-//Decode encode the TxDecSet into []byte
+//Decode decode the []byte into TxDecSet
 func (a *TxDecSet) Decode(buf *[]byte) error {
-	decoder := gob.NewDecoder(bytes.NewReader(*buf))
-	err := decoder.Decode(a)
-	return err
+	var tmp []byte
+	err := DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxDecSet ID decode failed %s", err)
+	}
+	copy(a.ID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxDecSet HashID decode failed %s", err)
+	}
+	copy(a.HashID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxDecSet PrevHash decode failed %s", err)
+	}
+	copy(a.PrevHash[:], tmp[:32])
+	err = DecodeInt(buf, &a.MemCnt)
+	if err != nil {
+		return fmt.Errorf("TxDecSet MemCnt decode failed %s", err)
+	}
+	err = DecodeInt(buf, &a.TxCnt)
+	if err != nil {
+		return fmt.Errorf("TxDecSet TxCnt decode failed %s", err)
+	}
+	for i := uint32(0); i < a.MemCnt; i++ {
+		var tmp1 TxDecision
+		err = tmp1.Decode(buf)
+		if err != nil {
+			return fmt.Errorf("TxDecSet MemDecision decode failed %s", err)
+		}
+		a.MemD = append(a.MemD, tmp1)
+	}
+	for i := uint32(0); i < a.TxCnt; i++ {
+		err = DecodeByteL(buf, &tmp, 32)
+		if err != nil {
+			return fmt.Errorf("TxDecSet TxArray decode failed %s", err)
+		}
+		var tmp1 [32]byte
+		copy(tmp1[:], tmp[:32])
+		a.TxArray = append(a.TxArray, tmp1)
+	}
+	err = a.Sig.DataToSign(buf)
+	if err != nil {
+		return fmt.Errorf("TxDecSet Signature decode failed %s", err)
+	}
+	if len(*buf) != 0 {
+		return fmt.Errorf("TxDecSet decode failed: With extra bits %s", err)
+	}
+	return nil
 }

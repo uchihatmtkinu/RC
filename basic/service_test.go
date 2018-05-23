@@ -36,10 +36,12 @@ func TestInToData(t *testing.T) {
 	tmp.Sig.S.SetString("12345", 10)
 	tmp.PukX.SetString("1234567890", 10)
 	tmp.PukY.SetString("123123123123", 10)
-	for i := 1; i < 500; i++ {
+	for i := 1; i < 50000; i++ {
 		var tmpIn []byte
 		tmp.InToData(&tmpIn)
 		xxx.DataToIn(&tmpIn)
+		//Serialize(tmp, &tmpIn)
+		//Deserialize(&tmpIn, &xxx)
 		if tmp.PrevTx != xxx.PrevTx {
 			t.Error(`Prev Hash is wrong`)
 		}
@@ -90,8 +92,12 @@ func TestTxtoData(t *testing.T) {
 	var tmpTx, tmp1 Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
 	var tmp []byte
-	tmpTx.Encode(&tmp)
-	tmp1.Decode(&tmp)
+	for i := 0; i < 50000; i++ {
+		tmpTx.Encode(&tmp)
+		tmp1.Decode(&tmp)
+		//Serialize(&tmpTx, &tmp)
+		//Deserialize(&tmp, &tmp1)
+	}
 	if tmp1.Timestamp != tmpTx.Timestamp {
 		t.Error(`Timestamp is wrong`)
 	}
@@ -160,16 +166,18 @@ func TestTxList(t *testing.T) {
 	tmp1.Sig.R.SetString("123123", 10)
 	tmp1.Sig.S.SetString("123123123", 10)
 	var tmp2 []byte
-	tmp1.Encode(&tmp2)
-	err := tmp3.Decode(&tmp2)
-	//Serialize(&tmp1, &tmp2)
-	fmt.Println(len(tmp2))
-	//err := Deserialize(&tmp2, &tmp3)
-	fmt.Println(tmp3.ID)
-	if err != nil {
-		t.Error(err)
+	for i := 0; i < 10000; i++ {
+		tmp1.Encode(&tmp2)
+		err := tmp3.Decode(&tmp2)
+		//Serialize(&tmp1, &tmp2)
+
+		//err := Deserialize(&tmp2, &tmp3)
+		if err != nil {
+			t.Error(err)
+		}
 	}
-	if tmp1.ID == tmp3.ID {
+
+	if tmp1.ID != tmp3.ID {
 		t.Error(`ID is wrong`)
 	}
 	if tmp1.PrevHash != tmp3.PrevHash {

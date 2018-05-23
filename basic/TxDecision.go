@@ -1,10 +1,9 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
-	"encoding/gob"
+	"fmt"
 )
 
 //Set initiates the TxDecision given the TxList and the account
@@ -48,19 +47,41 @@ func (a *TxDecision) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //Encode encodes the TxDecision into []byte
-func (a *TxDecision) Encode(tmp *[]byte) error {
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err == nil {
-		*tmp = result.Bytes()
-	}
-	return err
+func (a *TxDecision) Encode(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
+	EncodeInt(tmp, a.TxCnt)
+	EncodeByte(tmp, &a.Decision)
+	a.Sig.SignToData(tmp)
 }
 
 // Decode decodes the []byte into TxDecision
 func (a *TxDecision) Decode(buf *[]byte) error {
-	decoder := gob.NewDecoder(bytes.NewReader(*buf))
-	err := decoder.Decode(a)
-	return err
+	var tmp []byte
+	err := DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxDecsion ID decode failed %s--", err)
+	}
+	copy(a.ID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
+	if err != nil {
+		return fmt.Errorf("TxDecsion HashID decode failed %s--", err)
+	}
+	copy(a.HashID[:], tmp[:32])
+	err = DecodeInt(buf, &a.TxCnt)
+	if err != nil {
+		return fmt.Errorf("TxDecsion TxCnt decode failed %s--", err)
+	}
+	err = DecodeByte(buf, &a.Decision)
+	if err != nil {
+		return fmt.Errorf("TxDecsion Decision decode failed %s--", err)
+	}
+	err = a.Sig.DataToSign(buf)
+	if err != nil {
+		return fmt.Errorf("TxDecsion Signature decode failed %s--", err)
+	}
+	if len(*buf) != 0 {
+		return fmt.Errorf("TxDecsion decode failed: With extra bits %s", err)
+	}
+	return nil
 }

@@ -1,9 +1,7 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
-	"encoding/gob"
 	"fmt"
 	"time"
 )
@@ -47,21 +45,72 @@ func (a *Transaction) VerifyTx(i uint32, b *OutType) bool {
 }
 
 //Encode converts the transaction into bytes
-func (a *Transaction) Encode(tmp *[]byte) error {
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(a)
-	if err == nil {
-		*tmp = result.Bytes()
+func (a *Transaction) Encode(tmp *[]byte) {
+	EncodeInt(tmp, a.Timestamp)
+	EncodeInt(tmp, a.TxinCnt)
+	EncodeInt(tmp, a.TxoutCnt)
+	EncodeInt(tmp, a.Kind)
+	EncodeInt(tmp, a.Locktime)
+	EncodeByteL(tmp, a.Hash[:], 32)
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		a.In[i].InToData(tmp)
+		//EncodeByte(&tmp, &xxx)
 	}
-	return err
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		a.Out[i].OutToData(tmp)
+	}
 }
 
 //Decode decodes the packets into transaction format
 func (a *Transaction) Decode(buf *[]byte) error {
-	decoder := gob.NewDecoder(bytes.NewReader(*buf))
-	err := decoder.Decode(a)
-	return err
+	//buf := *data
+
+	err := DecodeInt(buf, &a.Timestamp)
+	if err != nil {
+		return fmt.Errorf("TX timestamp Read failed %s", err)
+	}
+	err = DecodeInt(buf, &a.TxinCnt)
+	if err != nil {
+		return fmt.Errorf("TX TxinCnt Read failed %s", err)
+	}
+	err = DecodeInt(buf, &a.TxoutCnt)
+	if err != nil {
+		return fmt.Errorf("TX TxoutCnt Read failed %s", err)
+	}
+	err = DecodeInt(buf, &a.Kind)
+	if err != nil {
+		return fmt.Errorf("TX Kind Read failed %s", err)
+	}
+	err = DecodeInt(buf, &a.Locktime)
+	if err != nil {
+		return fmt.Errorf("TX Locktime Readfailed %s", err)
+	}
+	var tmp1 []byte
+	err = DecodeByteL(buf, &tmp1, 32)
+	if err != nil {
+		return fmt.Errorf("TX hash Readfailed %s", err)
+	}
+	copy(a.Hash[:], tmp1[:32])
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		//var tmpArray *[]byte
+		var tmpIn InType
+		err = tmpIn.DataToIn(buf)
+		if err != nil {
+			return fmt.Errorf("Input Address Readfailed %s", err)
+		}
+		a.In = append(a.In, tmpIn)
+	}
+
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		//var tmpArray *[]byte
+		var tmpOut OutType
+		err = tmpOut.DataToOut(buf)
+		if err != nil {
+			return fmt.Errorf("Output Address Readfailed %s", err)
+		}
+		a.Out = append(a.Out, tmpOut)
+	}
+	return nil
 }
 
 //MakeTx implements the method to create a new transaction
