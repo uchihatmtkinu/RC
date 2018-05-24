@@ -11,7 +11,7 @@ import (
 
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
-	"github.com/uchihatmtkinu/RC/crypto"
+	"github.com/uchihatmtkinu/RC/cryptonew"
 )
 
 //RcAcc the wallet of a user1
@@ -55,8 +55,8 @@ func (acc *RcAcc) Load(a1, a2, a3, a4, a5 string) {
 }
 
 //MakeTrans generate a transaction
-func (acc *RcAcc) MakeTrans(In []basic.InType, Out []basic.OutType) basic.RawTransaction {
-	var tmp basic.RawTransaction
+func (acc *RcAcc) MakeTrans(In []basic.InType, Out []basic.OutType) basic.Transaction {
+	var tmp basic.Transaction
 
 	return tmp
 }

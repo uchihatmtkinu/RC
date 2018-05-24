@@ -1,4 +1,4 @@
-package crypto
+package cryptonew
 
 import (
 	"crypto/ecdsa"
@@ -16,13 +16,11 @@ func generateAddr(puk ecdsa.PublicKey) [32]byte {
 func AddressGenerate(priv *ecdsa.PrivateKey) [32]byte {
 
 	tmp := priv.PublicKey
-
 	return generateAddr(tmp)
 }
 
 //Verify verify the address with the public key
 func Verify(puk ecdsa.PublicKey, addr [32]byte) bool {
-
 	tmp := generateAddr(puk)
 	return tmp == addr
 }
