@@ -35,6 +35,7 @@ func (a *TxDecSet) Set(b *TxList) {
 	a.PrevHash = b.PrevHash
 	a.MemCnt = 0
 	a.TxCnt = b.TxCnt
+	a.TxArray = make([][32]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		a.TxArray = append(a.TxArray, b.TxArray[i].Hash)
 	}
@@ -64,42 +65,44 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 
 //Decode decode the []byte into TxDecSet
 func (a *TxDecSet) Decode(buf *[]byte) error {
-	var tmp []byte
+	tmp := make([]byte, 0, 32)
 	err := DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return fmt.Errorf("TxDecSet ID decode failed %s", err)
+		return fmt.Errorf("TxDecSet ID decode failed: %s", err)
 	}
 	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return fmt.Errorf("TxDecSet HashID decode failed %s", err)
+		return fmt.Errorf("TxDecSet HashID decode failed: %s", err)
 	}
 	copy(a.HashID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return fmt.Errorf("TxDecSet PrevHash decode failed %s", err)
+		return fmt.Errorf("TxDecSet PrevHash decode failed: %s", err)
 	}
 	copy(a.PrevHash[:], tmp[:32])
 	err = DecodeInt(buf, &a.MemCnt)
 	if err != nil {
-		return fmt.Errorf("TxDecSet MemCnt decode failed %s", err)
+		return fmt.Errorf("TxDecSet MemCnt decode failed: %s", err)
 	}
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
-		return fmt.Errorf("TxDecSet TxCnt decode failed %s", err)
+		return fmt.Errorf("TxDecSet TxCnt decode failed: %s", err)
 	}
+	a.MemD = make([]TxDecision, 0, a.MemCnt)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		var tmp1 TxDecision
 		err = tmp1.Decode(buf)
 		if err != nil {
-			return fmt.Errorf("TxDecSet MemDecision decode failed %s", err)
+			return fmt.Errorf("TxDecSet MemDecision decode failed-%d: %s", i, err)
 		}
 		a.MemD = append(a.MemD, tmp1)
 	}
+	a.TxArray = make([][32]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		err = DecodeByteL(buf, &tmp, 32)
 		if err != nil {
-			return fmt.Errorf("TxDecSet TxArray decode failed %s", err)
+			return fmt.Errorf("TxDecSet TxArray decode failed-%d: %s", i, err)
 		}
 		var tmp1 [32]byte
 		copy(tmp1[:], tmp[:32])
@@ -107,10 +110,10 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 	}
 	err = a.Sig.DataToSign(buf)
 	if err != nil {
-		return fmt.Errorf("TxDecSet Signature decode failed %s", err)
+		return fmt.Errorf("TxDecSet Signature decode failed: %s", err)
 	}
 	if len(*buf) != 0 {
-		return fmt.Errorf("TxDecSet decode failed: With extra bits %s", err)
+		return fmt.Errorf("TxDecSet decode failed: With extra bits")
 	}
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/uchihatmtkinu/RC/crypto"
+	"github.com/uchihatmtkinu/RC/cryptonew"
 )
 
 //Init initial the big.Int parameters
@@ -35,7 +35,7 @@ func (a *InType) Puk() ecdsa.PublicKey {
 
 //VerifyIn using the UTXO to verify the in address
 func (a *InType) VerifyIn(b *OutType, h [32]byte) bool {
-	if !crypto.Verify(a.Puk(), b.Address) {
+	if !cryptonew.Verify(a.Puk(), b.Address) {
 		fmt.Println("UTXO.VerifyIn address doesn't match")
 		return false
 	}
@@ -64,14 +64,14 @@ func (a *OutType) OutToData(b *[]byte) {
 
 //DataToOut converts bytes into output address data
 func (a *OutType) DataToOut(data *[]byte) error {
-	var tmp1 []byte
+	tmp1 := make([]byte, 0, 32)
 	err := DecodeInt(data, &a.Value)
 	if err != nil {
-		return fmt.Errorf("Out Value read failed")
+		return fmt.Errorf("Out Value read failed: %s", err)
 	}
 	err = DecodeByteL(data, &tmp1, 32)
 	if err != nil {
-		return fmt.Errorf("Out Address read failed")
+		return fmt.Errorf("Out Address read failed: %s", err)
 	}
 	copy(a.Address[:], tmp1[:32])
 	return nil
@@ -89,28 +89,28 @@ func (a *InType) InToData(b *[]byte) {
 
 //DataToIn converts bytes into input address data
 func (a *InType) DataToIn(data *[]byte) error {
-	var tmp1 []byte
+	tmp1 := make([]byte, 0, 32)
 	a.Init()
 	err := DecodeByteL(data, &tmp1, 32)
 	if err != nil {
-		return fmt.Errorf("Input PrevHash read failed %s", err)
+		return fmt.Errorf("Input PrevHash read failed: %s", err)
 	}
 	copy(a.PrevTx[:], tmp1[:32])
 	err = DecodeInt(data, &a.Index)
 	if err != nil {
-		return fmt.Errorf("Input Index read failed %s", err)
+		return fmt.Errorf("Input Index read failed: %s", err)
 	}
 	err = a.Sig.DataToSign(data)
 	if err != nil {
-		return fmt.Errorf("Input Signature read failed %s", err)
+		return fmt.Errorf("Input Signature read failed: %s", err)
 	}
 	err = DecodeDoubleBig(data, a.PukX, a.PukY)
 	if err != nil {
-		return fmt.Errorf("Input Publick Key read failed %s", err)
+		return fmt.Errorf("Input Publick Key read failed: %s", err)
 	}
 	err = DecodeInt(data, &a.Acc)
 	if err != nil {
-		return fmt.Errorf("Input Account type read failed %s", err)
+		return fmt.Errorf("Input Account type read failed: %s", err)
 	}
 	return nil
 

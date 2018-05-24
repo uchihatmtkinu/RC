@@ -93,7 +93,6 @@ type TDSHeader struct {
 	TxCnt    uint32
 	TxIndex  []uint32
 	MemCnt   uint32
-	List     []byte
 	MemD     []TxDPure
 	Sig      RCSign
 }

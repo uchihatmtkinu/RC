@@ -30,7 +30,7 @@ func (a *TxDecision) Add(x bool) error {
 
 //Sign signs the TxDecision
 func (a *TxDecision) Sign(prk *ecdsa.PrivateKey) {
-	var tmp []byte
+	tmp := make([]byte, 0, 64+len(a.Decision))
 	tmp = append(a.HashID[:], a.Decision...)
 	tmp = append(tmp, a.ID[:]...)
 	tmpHash := sha256.Sum256(tmp)
@@ -39,7 +39,7 @@ func (a *TxDecision) Sign(prk *ecdsa.PrivateKey) {
 
 //Verify the signature using public key
 func (a *TxDecision) Verify(puk *ecdsa.PublicKey) bool {
-	var tmp []byte
+	tmp := make([]byte, 0, 64+len(a.Decision))
 	tmp = append(a.HashID[:], a.Decision...)
 	tmp = append(tmp, a.ID[:]...)
 	tmpHash := sha256.Sum256(tmp)
@@ -60,28 +60,28 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 	var tmp []byte
 	err := DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return fmt.Errorf("TxDecsion ID decode failed %s--", err)
+		return fmt.Errorf("TxDecsion ID decode failed: %s", err)
 	}
 	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return fmt.Errorf("TxDecsion HashID decode failed %s--", err)
+		return fmt.Errorf("TxDecsion HashID decode failed: %s", err)
 	}
 	copy(a.HashID[:], tmp[:32])
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
-		return fmt.Errorf("TxDecsion TxCnt decode failed %s--", err)
+		return fmt.Errorf("TxDecsion TxCnt decode failed: %s", err)
 	}
 	err = DecodeByte(buf, &a.Decision)
 	if err != nil {
-		return fmt.Errorf("TxDecsion Decision decode failed %s--", err)
+		return fmt.Errorf("TxDecsion Decision decode failed: %s", err)
 	}
 	err = a.Sig.DataToSign(buf)
 	if err != nil {
-		return fmt.Errorf("TxDecsion Signature decode failed %s--", err)
+		return fmt.Errorf("TxDecsion Signature decode failed: %s", err)
 	}
 	if len(*buf) != 0 {
-		return fmt.Errorf("TxDecsion decode failed: With extra bits %s", err)
+		return fmt.Errorf("TxDecsion decode failed: With extra bits")
 	}
 	return nil
 }
