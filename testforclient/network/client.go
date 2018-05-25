@@ -36,19 +36,19 @@ type addr struct {
 
 
 func commandToBytes(command string) []byte {
-	var bytes [commandLength]byte
+	var bytees [commandLength]byte
 
 	for i, c := range command {
-		bytes[i] = byte(c)
+		bytees[i] = byte(c)
 	}
 
-	return bytes[:]
+	return bytees[:]
 }
 
-func bytesToCommand(bytes []byte) string {
+func bytesToCommand(bytees []byte) string {
 	var command []byte
 
-	for _, b := range bytes {
+	for _, b := range bytees {
 		if b != 0x0 {
 			command = append(command, b)
 		}
