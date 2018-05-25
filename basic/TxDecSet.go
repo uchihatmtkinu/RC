@@ -19,7 +19,14 @@ func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
 
 //Verify verifies the TxDecSet
 func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
-	tmp := make([]byte, 0, 64+len(a.MemD[0].Decision)*int(a.MemCnt))
+	tmp := make([]byte, 0, a.TxCnt*32)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		tmp = append(tmp, a.TxArray[i][:]...)
+	}
+	if sha256.Sum256(tmp) != a.HashID {
+		return false
+	}
+	tmp = make([]byte, 0, 64+len(a.MemD[0].Decision)*int(a.MemCnt))
 	tmp = append(a.ID[:], a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		tmp = append(tmp, a.MemD[i].Decision...)

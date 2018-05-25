@@ -1,9 +1,11 @@
 package rccache
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/treap"
 )
 
 //tmpTx stores the tempory utxo information
@@ -13,14 +15,34 @@ type tmpTx struct {
 	value uint32
 }
 
+//byteCompare is the func used for string compare
+func byteCompare(a, b interface{}) int {
+	switch tmp := a.(type) {
+	case basic.AccCache:
+		tmp1 := a.(basic.AccCache).ID
+		tmp2 := b.(basic.AccCache).ID
+		return bytes.Compare(tmp1[:], tmp2[:])
+	default:
+		return bytes.Compare([]byte(a.([]byte)), []byte(b.([]byte)))
+	}
+
+}
+
 //dbRef is the structure stores the cache of a miner for the database
 type dbRef struct {
+	AccData *gtreap.Treap
 	TXIndex map[[32]byte]int
 	TX      *[]basic.TxDB
 	tmp     *[]tmpTx
 	TXLen   uint32
 }
 
+//New is the initilization of dbRef
+func (d *dbRef) New() {
+	d.AccData = gtreap.NewTreap(byteCompare)
+}
+
+//findTX finds the transaction given the index
 func (d *dbRef) findTX(a *basic.Transaction, index int) int {
 
 	x, ok := d.TXIndex[a.In[index].PrevTx]
@@ -39,11 +61,9 @@ func (d *dbRef) findTX(a *basic.Transaction, index int) int {
 
 func (d *dbRef) AddTX(a *basic.Transaction) {
 	var xxx basic.TxDB
-	xxx.Data = *a
-	xxx.Used = make([]uint32, a.TxoutCnt)
-	xxx.Res = -1
+	xxx.New(a)
 	(*d.TX) = append(*d.TX, xxx)
-	d.TXIndex[xxx.Data.Hash] = len(*d.TX) - 1
+	d.TXIndex[xxx.ID] = len(*d.TX) - 1
 	d.TXLen++
 }
 

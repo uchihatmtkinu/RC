@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 )
 
-//generateAddr generate the address based on public key
-func generateAddr(puk ecdsa.PublicKey) [32]byte {
+//GenerateAddr generate the address based on public key
+func GenerateAddr(puk ecdsa.PublicKey) [32]byte {
 	tmp := append(puk.X.Bytes(), puk.Y.Bytes()...)
 	newHash := sha256.Sum256(tmp)
 	return newHash
@@ -16,11 +16,11 @@ func generateAddr(puk ecdsa.PublicKey) [32]byte {
 func AddressGenerate(priv *ecdsa.PrivateKey) [32]byte {
 
 	tmp := priv.PublicKey
-	return generateAddr(tmp)
+	return GenerateAddr(tmp)
 }
 
 //Verify verify the address with the public key
 func Verify(puk ecdsa.PublicKey, addr [32]byte) bool {
-	tmp := generateAddr(puk)
+	tmp := GenerateAddr(puk)
 	return tmp == addr
 }

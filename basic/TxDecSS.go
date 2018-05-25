@@ -1,6 +1,7 @@
 package basic
 
 import (
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
 )
@@ -11,7 +12,7 @@ func (a *TxDecSS) Build(b *[]TxDecSet) {
 	a.Header = make([]TDSHeader, a.ShardNum)
 	tmp := make(map[[32]byte]uint32, 5000)
 	a.TxCnt = 0
-	a.Tx = make([][32]byte, 0, 4000)
+	a.Tx = make([][32]byte, 0, 5000)
 	for i := uint32(0); i < a.ShardNum; i++ {
 		a.Header[i].ID = (*b)[i].ID
 		a.Header[i].HashID = (*b)[i].HashID
@@ -40,8 +41,8 @@ func (a *TxDecSS) Build(b *[]TxDecSet) {
 	}
 }
 
-//Verify verfies the hash and data structure of TxDecSS
-func (a *TxDecSS) Verify() bool {
+//VerifyHash verfies the hash and data structure of TxDecSS
+func (a *TxDecSS) VerifyHash() bool {
 	if a.ShardNum != uint32(len(a.Header)) {
 		return false
 	}
@@ -65,6 +66,61 @@ func (a *TxDecSS) Verify() bool {
 		}
 	}
 	return true
+}
+
+//VerifyHeader verifies the header signature and address
+func (a *TxDecSS) VerifyHeader(x int, puk *ecdsa.PublicKey, ID [32]byte) bool {
+	if uint32(x) >= a.ShardNum {
+		return false
+	}
+	if a.Header[x].ID != ID {
+		return false
+	}
+	tmp := make([]byte, 0, 64+len(a.Header[x].MemD[0].Decision)*int(a.Header[x].MemCnt))
+	tmp = append(a.Header[x].ID[:], a.Header[x].HashID[:]...)
+	for i := uint32(0); i < a.Header[x].MemCnt; i++ {
+		tmp = append(tmp, a.Header[x].MemD[i].Decision...)
+	}
+	tmpHash := sha256.Sum256(tmp)
+	return a.Header[x].Sig.Verify(tmpHash[:], puk)
+}
+
+//VerifyDec verifies the decision signature and address
+func (a *TxDecSS) VerifyDec(x int, y int, puk *ecdsa.PublicKey, ID [32]byte) bool {
+	if uint32(x) >= a.ShardNum {
+		return false
+	}
+	if uint32(y) >= a.Header[x].MemCnt {
+		return false
+	}
+	if a.Header[x].MemD[y].ID != ID {
+		return false
+	}
+	tmp := make([]byte, 0, 64+len(a.Header[x].MemD[y].Decision))
+	tmp = append(a.Header[x].HashID[:], a.Header[x].MemD[y].Decision...)
+	tmp = append(tmp, a.Header[x].MemD[y].ID[:]...)
+	tmpHash := sha256.Sum256(tmp)
+	return a.Header[x].MemD[y].Sig.Verify(tmpHash[:], puk)
+}
+
+//Result returns the y-th Tx result by x-th shard and its ID
+func (a *TxDecSS) Result(x int, y int, max int) ([32]byte, bool) {
+	if uint32(x) >= a.ShardNum {
+		return [32]byte{}, false
+	}
+	if uint32(y) >= a.Header[x].TxCnt {
+		return [32]byte{}, false
+	}
+	total := 0
+	index := y / 8
+	shift := byte(y % 8)
+	for i := uint32(0); i < a.Header[x].MemCnt; i++ {
+		total += int((a.Header[x].MemD[i].Decision[index] >> shift) & 1)
+		if total > max/2 {
+			return a.Tx[a.Header[x].TxIndex[y]], true
+		}
+	}
+	return a.Tx[a.Header[x].TxIndex[y]], false
 }
 
 //Encode encodes the TxDPure into []byte

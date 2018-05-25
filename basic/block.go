@@ -1,38 +1,21 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/ecdsa"
-	"crypto/elliptic"
-	"encoding/gob"
 	"fmt"
 	"time"
 )
 
-//Puk returns the public key
-func (b *TxBlock) Puk() ecdsa.PublicKey {
-	var tmp ecdsa.PublicKey
-	tmp.Curve = elliptic.P256()
-	tmp.X = b.PukX
-	tmp.Y = b.PukY
-	return tmp
-}
-
-//NewPuk sets the public key
-func (b *TxBlock) NewPuk(x ecdsa.PublicKey) {
-	b.PukX.Set(x.X)
-	b.PukY.Set(x.Y)
-}
-
-//HashTxBlock generates the 32bits hash of one Tx block
-func HashTxBlock(a *TxBlock, b *[32]byte) {
-	tmp1 := []byte{}
-	tmp1 = append(tmp1, a.PrevHash[:]...)
+//Hash generates the 32bits hash of one Tx block
+func (a *TxBlock) Hash() [32]byte {
+	tmp1 := make([]byte, 0, 136)
+	tmp1 = append(a.ID[:], a.PrevHash[:]...)
+	tmp1 = append(a.ID[:], a.HashID[:]...)
 	tmp1 = append(tmp1, a.MerkleRoot[:]...)
-	var tmp2 *[]byte
-	EncodeInt(tmp2, a.Timestamp)
-	tmp1 = append(tmp1, *tmp2...)
-	DoubleHash256(&tmp1, b)
+	EncodeInt(&tmp1, a.Timestamp)
+	var b [32]byte
+	DoubleHash256(&tmp1, &b)
+	return b
 }
 
 //GenMerkTree generates the merkleroot tree given the transactions
@@ -53,139 +36,104 @@ func GenMerkTree(d *[]Transaction, out *[32]byte) error {
 	return nil
 }
 
-//VerifyTxBlock verify the signature of transaction a
-func VerifyTxBlock(a *TxBlock) (bool, error) {
+//Verify verify the signature of the Txblock
+func (a *TxBlock) Verify(puk *ecdsa.PublicKey) (bool, error) {
 
-	var tmp [32]byte
-	HashTxBlock(a, &tmp)
+	tmp := a.Hash()
 	//Verify the hash, the cnt of in and out address
 	if tmp != a.HashID || a.TxCnt != uint32(len(a.TxArray)) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
-	tmpPuk := a.Puk()
-	if !a.Sig.Verify(a.HashID[:], &tmpPuk) {
+	var tmpHash [32]byte
+	GenMerkTree(&a.TxArray, &tmpHash)
+	if tmpHash != a.MerkleRoot {
+		return false, fmt.Errorf("VerifyTxBlock MerkleRoot Invalid")
+	}
+	if !a.Sig.Verify(a.HashID[:], puk) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
 	}
 	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
 }
 
 //MakeTxBlock creates the transaction blocks given verified transactions
-func MakeTxBlock(a *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, out *TxBlock) error {
-	if out == nil {
-		return fmt.Errorf("Basic.MakeTxBlock, null block")
-	}
-
-	out.PrevHash = preHash
-	out.Timestamp = time.Now().Unix()
-	out.TxCnt = uint32(len(*a))
-	out.Height = h
-	out.TxArray = []Transaction{}
-	for i := 0; i < int(out.TxCnt); i++ {
-		out.TxArray = append(out.TxArray, (*a)[i])
-	}
-	GenMerkTree(&out.TxArray, &out.MerkleRoot)
-
-	HashTxBlock(out, &out.HashID)
-	out.NewPuk(prk.PublicKey)
-	out.Sig.Sign(out.HashID[:], prk)
+func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32) error {
+	a.ID = ID
+	a.PrevHash = preHash
+	a.Timestamp = time.Now().Unix()
+	a.TxCnt = uint32(len(*b))
+	a.Height = h
+	a.TxArray = *b
+	GenMerkTree(&a.TxArray, &a.MerkleRoot)
+	a.HashID = a.Hash()
+	a.Sig.Sign(a.HashID[:], prk)
 	return nil
 }
 
-//BlockToData converts the block data into bytes
-func BlockToData(b *TxBlock) []byte {
-	/*tmp := []byte{}
-	tmp1 := b.PrevHash[:]
-	EncodeByteL(&tmp, &tmp1, 32)
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, b.TxCnt)
-	binary.Write(buf, binary.LittleEndian, b.Timestamp)
-	binary.Write(buf, binary.LittleEndian, b.Height)
-	tmp = append(tmp, buf.Bytes()...)
-	tmp1 = b.HashID[:]
-	EncodeByteL(&tmp, &tmp1, 32)
-	tmp1 = b.MerkleRoot[:]
-	EncodeByteL(&tmp, &tmp1, 32)
-	EncodeDoubleBig(&tmp, b.SignR, b.SignS)
-	EncodeDoubleBig(&tmp, b.Prk.X, b.Prk.Y)
-	for i := uint32(0); i < b.TxCnt; i++ {
-		tmpTxData := TxToData(&b.TxArray[i])
-		EncodeByte(&tmp, &tmpTxData)
+//Encode converts the block data into bytes
+func (a *TxBlock) Encode(tmp *[]byte) {
+	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.PrevHash[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
+	EncodeByteL(tmp, a.MerkleRoot[:], 32)
+	EncodeInt(tmp, a.Timestamp)
+	EncodeInt(tmp, a.Height)
+	EncodeInt(tmp, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArray[i].Encode(tmp)
 	}
-
-	return tmp*/
-	var result bytes.Buffer
-	encoder := gob.NewEncoder(&result)
-	err := encoder.Encode(b)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return result.Bytes()
+	a.Sig.SignToData(tmp)
 }
 
-//DataToBlock converts bytes into block data
-func DataToBlock(data *[]byte) (TxBlock, error) {
-	/*buf := *data
-	var b TxBlock
-	var tmp []byte
-	err := DecodeByteL(&buf, &tmp, 32)
+//Decode converts bytes into block data
+func (a *TxBlock) Decode(buf *[]byte) error {
+	tmp := make([]byte, 0, 32)
+	err := DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock PrevHash failed %s", err)
+		return fmt.Errorf("TxBlock ID failed %s", err)
 	}
-	copy(b.PrevHash[:], tmp[:32])
-	err = DecodeInt(&buf, &b.TxCnt)
+	copy(a.ID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock TxCnt failed %s", err)
+		return fmt.Errorf("TxBlock PrevHash failed %s", err)
 	}
-	err = DecodeInt(&buf, &b.Timestamp)
+	copy(a.PrevHash[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock Timestamp failed %s", err)
+		return fmt.Errorf("TxBlock HashID failed %s", err)
 	}
-	err = DecodeInt(&buf, &b.Height)
+	copy(a.HashID[:], tmp[:32])
+	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock Height failed %s", err)
+		return fmt.Errorf("TxBlock MerkleRoot failed: %s", err)
 	}
-	err = DecodeByteL(&buf, &tmp, 32)
+	copy(a.MerkleRoot[:], tmp[:32])
+	err = DecodeInt(buf, &a.Timestamp)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock HashID failed %s", err)
+		return fmt.Errorf("TxBlock Timestamp failed: %s", err)
 	}
-	copy(b.HashID[:], tmp[:32])
-	err = DecodeByteL(&buf, &tmp, 32)
+	err = DecodeInt(buf, &a.Height)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock MerkleRoot failed %s", err)
+		return fmt.Errorf("TxBlock Height failed: %s", err)
 	}
-	copy(b.MerkleRoot[:], tmp[:32])
-	big1 := new(big.Int)
-	big2 := new(big.Int)
-	err = DecodeDoubleBig(&buf, big1, big2)
+	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
-		return b, fmt.Errorf("DataToBlock Signature failed %s", err)
+		return fmt.Errorf("TxBlock TxCnt failed: %s", err)
 	}
-	*b.SignR = *big1
-	*b.SignS = *big2
-	err = DecodeDoubleBig(&buf, big1, big2)
-	if err != nil {
-		return b, fmt.Errorf("DataToBlock Public Key failed %s", err)
-	}
-	b.Prk.Curve = elliptic.P256()
-	*b.Prk.X = *big1
-	*b.Prk.Y = *big2
-	for i := uint32(0); i < b.TxCnt; i++ {
-		var tmpBuf []byte
-		err = DecodeByte(&buf, &tmpBuf)
+	a.TxArray = make([]Transaction, 0, a.TxCnt)
+	var xxx Transaction
+	for i := uint32(0); i < a.TxCnt; i++ {
+		err = xxx.Decode(buf)
 		if err != nil {
-			return b, fmt.Errorf("DataToBlock decode Tx failed %s", err)
+			return fmt.Errorf("TxBlock decode Tx failed-%d: %s", i, err)
 		}
-		tmpTx := DataToTx(&tmpBuf)
-		b.TxArray = append(b.TxArray, tmpTx)
+		a.TxArray = append(a.TxArray, xxx)
 	}
-	//DecodeByte(&buf, &b.Signature)
-	return b, nil*/
-	var tmp TxBlock
-	decoder := gob.NewDecoder(bytes.NewReader(*data))
-	err := decoder.Decode(&tmp)
+	err = a.Sig.DataToSign(buf)
 	if err != nil {
-		fmt.Println(err)
+		return fmt.Errorf("TxBlock Signature failed: %s", err)
 	}
-	return tmp, nil
+	if len(*buf) != 0 {
+		return fmt.Errorf("TxBlock decode failed: With extra bits")
+	}
+	return nil
 }

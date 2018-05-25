@@ -17,11 +17,21 @@ func (a *InType) Init() {
 	a.PukY = new(big.Int)
 }
 
+//Acc returns whether the input address is an account or utxo
+func (a *InType) Acc() bool {
+	return cryptonew.Verify(a.Puk(), a.PrevTx)
+}
+
+//ShardIndex returns the target shard of the input address
+func (a *InType) ShardIndex() uint32 {
+	tmp := cryptonew.GenerateAddr(a.Puk())
+	return uint32(tmp[0]) % ShardCnt
+}
+
 //Byte return the []byte of the input address used for hash
 func (a *InType) Byte(b *[]byte) {
 	EncodeByteL(b, a.PrevTx[:], 32)
 	EncodeInt(b, a.Index)
-	EncodeInt(b, a.Acc)
 }
 
 //Puk returns the public key
@@ -83,7 +93,6 @@ func (a *InType) InToData(b *[]byte) {
 	EncodeInt(b, a.Index)
 	a.Sig.SignToData(b)
 	EncodeDoubleBig(b, a.PukX, a.PukY)
-	EncodeInt(b, a.Acc)
 	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
 }
 
@@ -107,10 +116,6 @@ func (a *InType) DataToIn(data *[]byte) error {
 	err = DecodeDoubleBig(data, a.PukX, a.PukY)
 	if err != nil {
 		return fmt.Errorf("Input Publick Key read failed: %s", err)
-	}
-	err = DecodeInt(data, &a.Acc)
-	if err != nil {
-		return fmt.Errorf("Input Account type read failed: %s", err)
 	}
 	return nil
 

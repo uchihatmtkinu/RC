@@ -32,7 +32,6 @@ type InType struct {
 	Sig    RCSign
 	PukX   *big.Int
 	PukY   *big.Int
-	Acc    bool
 }
 
 //Transaction is the transaction data which sent by the sender
@@ -107,21 +106,20 @@ type TxDecSS struct {
 
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
+	ID         [32]byte
 	PrevHash   [32]byte
-	TxCnt      uint32
-	TxArray    []Transaction
-	Timestamp  int64
-	Height     uint32
-	Sig        RCSign
-	PukX       *big.Int
-	PukY       *big.Int
 	HashID     [32]byte
 	MerkleRoot [32]byte
+	Timestamp  int64
+	Height     uint32
+	TxCnt      uint32
+	TxArray    []Transaction
+	Sig        RCSign
 }
 
 //TxDB is the database of cache
 type TxDB struct {
-	Data Transaction
+	ID   [32]byte
 	Used []uint32
 	/*0 not checked(the first time),
 	1: Correct part in the shard,
@@ -138,4 +136,10 @@ type UserClient struct {
 	IPaddress string
 	Prk       ecdsa.PublicKey
 	kind      int
+}
+
+//AccCache is the cache of account
+type AccCache struct {
+	ID    [32]byte
+	Value uint32
 }
