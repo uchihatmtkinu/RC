@@ -13,6 +13,8 @@ import (
 const protocol = "tcp"
 const nodeVersion = 1
 const commandLength = 12
+const bufferSize = 100
+
 
 var nodeAddress string
 var knownNodes = []string{"localhost:3000"}
@@ -34,19 +36,19 @@ type addr struct {
 
 
 func commandToBytes(command string) []byte {
-	var bytes [commandLength]byte
+	var bytees [commandLength]byte
 
 	for i, c := range command {
-		bytes[i] = byte(c)
+		bytees[i] = byte(c)
 	}
 
-	return bytes[:]
+	return bytees[:]
 }
 
-func bytesToCommand(bytes []byte) string {
+func bytesToCommand(bytees []byte) string {
 	var command []byte
 
-	for _, b := range bytes {
+	for _, b := range bytees {
 		if b != 0x0 {
 			command = append(command, b)
 		}
@@ -152,24 +154,14 @@ func handleAddr(request []byte) {
 
 
 // handle connection
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, requestChannel chan []byte) {
 	request, err := ioutil.ReadAll(conn)
 	if err != nil {
 		log.Panic(err)
 	}
-	command := bytesToCommand(request[:commandLength])
-	fmt.Printf("Received %s command\n", command)
+	defer conn.Close()
+	requestChannel <- request
 
-	switch command {
-	case "add":
-		handleAddr(request)
-	case "version":
-		handleVersion(request, myheight)
-	default:
-		fmt.Println("Unknown command!")
-	}
-
-	conn.Close()
 }
 
 func StartServer(nodeID string, height int) {
@@ -188,13 +180,27 @@ func StartServer(nodeID string, height int) {
 	if nodeAddress != knownNodes[0] {
 		sendVersion(knownNodes[0], myheight)
 	}
-
+	var command string
+	var request []byte
+	requestChannel := make(chan []byte, bufferSize)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Panic(err)
 		}
-		go handleConnection(conn)
+		go handleConnection(conn, requestChannel)
+		request = <- requestChannel
+		command = bytesToCommand(request[:commandLength])
+		fmt.Printf("Received %s command\n", command)
+		// TODO instead of switch, we can use select to concurrently solve different commands
+		switch command{
+		case "add":
+			handleAddr(request)
+		case "version":
+			handleVersion(request, myheight)
+		default:
+			fmt.Println("Unknown command!")
+		}
 	}
 }
 
