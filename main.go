@@ -1,15 +1,24 @@
 package main
 
-/*
 import (
-	"github.com/uchihatmtkinu/RC/Reputation"
+	"fmt"
 )
 
 func main() {
-	bc := Reputation.NewRepBlockchain()
-	defer bc.Db.Close()
+	c := make(chan []int,2)
 
-	cli := Reputation.CLI{bc}
-	cli.Run()
+	things := []int{1, 2, 3}
+	a1 := []int{2,3}
+	go func() {
+		c <- things
+	}()
+
+
+
+	go func() {
+		c <- a1
+	}()
+	a := <-c
+	fmt.Println(a)
+	fmt.Println(<-c)
 }
-*/
