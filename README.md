@@ -1,5 +1,5 @@
 # RC
 
-Libiray: 
+Libray: 
 BoltDB
 $ go get github.com/boltdb/bolt/...
