@@ -22,7 +22,74 @@ type RepBlockchainIterator struct {
 	db          *bolt.DB
 }
 
+// MineRepBlock mines a new repblock with the provided transactions
+func (bc *RepBlockchain) MineRepBlock(RepMatrix [][]int) {
+	var lastHash []byte
 
+	err := bc.Db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		lastHash = b.Get([]byte("l"))
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	newRepBlock := NewRepBlock(RepMatrix, lastHash)
+
+	err = bc.Db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		err := b.Put(newRepBlock.Hash, newRepBlock.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put([]byte("l"), newRepBlock.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		bc.Tip = newRepBlock.Hash
+
+		return nil
+	})
+}
+
+// add a new syncBlock on RepBlockChain
+func (bc *RepBlockchain) AddSyncBlock(Userlist []int, PrevTxBlockHashList [][]byte, CoSignature []byte) {
+	var lastRepBlockHash []byte
+
+	err := bc.Db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		lastRepBlockHash = b.Get([]byte("l"))
+
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+	newSyncBlock := NewSynBlock(Userlist, lastRepBlockHash, PrevTxBlockHashList, CoSignature)
+
+	err = bc.Db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		err := b.Put(newSyncBlock.Hash, newSyncBlock.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put([]byte("l"), newSyncBlock.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		bc.Tip = newSyncBlock.Hash
+
+		return nil
+	})
+
+}
 
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewRepBlockchain() *RepBlockchain {

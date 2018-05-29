@@ -5,22 +5,55 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"crypto/sha256"
 )
 
 
 type SyncBlock struct {
 	Timestamp     	 	int64
+	//Userlist			[]int
 	PrevRepBlockHash 	[]byte
 	PrevTxBlockHashList	[][]byte
 	CoSignature			[]byte
 	Hash          	 	[]byte
 }
 
-
+//TODO add userlist
 func NewSynBlock(Userlist []int, PrevRepBlockHash []byte, PrevTxBlockHashList [][]byte, CoSignature []byte) *SyncBlock{
-	block := &SyncBlock{time.Now().Unix(),PrevRepBlockHash, PrevTxBlockHashList,CoSignature, []byte{}}
+	block := &SyncBlock{time.Now().Unix(), PrevRepBlockHash, PrevTxBlockHashList,CoSignature, []byte{}}
+	blockhash := sha256.Sum256(block.prepareData())
+	block.Hash = blockhash[:]
 	return block
 
+}
+
+func (b *SyncBlock) prepareData() []byte {
+	data := bytes.Join(
+		[][]byte{
+			//IntToHex(b.Userlist),
+			b.PrevRepBlockHash,
+			b.hashPrevTxBlockHashList(),
+			b.CoSignature,
+			IntToHex(b.Timestamp),
+		},
+		[]byte{},
+	)
+
+	return data
+}
+
+// HashTransactions returns a hash of the transactions in the block
+func (b *SyncBlock) hashPrevTxBlockHashList() []byte {
+	var blockHashes []byte
+	var blockHash [32]byte
+
+	for i := range b.PrevTxBlockHashList {
+		for _,value := range b.PrevTxBlockHashList[i]{
+			blockHashes = append(blockHashes, value)
+		}
+	}
+	blockHash = sha256.Sum256(bytes.Join([][]byte{blockHashes}, []byte{}))
+	return blockHash[:]
 }
 
 //encode block
@@ -45,3 +78,5 @@ func DeserializeSyncBlock(d []byte) *SyncBlock {
 	}
 	return &block
 }
+
+
