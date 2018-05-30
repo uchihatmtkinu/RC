@@ -73,26 +73,26 @@ func GenerateSeed(a *[][32]byte) int64 {
 //Sharding do the shards given reputations
 func Sharding(a *[]MemShard, b *[][]int) {
 	tail := 0
-	if len(*a)%basic.ShardSize > 0 {
+	if uint32(len(*a))%basic.ShardSize > 0 {
 		tail = 1
 	}
 	//rng.Seed()
 	now := 0
-	nShard := len(*a) / basic.ShardSize
-	for i := 0; i < basic.ShardSize+tail; i++ {
+	nShard := uint32(len(*a)) / basic.ShardSize
+	for i := uint32(len(*a)); i < basic.ShardSize+uint32(tail); i++ {
 		check := make([]int, nShard)
 		tmp := 0
 		final := nShard
-		if nShard > (len(*a) - now) {
-			final = len(*a) - now
+		if nShard > uint32(len(*a)-now) {
+			final = uint32(len(*a) - now)
 		}
 		if i == basic.ShardSize {
-			for j := 0; j < nShard; j++ {
+			for j := uint32(0); j < nShard; j++ {
 				(*b)[j][i] = -1
 			}
 		}
-		for tmp < final {
-			x := (rng.Int() ^ (*a)[now].rep) % nShard
+		for uint32(tmp) < final {
+			x := uint32((rng.Int() ^ (*a)[now].rep)) % nShard
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = now
@@ -100,17 +100,17 @@ func Sharding(a *[]MemShard, b *[][]int) {
 				tmp++
 			}
 		}
-
+	}
+	for i := uint32(0); i < nShard; i++ {
+		LeaderSort(a, b, i)
 	}
 }
 
 //LeaderSort give the priority of being leader in this round
-func LeaderSort(a *[]MemShard, b *[]int) {
-	tmp := make([]float32, len(*b))
-	index := make([]int, len(*b))
+func LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
+	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
-		tmp[i] = rng.Float32() / float32((*a)[(*b)[i]].rep)
-		index[i] = i
+		tmp[i] = rng.Float32() / float32((*a)[(*b)[xx][i]].rep)
 	}
 	for i := 0; i < len(tmp); i++ {
 		for j := i + 1; j < len(tmp); j++ {
@@ -118,9 +118,9 @@ func LeaderSort(a *[]MemShard, b *[]int) {
 				y := tmp[i]
 				tmp[i] = tmp[j]
 				tmp[j] = y
-				x := index[i]
-				index[i] = index[j]
-				index[j] = x
+				x := (*b)[xx][i]
+				(*b)[xx][i] = (*b)[xx][j]
+				(*b)[xx][j] = x
 			}
 		}
 	}
