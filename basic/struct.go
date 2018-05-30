@@ -62,6 +62,7 @@ type TxDecision struct {
 	HashID   [32]byte
 	TxCnt    uint32
 	Decision []byte
+	Index    uint32
 	Sig      RCSign
 }
 

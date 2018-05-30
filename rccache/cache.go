@@ -2,6 +2,7 @@ package rccache
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"log"
 	"math/rand"
 
@@ -19,6 +20,9 @@ const TXBucket = "TX"
 
 //ACCBucket is the bucket of ACC
 const ACCBucket = "ACC"
+
+//TBBucket is the bucket of ACC
+const TBBucket = "TxBlock"
 
 //byteCompare is the func used for string compare
 func byteCompare(a, b interface{}) int {
@@ -41,6 +45,11 @@ type dbRef struct {
 	TX       map[[32]byte]*basic.CrossShardDec
 	tmp      map[[32]byte]*basic.TxDB
 	ShardNum uint32
+	TL       []basic.TxList
+	TDS      []basic.TxDecSet
+	Ready    []basic.Transaction
+	TxB      *basic.TxBlock
+	prk      ecdsa.PrivateKey
 }
 
 //New is the initilization of dbRef

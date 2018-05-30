@@ -7,10 +7,11 @@ import (
 )
 
 //Set initiates the TxDecision given the TxList and the account
-func (a *TxDecision) Set(ID [32]byte, b *TxList) error {
+func (a *TxDecision) Set(ID [32]byte, b *TxList, index uint32) error {
 	a.TxCnt = 0
 	a.HashID = b.HashID
 	a.ID = ID
+	a.Index = index
 	return nil
 }
 
@@ -51,6 +52,7 @@ func (a *TxDecision) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.ID[:], 32)
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.TxCnt)
+	EncodeInt(tmp, a.Index)
 	EncodeByte(tmp, &a.Decision)
 	a.Sig.SignToData(tmp)
 }
@@ -72,6 +74,10 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxDecsion TxCnt decode failed: %s", err)
 	}
+	err = DecodeInt(buf, &a.Index)
+	if err != nil {
+		return fmt.Errorf("TxDecsion Index decode failed: %s", err)
+	}
 	err = DecodeByte(buf, &a.Decision)
 	if err != nil {
 		return fmt.Errorf("TxDecsion Decision decode failed: %s", err)
@@ -79,9 +85,6 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 	err = a.Sig.DataToSign(buf)
 	if err != nil {
 		return fmt.Errorf("TxDecsion Signature decode failed: %s", err)
-	}
-	if len(*buf) != 0 {
-		return fmt.Errorf("TxDecsion decode failed: With extra bits")
 	}
 	return nil
 }
