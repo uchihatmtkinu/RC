@@ -9,7 +9,10 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
-var rng rand.Rand
+//Instance is the struct for sharding
+type Instance struct {
+	rng rand.Rand
+}
 
 //GetRBData get all the data from reputation block for sharding
 func GetRBData() {
@@ -71,7 +74,7 @@ func GenerateSeed(a *[][32]byte) int64 {
 }
 
 //Sharding do the shards given reputations
-func Sharding(a *[]MemShard, b *[][]int) {
+func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	tail := 0
 	if uint32(len(*a))%basic.ShardSize > 0 {
 		tail = 1
@@ -92,7 +95,7 @@ func Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 		for uint32(tmp) < final {
-			x := uint32((rng.Int() ^ (*a)[now].rep)) % nShard
+			x := uint32((c.rng.Int() ^ (*a)[now].rep)) % nShard
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = now
@@ -102,15 +105,15 @@ func Sharding(a *[]MemShard, b *[][]int) {
 		}
 	}
 	for i := uint32(0); i < nShard; i++ {
-		LeaderSort(a, b, i)
+		c.LeaderSort(a, b, i)
 	}
 }
 
 //LeaderSort give the priority of being leader in this round
-func LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
+func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
-		tmp[i] = rng.Float32() / float32((*a)[(*b)[xx][i]].rep)
+		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].rep)
 	}
 	for i := 0; i < len(tmp); i++ {
 		for j := i + 1; j < len(tmp); j++ {
