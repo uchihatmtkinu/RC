@@ -24,7 +24,7 @@ type RcAcc struct {
 	ID       string
 }
 
-//New generate a new wallet with different type, 0 is client and 1 is miner
+//New generate a new wallet with different type
 func (acc *RcAcc) New(ID string, accType int) {
 	h := sha256.New()
 	h.Write([]byte(ID))

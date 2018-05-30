@@ -2,25 +2,30 @@ package rccache
 
 import (
 	"bytes"
-	"fmt"
+	"log"
+	"math/rand"
 
+	"github.com/uchihatmtkinu/RC/cryptonew"
+
+	"github.com/boltdb/bolt"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/treap"
 )
 
-//tmpTx stores the tempory utxo information
-type tmpTx struct {
-	index uint32
-	under uint32
-	value uint32
-}
+const dbFile = "TxBlockchain.db"
+
+//TXBucket is the bucket of TX
+const TXBucket = "TX"
+
+//ACCBucket is the bucket of ACC
+const ACCBucket = "ACC"
 
 //byteCompare is the func used for string compare
 func byteCompare(a, b interface{}) int {
-	switch tmp := a.(type) {
-	case basic.AccCache:
-		tmp1 := a.(basic.AccCache).ID
-		tmp2 := b.(basic.AccCache).ID
+	switch a.(type) {
+	case *basic.AccCache:
+		tmp1 := a.(*basic.AccCache).ID
+		tmp2 := b.(*basic.AccCache).ID
 		return bytes.Compare(tmp1[:], tmp2[:])
 	default:
 		return bytes.Compare([]byte(a.([]byte)), []byte(b.([]byte)))
@@ -30,118 +35,114 @@ func byteCompare(a, b interface{}) int {
 
 //dbRef is the structure stores the cache of a miner for the database
 type dbRef struct {
-	AccData *gtreap.Treap
-	TXIndex map[[32]byte]int
-	TX      *[]basic.TxDB
-	tmp     *[]tmpTx
-	TXLen   uint32
+	ID       [32]byte
+	AccData  *gtreap.Treap
+	Mem      *bolt.DB
+	TX       map[[32]byte]*basic.CrossShardDec
+	tmp      map[[32]byte]*basic.TxDB
+	ShardNum uint32
 }
 
 //New is the initilization of dbRef
 func (d *dbRef) New() {
 	d.AccData = gtreap.NewTreap(byteCompare)
+	var err error
+	d.Mem, err = bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer d.Mem.Close()
+	var tmp *basic.AccCache
+	err = d.Mem.View(func(tx *bolt.Tx) error {
+		// Assume bucket exists and has keys
+		b := tx.Bucket([]byte(ACCBucket))
+		if b == nil {
+			return nil
+		}
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			tmp = new(basic.AccCache)
+			copy(tmp.ID[:], k[:32])
+			tmpStr := v
+			basic.DecodeInt(&tmpStr, &tmp.Value)
+			d.AccData = d.AccData.Upsert(tmp, rand.Int())
+		}
+
+		return nil
+	})
+	d.TX = make(map[[32]byte]*basic.CrossShardDec)
+	d.tmp = make(map[[32]byte]*basic.TxDB)
 }
 
-//findTX finds the transaction given the index
-func (d *dbRef) findTX(a *basic.Transaction, index int) int {
+func (d *dbRef) FindACC(ID [32]byte, value uint32) int {
+	xxx := basic.AccCache{ID: ID, Value: value}
+	tmp := d.AccData.Get(xxx)
+	if tmp == nil {
+		return -1
+	}
+	if value > tmp.(*basic.AccCache).Value {
+		return -1
+	}
+	return int(tmp.(*basic.AccCache).Value - value)
+}
 
-	x, ok := d.TXIndex[a.In[index].PrevTx]
+//FindTX finds the transaction given the index
+func (d *dbRef) FindTX(ID [32]byte, index uint32) int {
+	var err error
+	xxx, ok := d.tmp[ID]
 	if !ok {
+		if uint32(len(xxx.Used)) <= index {
+			return -1
+		}
+		if xxx.Used[index] == 0 {
+			return 1
+		}
 		return -1
 	}
-	if (*d.TX)[x].Data.Kind == 1 {
-		return 0
-	}
-	if (*d.TX)[x].Data.TxoutCnt < a.In[index].Index {
+	d.Mem, err = bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
 		return -1
 	}
-	return x
-
+	defer d.Mem.Close()
+	var res []byte
+	err = d.Mem.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TXBucket))
+		if b != nil {
+			res = b.Get(ID[:])
+		}
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+		return -1
+	}
+	if res == nil {
+		return -1
+	}
+	if err != nil {
+		return -1
+	}
+	tmp := new(basic.TxDB)
+	err = (*tmp).Decode(&res)
+	d.tmp[ID] = tmp //Check whether it is ok
+	if index >= uint32(len(tmp.Used)) {
+		return -1
+	}
+	if tmp.Used[index] == 0 {
+		return 1
+	}
+	return -1
 }
 
-func (d *dbRef) AddTX(a *basic.Transaction) {
-	var xxx basic.TxDB
-	xxx.New(a)
-	(*d.TX) = append(*d.TX, xxx)
-	d.TXIndex[xxx.ID] = len(*d.TX) - 1
-	d.TXLen++
-}
-
-func (d *dbRef) Verify(a *basic.Transaction) (bool, error) {
-	if a.TxinCnt != uint32(len(a.In)) || a.TxoutCnt != uint32(len(a.Out)) {
-		return false, fmt.Errorf("Invalid input,output parameter")
+//CheckInType deal with the InType in one of the transaction
+func (d *dbRef) CheckInType(a basic.InType) int {
+	if a.ShardIndex() != d.ShardNum {
+		return -2
 	}
-	tmp := a.HashTx()
-	if tmp != a.Hash {
-		return false, fmt.Errorf("Hashvalue not match")
+	if cryptonew.GenerateAddr(a.Puk()) == a.PrevTx {
+		return d.FindACC(a.PrevTx, a.Index)
 	}
-	d.AddTX(a)
-	if a.Kind == 0 {
-		var value uint32
-		var tmpInt uint32
-		var tmpOut basic.OutType
-		tmpArr := make([]uint32, a.TxinCnt)
-		check := true
-		for i := uint32(0); i < a.TxinCnt; i++ {
-			x := d.findTX(a, int(i))
-			if x < 0 {
-				return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d", &i)
-			}
-			tmpArr[i] = uint32(x)
-			if (*d.TX)[x].Data.Kind == 1 {
-				tmpOut = (*d.TX)[x].Data.Out[0]
-				if !a.VerifyTx(i, &tmpOut) {
-					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
-				}
-				if (*d.TX)[x].Used[0]+a.In[i].Index > (*d.TX)[x].Data.Out[0].Value {
-					check = false
-				}
-				tmpInt = a.In[i].Index
-			} else {
-				tmpOut = (*d.TX)[x].Data.Out[a.In[i].Index]
-				if !a.VerifyTx(i, &tmpOut) {
-					return false, fmt.Errorf("rccache.Verify Invalid UTXO of %d address", &i)
-				}
-				if (*d.TX)[x].Used[a.In[i].Index] != 0 {
-					check = false
-				}
-				tmpInt = (*d.TX)[x].Data.Out[a.In[i].Index].Value
-			}
-
-			value += tmpInt
-		}
-		for i := uint32(0); i < a.TxoutCnt; i++ {
-			value -= a.Out[i].Value
-		}
-		if value < 0 {
-			return false, fmt.Errorf("rccache.Verify Invalid outcome value")
-		}
-
-		if check {
-			(*d.TX)[len(*d.TX)-1].Res = 1
-			for i := uint32(0); i < a.TxinCnt; i++ {
-				if (*d.TX)[tmpArr[i]].Data.Kind == 0 {
-					(*d.TX)[tmpArr[i]].Used[a.In[i].Index] = d.TXLen
-
-				} else {
-					(*d.TX)[tmpArr[i]].Used[0] += a.In[i].Index
-				}
-				var tmpTX0 tmpTx
-				tmpTX0.index = tmpArr[i]
-				tmpTX0.under = a.In[i].Index
-				tmpTX0.value = d.TXLen
-				*d.tmp = append(*d.tmp, tmpTX0)
-			}
-			return true, nil
-		}
-		(*d.TX)[len(*d.TX)-1].Res = -2
-		return false, fmt.Errorf("rccache.Verify UTXO used")
-
-	} else if a.Kind == 1 {
-		if a.TxoutCnt != 1 {
-			return false, fmt.Errorf("rccache.Verify the out address should be 1")
-		}
-
-	}
-	return false, fmt.Errorf("rccache.Verify Invalid transaction type")
+	return d.FindTX(a.PrevTx, a.Index)
 }

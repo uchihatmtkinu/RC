@@ -117,18 +117,18 @@ type TxBlock struct {
 	Sig        RCSign
 }
 
-//TxDB is the database of cache
-type TxDB struct {
-	ID   [32]byte
-	Used []uint32
-	/*0 not checked(the first time),
-	1: Correct part in the shard,
-	-1: fail due to not correct format
-	-2: fail due to double spend
-	*/
+//CrossShardDec  is the database of cache
+type CrossShardDec struct {
+	Data       Transaction
 	InCheck    []bool
 	Res        int8
 	InCheckSum int
+}
+
+//TxDB Transaction stored in database
+type TxDB struct {
+	Data Transaction
+	Used []byte
 }
 
 //UserClient is the struct for miner and client
