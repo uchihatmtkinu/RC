@@ -18,7 +18,7 @@ type SyncBlock struct {
 	Hash          	 	[]byte
 }
 
-//TODO add userlist
+//TODO - add userlist
 func NewSynBlock(Userlist []int, PrevRepBlockHash []byte, PrevTxBlockHashList [][]byte, CoSignature []byte) *SyncBlock{
 	block := &SyncBlock{time.Now().Unix(), PrevRepBlockHash, PrevTxBlockHashList,CoSignature, []byte{}}
 	blockhash := sha256.Sum256(block.prepareData())

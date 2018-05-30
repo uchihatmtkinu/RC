@@ -7,25 +7,28 @@ import (
 	"crypto/sha256"
 
 	"math/big"
-	"strconv"
 
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/cryptonew"
+	"github.com/uchihatmtkinu/RC/ed25519"
 )
 
 //RcAcc the wallet of a user1
 type RcAcc struct {
 	pri      ecdsa.PrivateKey
 	Puk      ecdsa.PublicKey
+	cosiPri	 ed25519.PrivateKey
+	CosiPuk	 ed25519.PublicKey
 	Addr     string
 	AddrReal [32]byte
-	AccType  int
+	//AccType  int
 	ID       string
+	Rep		 int //total reputation among a period of time
 }
 
 //New generate a new wallet with different type
-func (acc *RcAcc) New(ID string, accType int) {
+func (acc *RcAcc) New(ID string) {
 	h := sha256.New()
 	h.Write([]byte(ID))
 	var curve elliptic.Curve
@@ -36,7 +39,13 @@ func (acc *RcAcc) New(ID string, accType int) {
 	acc.Puk = acc.pri.PublicKey
 	acc.AddrReal = cryptonew.AddressGenerate(&acc.pri)
 	acc.Addr = base58.Encode(acc.AddrReal[:])
-	acc.AccType = accType
+	//acc.AccType = accType
+}
+
+func (acc *RcAcc) NewCosi() {
+	pubKey, priKey, _ := ed25519.GenerateKey(nil)
+	acc.cosiPri = priKey
+	acc.CosiPuk = pubKey
 }
 
 //Load loading the account information
@@ -51,7 +60,7 @@ func (acc *RcAcc) Load(a1, a2, a3, a4, a5 string) {
 	acc.Puk = acc.pri.PublicKey
 	acc.Addr = a4
 	acc.AddrReal = cryptonew.AddressGenerate(&acc.pri)
-	acc.AccType, _ = strconv.Atoi(a5)
+	//acc.AccType, _ = strconv.Atoi(a5)
 }
 
 //MakeTrans generate a transaction

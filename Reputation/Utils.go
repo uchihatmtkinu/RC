@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-var MineridToInd map[int]int
+
 
 // IntToHex converts an int64 to a byte array
 func IntToHex(num int64) []byte {

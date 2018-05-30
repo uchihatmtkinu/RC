@@ -21,12 +21,12 @@ func GetRBData() {
 
 //CompareRep returns whether a has a great reputation than b
 func CompareRep(a *MemShard, b *MemShard) int {
-	if a.rep > b.rep {
+	if a.Rep > b.Rep {
 		return 1
-	} else if b.rep > a.rep {
+	} else if b.Rep > a.Rep {
 		return -1
 	} else {
-		return strings.Compare(a.address, b.address)
+		return strings.Compare(a.Address, b.Address)
 	}
 }
 
@@ -95,7 +95,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 		for uint32(tmp) < final {
-			x := uint32((c.rng.Int() ^ (*a)[now].rep)) % nShard
+			x := uint32((c.rng.Int() ^ (*a)[now].Rep)) % nShard
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = now
@@ -113,7 +113,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
-		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].rep)
+		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].Rep)
 	}
 	for i := 0; i < len(tmp); i++ {
 		for j := i + 1; j < len(tmp); j++ {
