@@ -1,20 +1,25 @@
 package shard
 
-import "github.com/uchihatmtkinu/RC/account"
+import (
+	"github.com/uchihatmtkinu/RC/account"
+	"github.com/uchihatmtkinu/RC/ed25519"
+)
 
 //MemShard is the struct of miners for sharding and leader selection
 type MemShard struct {
 	Address     string
 	Rep         int
+	Pub			ed25519.PublicKey
 	Shard       int
-	Role        byte //0 - member, 1 - leaders
+	Role        byte //0 - member, 1 - leader
 	Legal       byte //0 - legal,  1 - kickout
 	RealAccount *account.RcAcc
 }
 
-func (ms *MemShard) newMemShard(acc account.RcAcc) {
+func (ms *MemShard) newMemShard(acc *account.RcAcc) {
 	ms.Address = acc.Addr
-	ms.RealAccount = &acc
+	ms.RealAccount = acc
+	ms.Pub = acc.CosiPuk
 	ms.Legal = 0
 	ms.Rep = 0
 }

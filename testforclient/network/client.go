@@ -8,17 +8,17 @@ import (
 	"log"
 	"bytes"
 	"io"
+	"github.com/uchihatmtkinu/RC/account"
 )
 
-const protocol = "tcp"
-const nodeVersion = 1
-const commandLength = 12
-const bufferSize = 100
 
 
 var nodeAddress string
 var knownNodes = []string{"localhost:3000"}
+var knownGroupNodes = []string{}
 var myheight int
+var MyAccount account.RcAcc
+
 type verzion struct {
 	Version    int
 	BestHeight int
@@ -30,8 +30,6 @@ type verzion struct {
 type addr struct {
 	AddrList []string
 }
-
-
 
 
 
@@ -152,6 +150,9 @@ func handleAddr(request []byte) {
 	//requestBlocks()
 }
 
+func sendCosi() {
+
+}
 
 // handle connection
 func handleConnection(conn net.Conn, requestChannel chan []byte) {
@@ -166,9 +167,10 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 
 func StartServer(nodeID string, height int) {
 	//assume in one computer.
-	nodeAddress = fmt.Sprintf("localhost:%s", nodeID)
+	//nodeAddress = fmt.Sprintf("%s", nodeID)
 	myheight = height
-	ln, err := net.Listen(protocol, nodeAddress)
+	MyAccount.New(nodeID)
+	ln, err := net.Listen(protocol, MyAccount.Addr)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -177,7 +179,7 @@ func StartServer(nodeID string, height int) {
 	//TODO generate block.
 	//bc := NewBlockchain(nodeID)
 
-	if nodeAddress != knownNodes[0] {
+	if MyAccount.Addr != knownNodes[0] {
 		sendVersion(knownNodes[0], myheight)
 	}
 	var command string
