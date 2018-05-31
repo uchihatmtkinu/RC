@@ -8,12 +8,34 @@ import (
 	//"golang.org/x/crypto/ed25519/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 
+func intialcosi(ms []shard.MemShard, sb *Reputation.SyncBlock) (*[]byte, *[]ed25519.PublicKey){
+	message := sb.Serialize()
+	pubKeys := []ed25519.PublicKey{}
+	for _,oneMem := range ms {
+		pubKeys = append(pubKeys, oneMem.RealAccount.CosiPuk)
+	}
+	return &message, &pubKeys
+}
+
+
+func cosiCommit(message []byte) (cosi.Commitment, *cosi.Secret){
+	commit, secret, _ := cosi.Commit(nil)
+	return commit, secret
+}
+
+func cosiAggregateCommit(commits []cosi.Commitment, mask []byte, pubKeys []ed25519.PublicKey) {
+	cosigners := cosi.NewCosigners(pubKeys, mask)
+	aggregatePublicKey := cosigners.AggregatePublicKey()
+	aggregateCommit := cosigners.AggregateCommit(commits)
+}
 // This example demonstrates how to generate a
 // collective signature involving two cosigners,
 // and how to check the resulting collective signature.
-func Example() {
+func begin() {
 
 	// Create keypairs for the two cosigners.
 	pubKey1, priKey1, _ := ed25519.GenerateKey(nil)
