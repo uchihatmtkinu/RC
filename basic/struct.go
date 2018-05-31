@@ -62,20 +62,22 @@ type TxDecision struct {
 	HashID   [32]byte
 	TxCnt    uint32
 	Decision []byte
-	Index    uint32
-	Sig      RCSign
+	Target   uint32
+	Single   uint32
+	Sig      []RCSign
 }
 
 //TxDecSet is the set of all decisions from one shard, signed by leader
 type TxDecSet struct {
-	ID       [32]byte
-	HashID   [32]byte
-	PrevHash [32]byte
-	MemCnt   uint32
-	MemD     []TxDecision
-	TxCnt    uint32
-	TxArray  [][32]byte
-	Sig      RCSign
+	ID         [32]byte
+	HashID     [32]byte
+	PrevHash   [32]byte
+	MemCnt     uint32
+	ShardIndex uint32
+	MemD       []TxDecision
+	TxCnt      uint32
+	TxArray    [][32]byte
+	Sig        RCSign
 }
 
 //TxDPure is the pure struct of the TxDecision
@@ -103,6 +105,7 @@ type TxDecSS struct {
 	Header   []TDSHeader
 	TxCnt    uint32
 	Tx       [][32]byte
+	HashMap  map[[32]byte]uint32
 }
 
 //TxBlock introduce the struct of the transaction block

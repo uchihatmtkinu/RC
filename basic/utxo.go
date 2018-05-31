@@ -28,6 +28,11 @@ func (a *InType) ShardIndex() uint32 {
 	return uint32(tmp[0]) % ShardCnt
 }
 
+//ShardIndex returns the target shard of the output address
+func (a *OutType) ShardIndex() uint32 {
+	return uint32(a.Address[0]) % ShardCnt
+}
+
 //Byte return the []byte of the input address used for hash
 func (a *InType) Byte(b *[]byte) {
 	EncodeByteL(b, a.PrevTx[:], 32)

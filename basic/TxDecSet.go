@@ -36,12 +36,13 @@ func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //Set init an instance of TxDecSet given those parameters
-func (a *TxDecSet) Set(b *TxList) {
+func (a *TxDecSet) Set(b *TxList, x uint32) {
 	a.ID = b.ID
 	a.HashID = b.HashID
 	a.PrevHash = b.PrevHash
 	a.MemCnt = 0
 	a.TxCnt = b.TxCnt
+	a.ShardIndex = x
 	a.TxArray = make([][32]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		a.TxArray = append(a.TxArray, b.TxArray[i].Hash)
@@ -54,6 +55,24 @@ func (a *TxDecSet) Add(b *TxDecision) {
 	a.MemD = append(a.MemD, *b)
 }
 
+//Result is the result of the index-th transaction
+func (a *TxDecSet) Result(index uint32) bool {
+	x := index / 8
+	y := byte(index % 8)
+	var ans uint32
+	total := a.MemCnt
+	for i := uint32(0); i < a.MemCnt; i++ {
+		ans = ans + uint32((a.MemD[i].Decision[x]>>y)&1)
+	}
+	if ans > (ShardSize-1)/2 {
+		return true
+	}
+	if ans > total/2 && total*3 > 2*(ShardSize-1) {
+		return true
+	}
+	return false
+}
+
 //Encode encode the TxDecSet into []byte
 func (a *TxDecSet) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.ID[:], 32)
@@ -61,6 +80,7 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.ID[:], 32)
 	EncodeInt(tmp, a.MemCnt)
 	EncodeInt(tmp, a.TxCnt)
+	EncodeInt(tmp, a.ShardIndex)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		a.MemD[i].Encode(tmp)
 	}
@@ -95,6 +115,10 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxDecSet TxCnt decode failed: %s", err)
+	}
+	err = DecodeInt(buf, &a.ShardIndex)
+	if err != nil {
+		return fmt.Errorf("TxDecSet ShardIndex decode failed: %s", err)
 	}
 	a.MemD = make([]TxDecision, 0, a.MemCnt)
 	for i := uint32(0); i < a.MemCnt; i++ {
