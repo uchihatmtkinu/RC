@@ -79,6 +79,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	if uint32(len(*a))%basic.ShardSize > 0 {
 		tail = 1
 	}
+	SortRep(a, 0, len(*a)-1)
 	//rng.Seed()
 	now := 0
 	nShard := uint32(len(*a)) / basic.ShardSize

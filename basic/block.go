@@ -2,6 +2,7 @@ package basic
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"fmt"
 	"time"
 )
@@ -55,6 +56,16 @@ func (a *TxBlock) Verify(puk *ecdsa.PublicKey) (bool, error) {
 	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
 }
 
+//NewGensisTxBlock is the gensis block
+func NewGensisTxBlock() TxBlock {
+	var a TxBlock
+	a.ID = sha256.Sum256([]byte(GenesisTxBlock))
+	a.TxCnt = 0
+	a.HashID = a.Hash()
+	a.Height = 0
+	return a
+}
+
 //MakeTxBlock creates the transaction blocks given verified transactions
 func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32) error {
 	a.ID = ID
@@ -67,6 +78,13 @@ func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, p
 	a.HashID = a.Hash()
 	a.Sig.Sign(a.HashID[:], prk)
 	return nil
+}
+
+//Serial outputs a serial of []byte
+func (a *TxBlock) Serial() []byte {
+	var tmp []byte
+	a.Encode(&tmp)
+	return tmp
 }
 
 //Encode converts the block data into bytes

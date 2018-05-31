@@ -2,11 +2,18 @@ package basic
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"math/big"
 )
+
+//DoubleHash256 returns the double hash result of hash256
+func DoubleHash256(a *[]byte, b *[32]byte) {
+	*b = sha256.Sum256(*a)
+	//*b = sha256.Sum256(tmp[:])
+}
 
 //EncodeByte add length bit at the head of the byte array
 func EncodeByte(current *[]byte, d *[]byte) error {

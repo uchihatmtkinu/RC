@@ -118,20 +118,6 @@ type TxBlock struct {
 	Sig        RCSign
 }
 
-//CrossShardDec  is the database of cache
-type CrossShardDec struct {
-	Data       Transaction
-	InCheck    []bool
-	Res        int8
-	InCheckSum int
-}
-
-//TxDB Transaction stored in database
-type TxDB struct {
-	Data Transaction
-	Used []byte
-}
-
 //UserClient is the struct for miner and client
 type UserClient struct {
 	IPaddress string

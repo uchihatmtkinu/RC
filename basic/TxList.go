@@ -28,6 +28,19 @@ func (a *TxList) Verify(puk *ecdsa.PublicKey) bool {
 	return a.Sig.Verify(a.HashID[:], puk)
 }
 
+//NewGenesisTxList is the first txlist
+func NewGenesisTxList(x int) TxList {
+	if x == -1 {
+		a := TxList{HashID: sha256.Sum256([]byte(GenesisTL))}
+		return a
+	}
+	var tmp []byte
+	EncodeInt(&tmp, x)
+	a := TxList{HashID: sha256.Sum256(append([]byte(GenesisTL), tmp...))}
+
+	return a
+}
+
 //Set init an instance of TxList given those parameters
 func (a *TxList) Set(ID [32]byte, prevH [32]byte) {
 	a.ID = ID
@@ -52,6 +65,13 @@ func (a *TxList) Encode(tmp *[]byte) {
 		a.TxArray[i].Encode(tmp)
 	}
 	a.Sig.SignToData(tmp)
+}
+
+//Serial outputs a serial of []byte
+func (a *TxList) Serial() []byte {
+	var tmp []byte
+	a.Encode(&tmp)
+	return tmp
 }
 
 //Decode decodes the TxList with []byte

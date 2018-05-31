@@ -79,7 +79,6 @@ func TestTxtoData(t *testing.T) {
 		*tmpInx.PukY = FindBigInt((i+1)*1000 + 2)
 		*tmpInx.Sig.R = FindBigInt((i+1)*1000 + 3)
 		*tmpInx.Sig.S = FindBigInt((i+1)*1000 + 4)
-		tmpInx.Acc = false
 		tmpIn = append(tmpIn, tmpInx)
 	}
 
@@ -141,7 +140,6 @@ func TestTxList(t *testing.T) {
 		*tmpInx.PukY = FindBigInt((i+1)*1000 + 2)
 		*tmpInx.Sig.R = FindBigInt((i+1)*1000 + 3)
 		*tmpInx.Sig.S = FindBigInt((i+1)*1000 + 4)
-		tmpInx.Acc = false
 		tmpIn = append(tmpIn, tmpInx)
 	}
 
