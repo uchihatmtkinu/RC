@@ -247,7 +247,7 @@ func (a *TxBlockChain) AddAccount(x *basic.AccCache) error {
 //CheckUTXO is to check whether the utxo is available
 func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 	if x.Acc() {
-		tmp := a.FindAcc(*x)
+		tmp := a.FindAcc(x.PrevTx)
 		return tmp.Value >= x.Index
 	}
 	tmp, ok := a.USet[x.PrevTx]
@@ -291,22 +291,121 @@ func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 
 //LockUTXO is to lock the value
 func (a *TxBlockChain) LockUTXO(x *basic.InType) error {
-	tmp, ok := a.USet[x.PrevTx]
-	if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 0 {
-		return fmt.Errorf("Locking utxo has error")
+	if x.Acc() {
+		tmp := a.FindAcc(x.PrevTx)
+		tmp.Value -= x.Index
+	} else {
+		tmp, ok := a.USet[x.PrevTx]
+		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 0 {
+			return fmt.Errorf("Locking utxo failed")
+		}
+		tmp.Stat[x.Index] = 2
 	}
-	tmp.Stat[x.Index] = 2
 	return nil
 }
 
 //UnlockUTXO is to lock the value
 func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
-	tmp, ok := a.USet[x.PrevTx]
-	if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 2 {
-		return fmt.Errorf("Unlocking utxo has error")
+	if x.Acc() {
+		tmp := a.FindAcc(x.PrevTx)
+		tmp.Value += x.Index
+	} else {
+		tmp, ok := a.USet[x.PrevTx]
+		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 2 {
+			return fmt.Errorf("Unlocking utxo failed")
+		}
+		tmp.Stat[x.Index] = 0
 	}
-	tmp.Stat[x.Index] = 0
 	return nil
+}
+
+//MakeFinalTx generates the final blocks transactions
+func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
+	var err error
+	a.data, err = bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	res := make([]basic.Transaction, 0, 10000)
+	tmpMap := make(map[[32]byte]uint32)
+	err = a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(UTXOBucket))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			tmp := new(UTXOSet)
+			tmpStr := v
+			var tmpHash [32]byte
+			copy(tmpHash[:], k[:32])
+			err := tmp.Decode(&tmpStr)
+			if err != nil {
+				continue
+			}
+			for i := uint32(0); i < tmp.Cnt; i++ {
+				if tmp.Stat[i] == 0 {
+					tmpID, ok := tmpMap[tmp.Data[i].Address]
+					if ok {
+						tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
+						res[tmpID].AddIn(tmpIn)
+						res[tmpID].Out[0].Value += tmp.Data[i].Value
+					} else {
+						var tmpTx basic.Transaction
+						tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
+						var tmpOut basic.OutType
+						tmpOut.Value = tmp.Data[i].Value
+						tmpOut.Address = tmp.Data[i].Address
+						tmpTx.New(1)
+						tmpTx.AddIn(tmpIn)
+						tmpTx.AddOut(tmpOut)
+						res = append(res, tmpTx)
+						tmpMap[tmp.Data[i].Address] = uint32(len(res) - 1)
+					}
+				}
+			}
+		}
+		return nil
+	})
+	return &res
+}
+
+//UpdateFinal is to update the final block
+func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
+	var err error
+	a.data, err = bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	for i := uint32(0); i < x.TxCnt; i++ {
+		tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
+		if tmp != nil {
+			tmp.Value += x.TxArray[i].Out[0].Value
+		} else {
+			tmp = new(basic.AccCache)
+			tmp.ID = x.TxArray[i].Out[0].Address
+			tmp.Value = x.TxArray[i].Out[0].Value
+			a.AccData.Upsert(tmp, rand.Int())
+		}
+	}
+
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		tx.DeleteBucket([]byte(UTXOBucket))
+		tx.CreateBucket([]byte(UTXOBucket))
+		b := tx.Bucket([]byte(ACCBucket))
+		tmp := a.AccData.Min()
+		a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
+			if i.(*basic.AccCache).Value == 0 {
+				b.Delete(i.(*basic.AccCache).ID[:])
+			} else {
+				var tmp []byte
+				basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
+				b.Put(i.(*basic.AccCache).ID[:], tmp)
+			}
+			return true
+		})
+		return nil
+	})
+	return err
 }
 
 //UpdateUTXO is to update utxo set
@@ -322,7 +421,7 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock) error {
 		for i := uint32(0); i < x.TxCnt; i++ {
 			for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
 				if x.TxArray[i].In[j].Acc() {
-					tmp := a.FindAcc(x.TxArray[i].In[j])
+					tmp := a.FindAcc(x.TxArray[i].In[j].PrevTx)
 					if tmp != nil {
 						tmp.Value -= x.TxArray[i].In[j].Index
 					}

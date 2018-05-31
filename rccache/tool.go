@@ -54,9 +54,9 @@ func byteSlice(x uint32) []byte {
 }
 
 //FindAcc is to find the account
-func (a *TxBlockChain) FindAcc(x basic.InType) *basic.AccCache {
+func (a *TxBlockChain) FindAcc(x [32]byte) *basic.AccCache {
 	var tmp1 *basic.AccCache
-	tmp1.ID = x.PrevTx
+	tmp1.ID = x
 	tmp1.Value = 0
 	tmp := a.AccData.Get(tmp1)
 	return tmp.(*basic.AccCache)

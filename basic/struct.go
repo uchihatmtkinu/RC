@@ -114,6 +114,7 @@ type TxBlock struct {
 	PrevHash   [32]byte
 	HashID     [32]byte
 	MerkleRoot [32]byte
+	Kind       uint32
 	Timestamp  int64
 	Height     uint32
 	TxCnt      uint32

@@ -67,8 +67,9 @@ func NewGensisTxBlock() TxBlock {
 }
 
 //MakeTxBlock creates the transaction blocks given verified transactions
-func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32) error {
+func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, kind uint32) error {
 	a.ID = ID
+	a.Kind = kind
 	a.PrevHash = preHash
 	a.Timestamp = time.Now().Unix()
 	a.TxCnt = uint32(len(*b))
@@ -96,6 +97,7 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 	EncodeInt(tmp, a.Timestamp)
 	EncodeInt(tmp, a.Height)
 	EncodeInt(tmp, a.TxCnt)
+	EncodeInt(tmp, a.Kind)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		a.TxArray[i].Encode(tmp)
 	}
@@ -136,6 +138,10 @@ func (a *TxBlock) Decode(buf *[]byte) error {
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxBlock TxCnt failed: %s", err)
+	}
+	err = DecodeInt(buf, &a.Kind)
+	if err != nil {
+		return fmt.Errorf("TxBlock Kind failed: %s", err)
 	}
 	a.TxArray = make([]Transaction, 0, a.TxCnt)
 	var xxx Transaction

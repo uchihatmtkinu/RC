@@ -114,6 +114,15 @@ func (a *Transaction) Decode(buf *[]byte) error {
 	return nil
 }
 
+//New is to initialize a transaction
+func (a *Transaction) New(kind int) error {
+	a.Timestamp = uint64(time.Now().Unix())
+	a.TxinCnt = 0
+	a.TxoutCnt = 0
+	a.Kind = uint32(kind)
+	return nil
+}
+
 //MakeTx implements the method to create a new transaction
 func MakeTx(a *[]InType, b *[]OutType, out *Transaction, kind int) error {
 	if out == nil {
