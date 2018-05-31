@@ -11,10 +11,6 @@ import (
 	"github.com/uchihatmtkinu/RC/account"
 )
 
-const protocol = "tcp"
-const nodeVersion = 1
-const commandLength = 12
-const bufferSize = 100
 
 
 var nodeAddress string
@@ -22,6 +18,7 @@ var knownNodes = []string{"localhost:3000"}
 var knownGroupNodes = []string{}
 var myheight int
 var MyAccount account.RcAcc
+
 type verzion struct {
 	Version    int
 	BestHeight int
@@ -33,8 +30,6 @@ type verzion struct {
 type addr struct {
 	AddrList []string
 }
-
-
 
 
 
