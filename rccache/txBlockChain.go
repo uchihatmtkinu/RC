@@ -14,10 +14,8 @@ import (
 type TxBlockChain struct {
 	data    *bolt.DB
 	lastTB  [32]byte
-	lastTL  [32]byte
-	lastTLS [basic.ShardCnt][32]byte
-	lastTLR [basic.ShardCnt][32]byte
 	USet    map[[32]byte]UTXOSet
+	TXCache map[[32]byte]int
 	AccData *gtreap.Treap
 }
 
@@ -44,42 +42,8 @@ func (a *TxBlockChain) NewBlockchain() error {
 			err = b.Put(append([]byte("B"), genesis.HashID[:]...), tmp)
 			err = b.Put([]byte("XB"), genesis.HashID[:])
 			a.lastTB = genesis.HashID
-			genTL := basic.NewGenesisTxList(-1)
-			tmp = genTL.Serial()
-			err = b.Put(append([]byte("TL"), genesis.HashID[:]...), tmp)
-			err = b.Put([]byte("XTL"), genesis.HashID[:])
-			a.lastTL = genTL.HashID
-			for i := uint32(0); i < basic.ShardCnt; i++ {
-				genTL = basic.NewGenesisTxList(int(i))
-				tmp = genTL.Serial()
-				xxx := append([]byte("TLS"), byteSlice(i)...)
-				err = b.Put(append(xxx, genesis.HashID[:]...), tmp)
-				if err != nil {
-					return err
-				}
-				err = b.Put(append([]byte("XTLS"), byteSlice(i)...), genesis.HashID[:])
-				if err != nil {
-					return err
-				}
-				a.lastTLS[i] = genTL.HashID
-				xxx = append([]byte("TLR"), byteSlice(i)...)
-				err = b.Put(append(xxx, genesis.HashID[:]...), tmp)
-				if err != nil {
-					return err
-				}
-				err = b.Put(append([]byte("XTLR"), byteSlice(i)...), genesis.HashID[:])
-				if err != nil {
-					return err
-				}
-				a.lastTLR[i] = genTL.HashID
-			}
 		} else {
 			copy(a.lastTB[:], b.Get([]byte("XB"))[:32])
-			copy(a.lastTL[:], b.Get([]byte("XTL"))[:32])
-			for i := uint32(0); i < basic.ShardCnt; i++ {
-				copy(a.lastTLS[i][:], b.Get(append([]byte("XTLS"), byteSlice(i)...))[:32])
-				copy(a.lastTLR[i][:], b.Get(append([]byte("XTLR"), byteSlice(i)...))[:32])
-			}
 		}
 		b = tx.Bucket([]byte(ACCBucket))
 		a.AccData = gtreap.NewTreap(byteCompare)
@@ -167,56 +131,6 @@ func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 		return nil
 	}
 	return &tmp
-}
-
-//AddTxList is adding a new txlist
-func (a *TxBlockChain) AddTxList(x *basic.TxList, index int, sent bool) error {
-	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer a.data.Close()
-	var xxx, yyy []byte
-	if index == -1 {
-		xxx = []byte("TL")
-		yyy = []byte("XTL")
-	}
-	if uint32(index) >= basic.ShardCnt {
-		return fmt.Errorf("Shard index error")
-	}
-	if sent {
-		xxx = append([]byte("TLS"), byteSlice(uint32(index))...)
-		yyy = append([]byte("XTLS"), byteSlice(uint32(index))...)
-	} else {
-		xxx = append([]byte("TLR"), byteSlice(uint32(index))...)
-		yyy = append([]byte("XTLR"), byteSlice(uint32(index))...)
-	}
-	var lastHash [32]byte
-	err = a.data.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TBBucket))
-		copy(lastHash[:], b.Get(yyy)[:32])
-
-		return nil
-	})
-	if lastHash != x.PrevHash {
-		return fmt.Errorf("Failed to add TxList: PrevHash not match")
-	}
-	err = a.data.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TBBucket))
-		err := b.Put(append(xxx, x.HashID[:]...), x.Serial())
-		if err != nil {
-			return err
-		}
-		err = b.Put(yyy, x.HashID[:])
-		if err != nil {
-			return err
-		}
-		a.lastTB = x.HashID
-
-		return nil
-	})
-	return nil
 }
 
 //AddAccount is adding a new account or update
@@ -319,6 +233,18 @@ func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
 	return nil
 }
 
+//ConfirmUTXO is to make the value used
+func (a *TxBlockChain) ConfirmUTXO(x *basic.InType) error {
+	if !x.Acc() {
+		tmp, ok := a.USet[x.PrevTx]
+		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 2 {
+			return fmt.Errorf("Confirming utxo failed")
+		}
+		tmp.Stat[x.Index] = 1
+	}
+	return nil
+}
+
 //MakeFinalTx generates the final blocks transactions
 func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	var err error
@@ -329,6 +255,21 @@ func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	defer a.data.Close()
 	res := make([]basic.Transaction, 0, 10000)
 	tmpMap := make(map[[32]byte]uint32)
+	tmp := a.AccData.Min()
+	a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
+		var tmpTx basic.Transaction
+		tmpIn := basic.InType{PrevTx: i.(*basic.AccCache).ID, Index: i.(*basic.AccCache).Value}
+		var tmpOut basic.OutType
+		tmpOut.Value = i.(*basic.AccCache).Value
+		tmpOut.Address = i.(*basic.AccCache).ID
+		tmpTx.New(1)
+		tmpTx.AddIn(tmpIn)
+		tmpTx.AddOut(tmpOut)
+		res = append(res, tmpTx)
+		tmpMap[tmpOut.Address] = uint32(len(res) - 1)
+		return true
+	})
+
 	err = a.data.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(UTXOBucket))
 		c := b.Cursor()
@@ -379,7 +320,7 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	for i := uint32(0); i < x.TxCnt; i++ {
 		tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
 		if tmp != nil {
-			tmp.Value += x.TxArray[i].Out[0].Value
+			tmp.Value = x.TxArray[i].Out[0].Value
 		} else {
 			tmp = new(basic.AccCache)
 			tmp.ID = x.TxArray[i].Out[0].Address
@@ -409,7 +350,7 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 }
 
 //UpdateUTXO is to update utxo set
-func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock) error {
+func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 	var err error
 	a.data, err = bolt.Open(dbFile, 0600, nil)
 	if err != nil {
@@ -419,33 +360,39 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock) error {
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(UTXOBucket))
 		for i := uint32(0); i < x.TxCnt; i++ {
+			_, oktx := a.TXCache[x.TxArray[i].Hash]
 			for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
-				if x.TxArray[i].In[j].Acc() {
-					tmp := a.FindAcc(x.TxArray[i].In[j].PrevTx)
-					if tmp != nil {
-						tmp.Value -= x.TxArray[i].In[j].Index
-					}
-				} else {
-					tmp, ok := a.USet[x.TxArray[i].In[j].PrevTx]
-					if ok {
-						tmp.Stat[x.TxArray[i].In[j].Index] = 1
-						tmp.Remain--
-						if tmp.Remain == 0 {
-							delete(a.USet, x.TxArray[i].In[j].PrevTx)
-						} else {
-							a.USet[x.TxArray[i].In[j].PrevTx] = tmp
+				if x.TxArray[i].In[j].ShardIndex() == shardindex {
+					if x.TxArray[i].In[j].Acc() {
+						tmp := a.FindAcc(x.TxArray[i].In[j].PrevTx)
+						if tmp != nil && !oktx {
+							tmp.Value -= x.TxArray[i].In[j].Index
 						}
-					}
-					tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
-					err := tmp.Decode(&tmpStr)
-					if err == nil {
-						tmp.Stat[x.TxArray[i].In[j].Index] = 1
-						tmp.Remain--
-						if tmp.Remain == 0 {
-							b.Delete(x.TxArray[i].In[j].PrevTx[:])
-						} else {
-							tmpStr = tmp.Encode()
-							b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+					} else {
+						tmp, ok := a.USet[x.TxArray[i].In[j].PrevTx]
+						if ok {
+							if tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
+								tmp.Stat[x.TxArray[i].In[j].Index] = 1
+								tmp.Remain--
+								if tmp.Remain == 0 {
+									delete(a.USet, x.TxArray[i].In[j].PrevTx)
+									b.Delete(x.TxArray[i].In[j].PrevTx[:])
+								} else {
+									a.USet[x.TxArray[i].In[j].PrevTx] = tmp
+								}
+							}
+						}
+						tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
+						err := tmp.Decode(&tmpStr)
+						if err == nil && tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
+							tmp.Stat[x.TxArray[i].In[j].Index] = 1
+							tmp.Remain--
+							if tmp.Remain == 0 {
+								b.Delete(x.TxArray[i].In[j].PrevTx[:])
+							} else {
+								tmpStr = tmp.Encode()
+								b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+							}
 						}
 					}
 				}
@@ -454,7 +401,18 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock) error {
 			copy(tmp.Data, x.TxArray[i].Out)
 			tmp.Remain = tmp.Cnt
 			tmp.Stat = make([]uint32, tmp.Cnt)
-			b.Put(x.TxArray[i].Hash[:], tmp.Encode())
+			for i := uint32(0); i < tmp.Cnt; i++ {
+				if tmp.Data[i].ShardIndex() != shardindex {
+					tmp.Stat[i] = 1
+					tmp.Remain--
+				}
+			}
+			if tmp.Remain > 0 {
+				b.Put(x.TxArray[i].Hash[:], tmp.Encode())
+			}
+			if oktx {
+				delete(a.TXCache, x.TxArray[i].Hash)
+			}
 		}
 		return nil
 	})

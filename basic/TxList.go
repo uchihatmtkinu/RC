@@ -17,6 +17,7 @@ func (a *TxList) Hash() [32]byte {
 
 //Sign signs the TxList with the leader's private key
 func (a *TxList) Sign(prk *ecdsa.PrivateKey) {
+	a.HashID = a.Hash()
 	a.Sig.Sign(a.HashID[:], prk)
 }
 
@@ -28,23 +29,9 @@ func (a *TxList) Verify(puk *ecdsa.PublicKey) bool {
 	return a.Sig.Verify(a.HashID[:], puk)
 }
 
-//NewGenesisTxList is the first txlist
-func NewGenesisTxList(x int) TxList {
-	if x == -1 {
-		a := TxList{HashID: sha256.Sum256([]byte(GenesisTL))}
-		return a
-	}
-	var tmp []byte
-	EncodeInt(&tmp, x)
-	a := TxList{HashID: sha256.Sum256(append([]byte(GenesisTL), tmp...))}
-
-	return a
-}
-
 //Set init an instance of TxList given those parameters
-func (a *TxList) Set(ID [32]byte, prevH [32]byte) {
+func (a *TxList) Set(ID [32]byte) {
 	a.ID = ID
-	a.PrevHash = prevH
 	a.TxCnt = 0
 	a.TxArray = nil
 }
@@ -59,7 +46,6 @@ func (a *TxList) AddTx(tx *Transaction) {
 func (a *TxList) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.ID[:], 32)
 	EncodeByteL(tmp, a.HashID[:], 32)
-	EncodeByteL(tmp, a.PrevHash[:], 32)
 	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		a.TxArray[i].Encode(tmp)
@@ -87,11 +73,6 @@ func (a *TxList) Decode(buf *[]byte) error {
 		return fmt.Errorf("TxList HashID decode failed: %s", err)
 	}
 	copy(a.HashID[:], tmp[:32])
-	err = DecodeByteL(buf, &tmp, 32)
-	if err != nil {
-		return fmt.Errorf("TxList PrevHash decode failed: %s", err)
-	}
-	copy(a.PrevHash[:], tmp[:32])
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxList TxCnt decode failed: %s", err)

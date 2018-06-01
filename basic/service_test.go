@@ -152,9 +152,8 @@ func TestTxList(t *testing.T) {
 	var tmpTx Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
 	id := FindByte32(123)
-	preH := FindByte32(123)
 	var tmp1, tmp3 TxList
-	tmp1.Set(id, preH)
+	tmp1.Set(id)
 	for i := 0; i < 5; i++ {
 		tmp1.AddTx(&tmpTx)
 	}
@@ -178,9 +177,7 @@ func TestTxList(t *testing.T) {
 	if tmp1.ID != tmp3.ID {
 		t.Error(`ID is wrong`)
 	}
-	if tmp1.PrevHash != tmp3.PrevHash {
-		t.Error(`PrevHash is wrong`)
-	}
+
 	if tmp1.TxCnt != tmp3.TxCnt {
 		t.Error(`TxCnt is wrong`, tmp1.TxCnt, tmp3.TxCnt)
 	}

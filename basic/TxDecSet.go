@@ -39,7 +39,6 @@ func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 func (a *TxDecSet) Set(b *TxList, x uint32) {
 	a.ID = b.ID
 	a.HashID = b.HashID
-	a.PrevHash = b.PrevHash
 	a.MemCnt = 0
 	a.TxCnt = b.TxCnt
 	a.ShardIndex = x
@@ -60,24 +59,20 @@ func (a *TxDecSet) Result(index uint32) bool {
 	x := index / 8
 	y := byte(index % 8)
 	var ans uint32
-	total := a.MemCnt
 	for i := uint32(0); i < a.MemCnt; i++ {
 		ans = ans + uint32((a.MemD[i].Decision[x]>>y)&1)
 	}
 	if ans > (ShardSize-1)/2 {
 		return true
 	}
-	if ans > total/2 && total*3 > 2*(ShardSize-1) {
-		return true
-	}
+
 	return false
 }
 
 //Encode encode the TxDecSet into []byte
 func (a *TxDecSet) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.ID[:], 32)
-	EncodeByteL(tmp, a.ID[:], 32)
-	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.MemCnt)
 	EncodeInt(tmp, a.TxCnt)
 	EncodeInt(tmp, a.ShardIndex)
@@ -103,11 +98,6 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 		return fmt.Errorf("TxDecSet HashID decode failed: %s", err)
 	}
 	copy(a.HashID[:], tmp[:32])
-	err = DecodeByteL(buf, &tmp, 32)
-	if err != nil {
-		return fmt.Errorf("TxDecSet PrevHash decode failed: %s", err)
-	}
-	copy(a.PrevHash[:], tmp[:32])
 	err = DecodeInt(buf, &a.MemCnt)
 	if err != nil {
 		return fmt.Errorf("TxDecSet MemCnt decode failed: %s", err)

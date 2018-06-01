@@ -33,22 +33,28 @@ func byteCompare(a, b interface{}) int {
 
 //dbRef is the structure stores the cache of a miner for the database
 type dbRef struct {
-	ID         [32]byte
-	db         TxBlockChain
-	TXCache    map[[32]byte]*CrossShardDec
-	ShardNum   uint32
-	TLCache    []basic.TxList
-	TLSCache   [][basic.ShardCnt]basic.TxList
-	TDSCache   [][basic.ShardCnt]basic.TxDecSet
-	TLIndex    map[[32]byte]uint32
-	TLS        *[basic.ShardCnt]basic.TxList
-	TDS        *[basic.ShardCnt]basic.TxDecSet
-	TL         *basic.TxList
-	Ready      []basic.Transaction
-	TxB        *basic.TxBlock
-	prk        ecdsa.PrivateKey
-	TDSS       *basic.TxDecSS
-	TDSSSent   *basic.TxDecSS
+	ID       [32]byte
+	db       TxBlockChain
+	TXCache  map[[32]byte]*CrossShardDec
+	ShardNum uint32
+
+	//Leader
+	TLCache  []basic.TxList
+	TLSCache [][basic.ShardCnt]basic.TxList
+	TDSCache [][basic.ShardCnt]basic.TxDecSet
+	TLIndex  map[[32]byte]uint32
+	TLS      *[basic.ShardCnt]basic.TxList
+	TDS      *[basic.ShardCnt]basic.TxDecSet
+	TL       *basic.TxList
+	Ready    []basic.Transaction
+	TxB      *basic.TxBlock
+	prk      ecdsa.PrivateKey
+	TDSS     *basic.TxDecSS
+	TDSSSent *basic.TxDecSS
+
+	//Miner
+	TLNow      *basic.TxDecision
+	TLSent     *basic.TxDecision
 	startIndex int
 	lastIndex  int
 }
@@ -74,7 +80,5 @@ type CrossShardDec struct {
 	ShardRelated []uint32
 	Res          int8 //0: unknown; 1: Yes; 2: No
 	InCheckSum   int
-	Yes          uint32
-	No           uint32
 	Total        int
 }

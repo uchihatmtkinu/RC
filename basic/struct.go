@@ -48,12 +48,11 @@ type Transaction struct {
 
 //TxList is the list of tx sent by Leader to miner for their verification
 type TxList struct {
-	ID       [32]byte
-	HashID   [32]byte
-	PrevHash [32]byte
-	TxCnt    uint32
-	TxArray  []Transaction
-	Sig      RCSign
+	ID      [32]byte
+	HashID  [32]byte
+	TxCnt   uint32
+	TxArray []Transaction
+	Sig     RCSign
 }
 
 //TxDecision is the decisions based on given TxList
@@ -71,7 +70,6 @@ type TxDecision struct {
 type TxDecSet struct {
 	ID         [32]byte
 	HashID     [32]byte
-	PrevHash   [32]byte
 	MemCnt     uint32
 	ShardIndex uint32
 	MemD       []TxDecision
@@ -89,14 +87,14 @@ type TxDPure struct {
 
 //TDSHeader is The Header part of TxDecSS
 type TDSHeader struct {
-	ID       [32]byte
-	HashID   [32]byte
-	PrevHash [32]byte
-	TxCnt    uint32
-	TxIndex  []uint32
-	MemCnt   uint32
-	MemD     []TxDPure
-	Sig      RCSign
+	ID      [32]byte
+	HashID  [32]byte
+	ShardID uint32
+	TxCnt   uint32
+	TxIndex []uint32
+	MemCnt  uint32
+	MemD    []TxDPure
+	Sig     RCSign
 }
 
 //TxDecSS is the set of TxDecSet

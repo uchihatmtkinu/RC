@@ -8,16 +8,11 @@ import (
 
 //GenerateTXList is to create TxList given transaction
 func (d *dbRef) MakeTXList(b *basic.Transaction) error {
-	if b.HashTx() != b.Hash {
-		return fmt.Errorf("Hash value invalid")
-	}
-	if uint32(len(b.In)) != b.TxinCnt || uint32(len(b.Out)) != b.TxoutCnt {
-		return fmt.Errorf("Invalid parameter")
-	}
 	tmp, ok := d.TXCache[b.Hash]
 	if !ok {
 		tmp.New(b)
 	} else {
+		tmp = new(CrossShardDec)
 		tmp.Update(b)
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {
@@ -29,14 +24,37 @@ func (d *dbRef) MakeTXList(b *basic.Transaction) error {
 	d.TL.AddTx(b)
 	d.TXCache[b.Hash] = tmp
 	for i := uint32(0); i < basic.ShardCnt; i++ {
-		if tmp.InCheck[i] > 0 {
+		if tmp.InCheck[i] != 0 {
 			d.TLS[i].AddTx(b)
 		}
 	}
 	return nil
 }
 
+//SignTXL is to sign all txlist
+func (d *dbRef) SignTXL() {
+	d.TL.Sign(&d.prk)
+	for i := uint32(0); i < basic.ShardCnt; i++ {
+		if i != d.ShardNum {
+			d.TLS[i].Sign(&d.prk)
+		}
+	}
+}
+
+//BuildTDS is to sign all txDecSet
+//Must after SignTXL
+func (d *dbRef) BuildTDS() {
+	d.TDS = new([basic.ShardCnt]basic.TxDecSet)
+	for i := uint32(0); i < basic.ShardCnt; i++ {
+		d.TDS[i].Set(&d.TLS[i], d.ShardNum)
+	}
+	for i := uint32(0); i < basic.ShardCnt; i++ {
+		d.TDS[i].Sign(&d.prk)
+	}
+}
+
 //NewTxList initialize the txList
+//Must after BuildTDS
 func (d *dbRef) NewTxList() error {
 	if d.TL != nil {
 		d.TLCache = append(d.TLCache, *d.TL)
@@ -48,21 +66,10 @@ func (d *dbRef) NewTxList() error {
 
 	d.TLS = new([basic.ShardCnt]basic.TxList)
 	for i := uint32(0); i < basic.ShardCnt; i++ {
-		if i != d.ShardNum {
-			d.TLS[i].ID = d.ID
-			d.TLS[i].PrevHash = d.db.lastTLS[i]
-		}
+		d.TLS[i].ID = d.ID
 	}
-	d.TL.Set(d.ID, d.db.lastTL)
-
-	d.TDS = new([basic.ShardCnt]basic.TxDecSet)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
-		if i != d.ShardNum {
-			d.TDS[i].Set(&d.TLS[i], d.ShardNum)
-		} else {
-			d.TDS[i].Set(d.TL, d.ShardNum)
-		}
-	}
+	d.TL = new(basic.TxList)
+	d.TL.Set(d.ID)
 	return nil
 }
 
@@ -75,7 +82,7 @@ func (d *dbRef) GenerateTxBlock() error {
 	}
 	d.Ready = nil
 	d.db.AddBlock(d.TxB)
-	d.db.UpdateUTXO(d.TxB)
+	d.db.UpdateUTXO(d.TxB, d.ShardNum)
 	return nil
 }
 
@@ -105,7 +112,8 @@ func (d *dbRef) UpdateTXCache(a *basic.TxDecision) error {
 	tmpTD := make([]basic.TxDecision, basic.ShardCnt)
 	for i := uint32(0); i < basic.ShardCnt; i++ {
 
-		tmpTD[i].Set(a.ID, &d.TLSCache[tmpIndex][i], i)
+		tmpTD[i].Set(a.ID, i, 1)
+		tmpTD[i].HashID = d.TLSCache[tmpIndex][i].HashID
 		tmpTD[i].Single = 1
 		tmpTD[i].Sig = nil
 		tmpTD[i].Sig = append(tmpTD[i].Sig, a.Sig[i])
@@ -113,38 +121,21 @@ func (d *dbRef) UpdateTXCache(a *basic.TxDecision) error {
 	}
 	for i := uint32(0); i < tmpTL.TxCnt; i++ {
 		tmpTx := d.TXCache[tmpTL.TxArray[i].Hash]
-		if (a.Decision[x]>>y)&1 == 1 {
-			tmpTx.Yes++
-
-		} else {
-			tmpTx.No++
-		}
-
-		if tmpTx.Yes > (basic.ShardSize-1)/2 {
-			tmpTx.UpdateFromOther(d.ShardNum, true)
-		} else if tmpTx.No > (basic.ShardSize-1)/2 {
-			tmpTx.UpdateFromOther(d.ShardNum, false)
-		}
-		d.TXCache[tmpTL.TxArray[i].Hash] = tmpTx
 		for j := 0; j < len(tmpTx.ShardRelated); j++ {
-
 			tmpTD[j].Add((a.Decision[x] >> y) & 1)
-
 		}
 		if y < 7 {
 			y++
 		} else {
 			x++
+			if x >= uint32(len(a.Decision)) {
+				break
+			}
 			y = 0
-		}
-		if x >= uint32(len(a.Decision)) {
-			break
 		}
 	}
 	for i := uint32(0); i < basic.ShardCnt; i++ {
-
 		d.TDS[i].Add(&tmpTD[i])
-
 	}
 	return nil
 }
@@ -163,6 +154,7 @@ func (d *dbRef) ProcessTDS(b *basic.TxDecSet) {
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmp, ok := d.TXCache[b.TxArray[i]]
 		if !ok {
+			tmp = new(CrossShardDec)
 			tmp.NewFromOther(b.ShardIndex, b.Result(i))
 			d.TXCache[b.TxArray[i]] = tmp
 		} else {

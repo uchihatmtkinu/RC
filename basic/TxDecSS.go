@@ -8,7 +8,7 @@ import (
 
 //AddTxDec is to adding a new TDS
 func (a *TxDecSS) AddTxDec(b *TxDecSet) {
-	tmp := TDSHeader{ID: b.ID, HashID: b.HashID, PrevHash: b.PrevHash}
+	tmp := TDSHeader{ID: b.ID, HashID: b.HashID, ShardID: b.ShardIndex}
 	tmp.TxCnt = b.TxCnt
 	tmp.MemCnt = b.MemCnt
 	tmp.Sig = b.Sig
@@ -107,23 +107,23 @@ func (a *TxDecSS) VerifyDec(x int, y int, puk *ecdsa.PublicKey, ID [32]byte) boo
 }
 
 //Result returns the y-th Tx result by x-th shard and its ID
-func (a *TxDecSS) Result(x int, y int, max int) ([32]byte, bool) {
+func (a *TxDecSS) Result(x int, y int) bool {
 	if uint32(x) >= a.ShardNum {
-		return [32]byte{}, false
+		return false
 	}
 	if uint32(y) >= a.Header[x].TxCnt {
-		return [32]byte{}, false
+		return false
 	}
-	total := 0
+	total := uint32(0)
 	index := y / 8
 	shift := byte(y % 8)
 	for i := uint32(0); i < a.Header[x].MemCnt; i++ {
-		total += int((a.Header[x].MemD[i].Decision[index] >> shift) & 1)
-		if total > max/2 {
-			return a.Tx[a.Header[x].TxIndex[y]], true
+		total += uint32((a.Header[x].MemD[i].Decision[index] >> shift) & 1)
+		if total > (ShardSize-1)/2 {
+			return true
 		}
 	}
-	return a.Tx[a.Header[x].TxIndex[y]], false
+	return false
 }
 
 //Encode encodes the TxDPure into []byte
@@ -156,7 +156,7 @@ func (a *TxDPure) Decode(buf *[]byte) error {
 func (a *TDSHeader) Encode(b *[]byte) {
 	EncodeByteL(b, a.ID[:], 32)
 	EncodeByteL(b, a.HashID[:], 32)
-	EncodeByteL(b, a.PrevHash[:], 32)
+	EncodeInt(b, a.ShardID)
 	EncodeInt(b, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		EncodeInt(b, a.TxIndex[i])
@@ -181,11 +181,10 @@ func (a *TDSHeader) Decode(buf *[]byte) error {
 		return fmt.Errorf("TDSHeader HashID decode failed: %s", err)
 	}
 	copy(a.HashID[:], tmp[:32])
-	err = DecodeByteL(buf, &tmp, 32)
+	err = DecodeInt(buf, &a.ShardID)
 	if err != nil {
-		return fmt.Errorf("TDSHeader PrevHash decode failed: %s", err)
+		return fmt.Errorf("TDSHeader ShardID decode failed: %s", err)
 	}
-	copy(a.PrevHash[:], tmp[:32])
 	err = DecodeInt(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TDSHeader TxCnt decode failed: %s", err)

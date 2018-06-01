@@ -33,7 +33,6 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 		}
 	}
 	t.Total = t.InCheckSum
-	t.Yes, t.No = 0, 0
 }
 
 //Update from the transaction
@@ -67,7 +66,6 @@ func (t *CrossShardDec) Update(a *basic.Transaction) {
 		}
 	}
 	t.Total = t.InCheckSum
-	t.Yes, t.No = 0, 0
 }
 
 //NewFromOther initiate the TxDB struct by cross-shard data
@@ -86,7 +84,6 @@ func (t *CrossShardDec) NewFromOther(index uint32, res bool) {
 		t.InCheck[index] = 2
 		t.InCheckSum = int(basic.ShardCnt)
 	}
-	t.Yes, t.No = 0, 0
 }
 
 //UpdateFromOther initiate the TxDB struct by cross-shard data

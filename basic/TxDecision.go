@@ -7,11 +7,16 @@ import (
 )
 
 //Set initiates the TxDecision given the TxList and the account
-func (a *TxDecision) Set(ID [32]byte, b *TxList, index uint32) error {
+func (a *TxDecision) Set(ID [32]byte, target uint32, single uint32) error {
 	a.TxCnt = 0
-	a.HashID = b.HashID
 	a.ID = ID
-	a.Target = index
+	a.Target = target
+	a.Single = single
+	if single == 0 {
+		a.Sig = make([]RCSign, ShardCnt)
+	} else {
+		a.Sig = make([]RCSign, 1)
+	}
 	return nil
 }
 
