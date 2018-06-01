@@ -9,7 +9,7 @@ import (
 type MemShard struct {
 	Address     string
 	Rep         int
-	Pub			ed25519.PublicKey
+	CosiPub		ed25519.PublicKey
 	Shard       int
 	Role        byte //0 - member, 1 - leader
 	Legal       byte //0 - legal,  1 - kickout
@@ -19,12 +19,12 @@ type MemShard struct {
 func (ms *MemShard) newMemShard(acc *account.RcAcc) {
 	ms.Address = acc.Addr
 	ms.RealAccount = acc
-	ms.Pub = acc.CosiPuk
+	ms.CosiPub = acc.CosiPuk
 	ms.Legal = 0
 	ms.Rep = 0
 }
 
-//0 - member, 1 - leaders
+//0 - member, 1 - leader
 func (ms *MemShard) setRole(role byte) {
 	ms.Role = role
 }

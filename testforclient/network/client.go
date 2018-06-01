@@ -8,7 +8,6 @@ import (
 	"log"
 	"bytes"
 	"io"
-	"github.com/uchihatmtkinu/RC/account"
 )
 
 
@@ -17,7 +16,7 @@ var nodeAddress string
 var knownNodes = []string{"localhost:3000"}
 var knownGroupNodes = []string{}
 var myheight int
-var MyAccount account.RcAcc
+
 
 type verzion struct {
 	Version    int
@@ -150,9 +149,7 @@ func handleAddr(request []byte) {
 	//requestBlocks()
 }
 
-func sendCosi() {
 
-}
 
 // handle connection
 func handleConnection(conn net.Conn, requestChannel chan []byte) {
