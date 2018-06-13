@@ -78,34 +78,6 @@ type TxDecSet struct {
 	Sig        RCSign
 }
 
-//TxDPure is the pure struct of the TxDecision
-type TxDPure struct {
-	ID       [32]byte
-	Decision []byte
-	Sig      RCSign
-}
-
-//TDSHeader is The Header part of TxDecSS
-type TDSHeader struct {
-	ID      [32]byte
-	HashID  [32]byte
-	ShardID uint32
-	TxCnt   uint32
-	TxIndex []uint32
-	MemCnt  uint32
-	MemD    []TxDPure
-	Sig     RCSign
-}
-
-//TxDecSS is the set of TxDecSet
-type TxDecSS struct {
-	ShardNum uint32
-	Header   []TDSHeader
-	TxCnt    uint32
-	Tx       [][32]byte
-	HashMap  map[[32]byte]uint32
-}
-
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
 	ID         [32]byte

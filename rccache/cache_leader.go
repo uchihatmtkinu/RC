@@ -143,13 +143,7 @@ func (d *dbRef) UpdateTXCache(a *basic.TxDecision) error {
 //ProcessTDS deal with the TDS
 func (d *dbRef) ProcessTDS(b *basic.TxDecSet) {
 	if b.ShardIndex != d.ShardNum {
-		if d.TDSS.TxCnt >= basic.MaxDecSSSize {
-			d.TDSSSent = d.TDSS
-			tmp := []basic.TxDecSet{*b}
-			d.TDSS.Build(&tmp)
-		} else {
-			d.TDSS.AddTxDec(b)
-		}
+
 	}
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmp, ok := d.TXCache[b.TxArray[i]]
@@ -178,4 +172,12 @@ func (d *dbRef) Release() {
 	d.TDSCache = d.TDSCache[1:]
 	d.TLSCache = d.TLSCache[1:]
 	d.startIndex++
+}
+
+func (d *dbRef) GetTLandTDS() (*[]basic.TxList, *[]basic.TxDecSet) {
+	tmp := new([]basic.TxDecSet)
+	for i := 0; i <= len(d.TDSCache); i++ {
+		*tmp = append(*tmp, d.TDSCache[i][d.ShardNum])
+	}
+	return &d.TLCache, tmp
 }

@@ -121,30 +121,6 @@ func (d *dbRef) GetTDS(b *basic.TxDecSet) error {
 	return nil
 }
 
-//GetTDSS handle the txblock sent by the leader
-func (d *dbRef) GetTDSS(a *basic.TxDecSS) error {
-	for i := uint32(0); i < a.ShardNum; i++ {
-		for j := uint32(0); j < a.Header[i].TxCnt; j++ {
-			tmpH := a.Tx[a.Header[i].TxIndex[j]]
-			tmp, ok := d.TXCache[tmpH]
-			if !ok {
-				tmp = new(CrossShardDec)
-				tmp.NewFromOther(a.Header[i].ShardID, a.Result(int(i), int(j)))
-				d.TXCache[tmpH] = tmp
-			} else {
-				tmp.UpdateFromOther(a.Header[i].ShardID, a.Result(int(i), int(j)))
-				if tmp.Total == 0 {
-					d.UnlockTx(tmp.Data)
-					delete(d.TXCache, tmpH)
-				} else {
-					d.TXCache[tmpH] = tmp
-				}
-			}
-		}
-	}
-	return nil
-}
-
 //GetTxBlock handle the txblock sent by the leader
 func (d *dbRef) GetTxBlock(a *basic.TxBlock) error {
 	for i := uint32(0); i < a.TxCnt; i++ {

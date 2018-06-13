@@ -49,8 +49,6 @@ type dbRef struct {
 	Ready    []basic.Transaction
 	TxB      *basic.TxBlock
 	prk      ecdsa.PrivateKey
-	TDSS     *basic.TxDecSS
-	TDSSSent *basic.TxDecSS
 
 	//Miner
 	TLNow      *basic.TxDecision
