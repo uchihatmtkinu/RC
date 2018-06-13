@@ -162,6 +162,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 
 }
 
+
 func StartServer(nodeID string, height int) {
 	//assume in one computer.
 	//nodeAddress = fmt.Sprintf("%s", nodeID)
@@ -188,6 +189,7 @@ func StartServer(nodeID string, height int) {
 			log.Panic(err)
 		}
 		go handleConnection(conn, requestChannel)
+
 		request = <- requestChannel
 		command = bytesToCommand(request[:commandLength])
 		fmt.Printf("Received %s command\n", command)

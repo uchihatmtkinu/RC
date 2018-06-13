@@ -30,7 +30,7 @@ var cosiSig		cosi.SignaturePart
 //leader use this
 func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.SignaturePart{
 	//initialize
-	sbMessage := sb.Serialize()
+	sbMessage := sb.Hash
 	cosimask = make([]byte, (numMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
 	commits = make([]cosi.Commitment, numMems)
 	pubKeys = make([]ed25519.PublicKey, numMems)
@@ -101,7 +101,7 @@ func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.Signa
 
 //member use this
 func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
-	sbMessage = sb.Serialize()
+	sbMessage = sb.Hash
 	leaderSBMessage := <-cosiAnnounceCh
 	if (!verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage))) {
 		fmt.Println("Sync Block from leader is wrong!")
@@ -133,9 +133,9 @@ func handleCommit(request []byte) []byte{
 
 
 
-func handleAnnounce(request []byte) challengeMessage {
+func handleAnnounce(request []byte) []byte {
 	var buff bytes.Buffer
-	var payload challengeMessage
+	var payload []byte
 
 	buff.Write(request[commandLength:])
 	dec := gob.NewDecoder(&buff)
