@@ -57,8 +57,8 @@ type TxList struct {
 
 //TxDecision is the decisions based on given TxList
 type TxDecision struct {
-	ID       [32]byte
-	HashID   [32]byte
+	ID       [32]byte  // miner id what id?  hash256(pubkey)
+	HashID   [32]byte // transaction list id
 	TxCnt    uint32
 	Decision []byte
 	Target   uint32
