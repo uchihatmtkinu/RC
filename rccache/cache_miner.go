@@ -9,7 +9,7 @@ import (
 )
 
 //VerifyTx verify the utxos related to transaction a
-func (d *dbRef) VerifyTx(a *basic.Transaction) bool {
+func (d *DbRef) VerifyTx(a *basic.Transaction) bool {
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		if a.In[i].ShardIndex() == d.ShardNum {
 			if !d.db.CheckUTXO(&a.In[i], a.Hash) {
@@ -21,7 +21,7 @@ func (d *dbRef) VerifyTx(a *basic.Transaction) bool {
 }
 
 //LockTx locks all utxos related to transction a
-func (d *dbRef) LockTx(a *basic.Transaction) error {
+func (d *DbRef) LockTx(a *basic.Transaction) error {
 	d.db.TXCache[a.Hash] = 1
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		if a.In[i].ShardIndex() == d.ShardNum {
@@ -35,7 +35,7 @@ func (d *dbRef) LockTx(a *basic.Transaction) error {
 }
 
 //UnlockTx locks all utxos related to transction a
-func (d *dbRef) UnlockTx(a *basic.Transaction) error {
+func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 	delete(d.db.TXCache, a.Hash)
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		if a.In[i].ShardIndex() == d.ShardNum {
@@ -49,7 +49,7 @@ func (d *dbRef) UnlockTx(a *basic.Transaction) error {
 }
 
 //GetTxList and store those transactions
-func (d *dbRef) GetTxList(a *basic.TxList) error {
+func (d *DbRef) GetTxList(a *basic.TxList) error {
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if ok {
@@ -64,7 +64,7 @@ func (d *dbRef) GetTxList(a *basic.TxList) error {
 }
 
 //ProcessTL verify the transactions in the txlist
-func (d *dbRef) ProcessTL(a *basic.TxList) error {
+func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	d.TLNow = new(basic.TxDecision)
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
@@ -100,8 +100,8 @@ func (d *dbRef) ProcessTL(a *basic.TxList) error {
 	return nil
 }
 
-//GetTxDecSet and ready to verify txblock
-func (d *dbRef) GetTDS(b *basic.TxDecSet) error {
+//GetTDS and ready to verify txblock
+func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmp, ok := d.TXCache[b.TxArray[i]]
 		if !ok {
@@ -124,7 +124,7 @@ func (d *dbRef) GetTDS(b *basic.TxDecSet) error {
 }
 
 //GetTxBlock handle the txblock sent by the leader
-func (d *dbRef) GetTxBlock(a *basic.TxBlock) error {
+func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	if d.TxB == nil {
 		d.TxB = new([][32]byte)
 	}

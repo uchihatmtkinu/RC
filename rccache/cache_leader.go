@@ -6,8 +6,8 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
-//GenerateTXList is to create TxList given transaction
-func (d *dbRef) MakeTXList(b *basic.Transaction) error {
+//MakeTXList is to create TxList given transaction
+func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	tmp, ok := d.TXCache[b.Hash]
 	if !ok {
 		tmp.New(b)
@@ -32,7 +32,7 @@ func (d *dbRef) MakeTXList(b *basic.Transaction) error {
 }
 
 //SignTXL is to sign all txlist
-func (d *dbRef) SignTXL() {
+func (d *DbRef) SignTXL() {
 	d.TL.Sign(&d.prk)
 	for i := uint32(0); i < basic.ShardCnt; i++ {
 		if i != d.ShardNum {
@@ -43,7 +43,7 @@ func (d *dbRef) SignTXL() {
 
 //BuildTDS is to sign all txDecSet
 //Must after SignTXL
-func (d *dbRef) BuildTDS() {
+func (d *DbRef) BuildTDS() {
 	d.TDS = new([basic.ShardCnt]basic.TxDecSet)
 	for i := uint32(0); i < basic.ShardCnt; i++ {
 		d.TDS[i].Set(&d.TLS[i], d.ShardNum)
@@ -55,7 +55,7 @@ func (d *dbRef) BuildTDS() {
 
 //NewTxList initialize the txList
 //Must after BuildTDS
-func (d *dbRef) NewTxList() error {
+func (d *DbRef) NewTxList() error {
 	if d.TL != nil {
 		d.TLCache = append(d.TLCache, *d.TL)
 		d.TLSCache = append(d.TLSCache, *d.TLS)
@@ -74,7 +74,7 @@ func (d *dbRef) NewTxList() error {
 }
 
 //GenerateTxBlock makes the TxBlock
-func (d *dbRef) GenerateTxBlock() error {
+func (d *DbRef) GenerateTxBlock() error {
 	height := d.TxB.Height
 	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.db.lastTB, &d.prk, height+1, 0)
 	for i := 0; i < len(d.Ready); i++ {
@@ -86,7 +86,8 @@ func (d *dbRef) GenerateTxBlock() error {
 	return nil
 }
 
-func (d *dbRef) GenerateFinalBlock() error {
+//GenerateFinalBlock generate final block
+func (d *DbRef) GenerateFinalBlock() error {
 	tmp := d.db.MakeFinalTx()
 	height := d.TxB.Height
 	d.TxB.MakeTxBlock(d.ID, tmp, d.db.lastTB, &d.prk, height+1, 1)
@@ -94,7 +95,7 @@ func (d *dbRef) GenerateFinalBlock() error {
 }
 
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
-func (d *dbRef) UpdateTXCache(a *basic.TxDecision) error {
+func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if a.Target != d.ShardNum {
 		return fmt.Errorf("TxDecision should be the intra-one")
 	}
@@ -141,7 +142,7 @@ func (d *dbRef) UpdateTXCache(a *basic.TxDecision) error {
 }
 
 //ProcessTDS deal with the TDS
-func (d *dbRef) ProcessTDS(b *basic.TxDecSet) {
+func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 	if b.ShardIndex != d.ShardNum {
 
 	}
@@ -166,18 +167,10 @@ func (d *dbRef) ProcessTDS(b *basic.TxDecSet) {
 }
 
 //Release delete the first element of the cache
-func (d *dbRef) Release() {
+func (d *DbRef) Release() {
 	delete(d.TLIndex, d.TLCache[0].HashID)
 	d.TLCache = d.TLCache[1:]
 	d.TDSCache = d.TDSCache[1:]
 	d.TLSCache = d.TLSCache[1:]
 	d.startIndex++
-}
-
-func (d *dbRef) GetTLandTDS() (*[]basic.TxList, *[]basic.TxDecSet) {
-	tmp := new([]basic.TxDecSet)
-	for i := 0; i <= len(d.TDSCache); i++ {
-		*tmp = append(*tmp, d.TDSCache[i][d.ShardNum])
-	}
-	return &d.TLCache, tmp
 }

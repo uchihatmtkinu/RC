@@ -33,7 +33,7 @@ func byteCompare(a, b interface{}) int {
 
 }
 
-//dbRef is the structure stores the cache of a miner for the database
+//DbRef is the structure stores the cache of a miner for the database
 type dbRef struct {
 	ID       [32]byte
 	db       TxBlockChain
