@@ -2,12 +2,12 @@ package Reputation
 
 type RepTransaction struct {
 	//ID   	[]byte
-	MinerID		int
-	Trustiness	byte
+	AddrReal 	[32]byte //public key -> id
+	Rep			uint64
 }
 
-func NewRepTransaction(minerID int, trustiness byte) *RepTransaction{
-	tx := RepTransaction{minerID,trustiness}
+func NewRepTransaction(add [32]byte, rep uint64) *RepTransaction{
+	tx := RepTransaction{add,rep}
 	return &tx
 }
 

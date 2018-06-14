@@ -1,24 +1,14 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func main() {
-	c := make(chan []int,2)
+	a := []int{1,2,3}
+	b := []int{4,5}
+	var s []int
+	s = append(s,a...)
+	fmt.Println(s)
+	s = append(s,b...)
+	fmt.Println(s)
 
-	things := []int{1, 2, 3}
-	a1 := []int{2,3}
-	go func() {
-		c <- things
-	}()
-
-
-
-	go func() {
-		c <- a1
-	}()
-	a := <-c
-	fmt.Println(a)
-	fmt.Println(<-c)
 }

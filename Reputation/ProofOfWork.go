@@ -12,7 +12,7 @@ var (
 	maxNonce = math.MaxInt64
 )
 
-const difficulty = 2
+const difficulty = 4
 
 
 // ProofOfWork represents a proof-of-work
@@ -36,8 +36,8 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.RepBlock.PrevRepBlockHash,
-			pow.RepBlock.HashRepMatrix(),
-			IntToHex(pow.RepBlock.Timestamp),
+			pow.RepBlock.HashRep(),
+			//IntToHex(pow.RepBlock.Timestamp),
 			IntToHex(int64(difficulty)),
 			IntToHex(int64(nonce)),
 		},
@@ -53,10 +53,8 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	var hash [32]byte
 	nonce := 0
 	fmt.Println("Mining the RepBlock containing")
-	fmt.Println(pow.RepBlock.RepMatrix)
 	for nonce < maxNonce {
 		data := pow.prepareData(nonce)
-
 		hash = sha256.Sum256(data)
 		fmt.Printf("\r%x", hash)
 		hashInt.SetBytes(hash[:])

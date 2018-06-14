@@ -11,16 +11,15 @@ import (
 
 type SyncBlock struct {
 	Timestamp     	 	int64
-	//Userlist			[]int
+	Userlist			[][32]byte
 	PrevRepBlockHash 	[]byte
-	PrevTxBlockHashList	[][]byte
 	CoSignature			[]byte
 	Hash          	 	[]byte
 }
 
 //TODO - add userlist
-func NewSynBlock(Userlist []int, PrevRepBlockHash []byte, PrevTxBlockHashList [][]byte) *SyncBlock{
-	block := &SyncBlock{time.Now().Unix(), PrevRepBlockHash, PrevTxBlockHashList,nil, []byte{}}
+func NewSynBlock(userlist [][32]byte, prevRepBlockHash []byte, coSignature []byte) *SyncBlock{
+	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, []byte{}}
 	blockhash := sha256.Sum256(block.prepareData())
 	block.Hash = blockhash[:]
 	return block
@@ -29,11 +28,11 @@ func NewSynBlock(Userlist []int, PrevRepBlockHash []byte, PrevTxBlockHashList []
 func (b *SyncBlock) prepareData() []byte {
 	data := bytes.Join(
 		[][]byte{
-			//IntToHex(b.Userlist),
+			b.UserlistHash(),
 			b.PrevRepBlockHash,
-			b.hashPrevTxBlockHashList(),
+			b.PrevTxBlockHash,
 			b.CoSignature,
-			IntToHex(b.Timestamp),
+			//IntToHex(b.Timestamp),
 		},
 		[]byte{},
 	)
@@ -41,6 +40,18 @@ func (b *SyncBlock) prepareData() []byte {
 	return data
 }
 
+// returns a hash of the userlist in the block
+func (b *SyncBlock) UserlistHash() []byte {
+	var txHashes []byte
+	var txHash [32]byte
+	for _,item := range b.Userlist {
+		txHashes = append(txHashes, item[:]...)
+	}
+	txHash = sha256.Sum256(txHashes)
+	return txHash[:]
+}
+
+/*
 // HashTransactions returns a hash of the transactions in the block
 func (b *SyncBlock) hashPrevTxBlockHashList() []byte {
 	var blockHashes []byte
@@ -53,7 +64,7 @@ func (b *SyncBlock) hashPrevTxBlockHashList() []byte {
 	}
 	blockHash = sha256.Sum256(bytes.Join([][]byte{blockHashes}, []byte{}))
 	return blockHash[:]
-}
+}*/
 
 //encode block
 func (b *SyncBlock) Serialize() []byte {

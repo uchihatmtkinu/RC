@@ -103,7 +103,7 @@ func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.Signa
 func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	sbMessage = sb.Hash
 	leaderSBMessage := <-cosiAnnounceCh
-	if (!verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage))) {
+	if !verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage)) {
 		fmt.Println("Sync Block from leader is wrong!")
 	}
 	myCommit, mySecret, _ = cosi.Commit(nil)

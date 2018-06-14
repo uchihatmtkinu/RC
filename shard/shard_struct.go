@@ -33,7 +33,7 @@ func (ms *MemShard) setShard(shard int) {
 	ms.Shard = shard
 }
 
-func (ms *MemShard) addReputation(addRep int) {
+func (ms *MemShard) addReputation(addRep uint64) {
 	ms.Rep += addRep
 }
 

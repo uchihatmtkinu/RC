@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"fmt"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -23,7 +24,7 @@ type RepBlockchainIterator struct {
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
-func (bc *RepBlockchain) MineRepBlock(RepMatrix [][]int) {
+func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard) {
 	var lastHash []byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
@@ -37,7 +38,7 @@ func (bc *RepBlockchain) MineRepBlock(RepMatrix [][]int) {
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(RepMatrix, lastHash)
+	newRepBlock := NewRepBlock(ms, lastHash)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -58,7 +59,7 @@ func (bc *RepBlockchain) MineRepBlock(RepMatrix [][]int) {
 }
 
 // add a new syncBlock on RepBlockChain
-func (bc *RepBlockchain) AddSyncBlock(Userlist []int, PrevTxBlockHashList [][]byte, CoSignature []byte) {
+func (bc *RepBlockchain) AddSyncBlock(Userlist [][32]byte,  CoSignature []byte) {
 	var lastRepBlockHash []byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
@@ -70,7 +71,7 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int, PrevTxBlockHashList [][]by
 	if err != nil {
 		log.Panic(err)
 	}
-	newSyncBlock := NewSynBlock(Userlist, lastRepBlockHash, PrevTxBlockHashList, CoSignature)
+	newSyncBlock := NewSynBlock(Userlist, lastRepBlockHash,  CoSignature)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
