@@ -31,9 +31,9 @@ var cosiSig		cosi.SignaturePart
 func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.SignaturePart{
 	//initialize
 	sbMessage := sb.Hash
-	cosimask = make([]byte, (numMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
-	commits = make([]cosi.Commitment, numMems)
-	pubKeys = make([]ed25519.PublicKey, numMems)
+	cosimask = make([]byte, (NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
+	commits = make([]cosi.Commitment, NumMems)
+	pubKeys = make([]ed25519.PublicKey, NumMems)
 	myCommit, mySecret, _ = cosi.Commit(nil)
 	for i := range cosimask {
 		cosimask[i] = 0xff // all disabled
@@ -49,15 +49,15 @@ func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.Signa
 	for timeoutflag {
 		select {
 		case commitInfo := <-cosiCommitCh:
-			commits[addrMapToInd[commitInfo.addr]] = handleCommit(commitInfo.request)
-			setMaskBit(addrMapToInd[commitInfo.addr], cosi.Enabled)
+			commits[AddrMapToInd[commitInfo.addr]] = handleCommit(commitInfo.request)
+			setMaskBit(AddrMapToInd[commitInfo.addr], cosi.Enabled)
 		case <-time.After(10 * time.Second):
 			timeoutflag = false
 		}
 	}
 	//handle leader's commit
-	commits[addrMapToInd[MyAccount.Addr]] = myCommit
-	setMaskBit(addrMapToInd[MyAccount.Addr], cosi.Enabled)
+	commits[AddrMapToInd[MyAccount.Addr]] = myCommit
+	setMaskBit(AddrMapToInd[MyAccount.Addr], cosi.Enabled)
 	close(cosiCommitCh)
 
 	// The leader then combines these into an aggregate commit.
@@ -73,18 +73,18 @@ func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.Signa
 		}
 	}
 	//handle response
-	sigParts = make([]cosi.SignaturePart, numMems)
+	sigParts = make([]cosi.SignaturePart, NumMems)
 	timeoutflag = true
 	for timeoutflag {
 		select {
 		case reponseInfo := <-cosiResponseCh:
-			sigParts[addrMapToInd[reponseInfo.addr]] = handleResponse(reponseInfo.request)
+			sigParts[AddrMapToInd[reponseInfo.addr]] = handleResponse(reponseInfo.request)
 		case <-time.After(10 * time.Second):
 			timeoutflag = false
 		}
 	}
 	mySigPart := cosi.Cosign(MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
-	sigParts[addrMapToInd[MyAccount.Addr]] = mySigPart
+	sigParts[AddrMapToInd[MyAccount.Addr]] = mySigPart
 
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
@@ -107,11 +107,11 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 		fmt.Println("Sync Block from leader is wrong!")
 	}
 	myCommit, mySecret, _ = cosi.Commit(nil)
-	sendCosiMessage(leaderAddr, "cosicommit", myCommit)
+	sendCosiMessage(LeaderAddr, "cosicommit", myCommit)
 	request := <- cosiChallengeCh
 	currentChaMessage := handleChallenge(request)
 	sigPart := cosi.Cosign(MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
-	sendCosiMessage(leaderAddr, "cosiresponse", sigPart)
+	sendCosiMessage(LeaderAddr, "cosiresponse", sigPart)
 	request = <- cosiSigCh
 	currentSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
 	valid := cosi.Verify(currentSigMessage.pubKeys, nil, sbMessage, currentSigMessage.cosiSig)

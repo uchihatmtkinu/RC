@@ -16,10 +16,17 @@ const timeoutCosi = 10  //10seconds for timeout
 
 var MyAccount 		account.RcAcc
 
-var leaderAddr 		string
-var addrMapToInd 	map[string]int //ip+port
-var groupMems		[]shard.MemShard
-var numMems			int
+var LeaderAddr 		string
+var AddrMapToInd 	map[string]int //ip+port
+var GroupMems		[]shard.MemShard
+var NumMems			int
+
+//used in rep calculation
+const TP = 1
+const TN = 1
+const FP = 1
+const FN = 1
+
 
 //used in pow
 var MyPoW Reputation.ProofOfWork
