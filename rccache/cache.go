@@ -34,7 +34,7 @@ func byteCompare(a, b interface{}) int {
 }
 
 //DbRef is the structure stores the cache of a miner for the database
-type dbRef struct {
+type DbRef struct {
 	ID       [32]byte
 	db       TxBlockChain
 	TXCache  map[[32]byte]*CrossShardDec
@@ -59,11 +59,11 @@ type dbRef struct {
 	lastIndex  int
 
 	TBCache *[][32]byte
-	mem     *[]shard.MemShard
+	Mem     *[]shard.MemShard
 }
 
-//New is the initilization of dbRef
-func (d *dbRef) New() {
+//New is the initilization of DbRef
+func (d *DbRef) New() {
 	d.db.NewBlockchain()
 	d.TXCache = make(map[[32]byte]*CrossShardDec)
 	d.TxB = d.db.LatestTxBlock()
