@@ -83,6 +83,7 @@ func leaderCosiProcess(ms []shard.MemShard, sb *Reputation.SyncBlock) cosi.Signa
 			timeoutflag = false
 		}
 	}
+
 	mySigPart := cosi.Cosign(MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
 	sigParts[AddrMapToInd[MyAccount.Addr]] = mySigPart
 

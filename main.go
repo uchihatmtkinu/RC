@@ -1,14 +1,28 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
+
+func run(a chan int) {
+	time.Sleep(5*time.Second)
+	a <- 10
+
+}
 func main() {
-	a := []int{1,2,3}
-	b := []int{4,5}
-	var s []int
-	s = append(s,a...)
-	fmt.Println(s)
-	s = append(s,b...)
-	fmt.Println(s)
+	a:=make(chan int)
+	go run(a)
+	for  {
+		select {
+		case f:=<-a:{
+			fmt.Println(f)
+			return
+		}
+		default:
+			fmt.Println("N")
+		}
+	}
 
 }

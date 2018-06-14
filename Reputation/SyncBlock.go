@@ -30,7 +30,6 @@ func (b *SyncBlock) prepareData() []byte {
 		[][]byte{
 			b.UserlistHash(),
 			b.PrevRepBlockHash,
-			b.PrevTxBlockHash,
 			b.CoSignature,
 			//IntToHex(b.Timestamp),
 		},

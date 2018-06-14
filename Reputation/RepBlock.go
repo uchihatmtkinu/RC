@@ -7,6 +7,7 @@ import (
 	"log"
 	"crypto/sha256"
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 type RepBlock struct {
@@ -14,15 +15,15 @@ type RepBlock struct {
 	RepTransactions	 []*RepTransaction
 	/* TODO
 	PrevSyncRepBlockHash [][]byte
-	PrevTxBlockHashes	[][]byte
 	TODO END*/
+	PrevTxBlockHashes	[][32]byte
 	PrevRepBlockHash []byte
 	Hash          	 []byte
 	Nonce         	 int
 }
 
 // NewBlock creates and returns Block
-func NewRepBlock(ms *[]shard.MemShard, prevRepBlockHash []byte) *RepBlock {
+func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlockHash []byte) *RepBlock {
 
 	var repTransactions []*RepTransaction
 	for _,item := range *ms{
@@ -30,29 +31,42 @@ func NewRepBlock(ms *[]shard.MemShard, prevRepBlockHash []byte) *RepBlock {
 	}
 
 	//generate new block
-	block := &RepBlock{time.Now().Unix(), repTransactions, prevRepBlockHash, []byte{}, 0}
+	block := &RepBlock{time.Now().Unix(), repTransactions, *prevTxBlockHashes, prevRepBlockHash, []byte{}, 0}
 
 	pow := NewProofOfWork(block)
-	nonce, hash := pow.Run()
+	nonce, hash, flag := pow.Run()
 	block.Hash = hash[:]
 	block.Nonce = nonce
-
+	if flag {
+		network.RepPowTxCh <- *block
+	}
 	return block
 }
 
 // NewGenesisBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	return NewRepBlock(nil,[]byte{})
+	return NewRepBlock(nil,nil,[]byte{0})
 }
 
 
-// HashTransactions returns a hash of the transactions in the block
+// returns a hash of the RepValue in the block
 func (b *RepBlock) HashRep() []byte {
 	var txHashes []byte
 	var txHash [32]byte
 	for _,item := range b.RepTransactions {
 		txHashes = append(txHashes, UIntToHex(item.Rep)[:]...)
 		txHashes = append(txHashes, item.AddrReal[:]...)
+	}
+	txHash = sha256.Sum256(txHashes)
+	return txHash[:]
+}
+
+// returns a hash of the prevTxBlocks in the block
+func (b *RepBlock) HashPrevTxBlockHashes() []byte {
+	var txHashes []byte
+	var txHash [32]byte
+	for _,item := range b.PrevTxBlockHashes {
+		txHashes = append(txHashes, item[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]

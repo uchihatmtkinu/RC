@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 var (
-	maxNonce = math.MaxInt64
+	maxNonce = math.MaxInt32
 )
 
 const difficulty = 4
@@ -37,6 +38,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 		[][]byte{
 			pow.RepBlock.PrevRepBlockHash,
 			pow.RepBlock.HashRep(),
+			pow.RepBlock.HashPrevTxBlockHashes(),
 			//IntToHex(pow.RepBlock.Timestamp),
 			IntToHex(int64(difficulty)),
 			IntToHex(int64(nonce)),
@@ -48,33 +50,47 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 }
 
 // Run performs a proof-of-work
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run() (int, []byte, bool) {
 	var hashInt big.Int
 	var hash [32]byte
+	var flag bool
+	flag = true
 	nonce := 0
 	fmt.Println("Mining the RepBlock containing")
-	for nonce < maxNonce {
-		data := pow.prepareData(nonce)
-		hash = sha256.Sum256(data)
-		fmt.Printf("\r%x", hash)
-		hashInt.SetBytes(hash[:])
+	for nonce < maxNonce && flag {
+		select {
+		case candidateRepBlock:=<-network.RepPowRxCh:{
+			if pow.Validate(candidateRepBlock.Nonce){
+				nonce = candidateRepBlock.Nonce
+				copy(hash[:], candidateRepBlock.Hash)
+				flag = false
+				return nonce, hash[:], flag
+			}
+		}
+		default:
+			{
+				data := pow.prepareData(nonce)
+				hash = sha256.Sum256(data)
+				fmt.Printf("\r%x", hash)
+				hashInt.SetBytes(hash[:])
 
-		if hashInt.Cmp(pow.Target) == -1 {
-			break
-		} else {
-			nonce++
+				if hashInt.Cmp(pow.Target) == -1 {
+					return nonce, hash[:], flag
+				} else {
+					nonce++
+				}
+			}
 		}
 	}
-	fmt.Print("\n\n")
 
-	return nonce, hash[:]
+	return nonce, hash[:], flag
 }
 
 // Validate validates RepBlock's PoW
-func (pow *ProofOfWork) Validate() bool {
+func (pow *ProofOfWork) Validate(nonce int) bool {
 	var hashInt big.Int
 
-	data := pow.prepareData(pow.RepBlock.Nonce)
+	data := pow.prepareData(nonce)
 	hash := sha256.Sum256(data)
 	hashInt.SetBytes(hash[:])
 
@@ -82,3 +98,5 @@ func (pow *ProofOfWork) Validate() bool {
 
 	return isValid
 }
+
+

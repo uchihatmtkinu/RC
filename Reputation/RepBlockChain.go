@@ -7,6 +7,7 @@ import (
 	"os"
 	"fmt"
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -38,8 +39,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard) {
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(ms, lastHash)
-
+	newRepBlock := NewRepBlock(ms, network.CacheDbRef.TBCache ,lastHash)
+	network.CacheDbRef.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newRepBlock.Hash, newRepBlock.Serialize())
