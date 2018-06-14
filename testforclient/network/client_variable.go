@@ -21,11 +21,11 @@ var AddrMapToInd 	map[string]int //ip+port
 var GroupMems		[]shard.MemShard
 var NumMems			int
 
-//used in rep calculation
-const TP = 1
-const TN = 1
-const FP = 1
-const FN = 1
+//used in rep calculation, scaling factor
+const RepTP = 1
+const RepTN = 1
+const RepFP = 1
+const RepFN = 1
 
 
 //used in pow
