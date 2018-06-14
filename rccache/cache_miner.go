@@ -125,6 +125,10 @@ func (d *dbRef) GetTDS(b *basic.TxDecSet) error {
 
 //GetTxBlock handle the txblock sent by the leader
 func (d *dbRef) GetTxBlock(a *basic.TxBlock) error {
+	if d.TxB == nil {
+		d.TxB = new([][32]byte)
+	}
+	d.TxB = append(d.TxB, a.HashID)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {
