@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 
+	"github.com/uchihatmtkinu/RC/shard"
+
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
@@ -55,6 +57,9 @@ type dbRef struct {
 	TLSent     *basic.TxDecision
 	startIndex int
 	lastIndex  int
+
+	TBCache *[][32]byte
+	mem     *[]shard.MemShard
 }
 
 //New is the initilization of dbRef
@@ -72,8 +77,9 @@ func (d *dbRef) New() {
 
 //CrossShardDec  is the database of cache
 type CrossShardDec struct {
-	Data    *basic.Transaction
-	InCheck []int //-1: Output related
+	Data     *basic.Transaction
+	Decision [basic.ShardSize]byte
+	InCheck  []int //-1: Output related
 	//0: unknown, Not-related; 1: Yes; 2: No; 3: Related-noresult
 	ShardRelated []uint32
 	Res          int8 //0: unknown; 1: Yes; 2: No

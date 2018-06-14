@@ -106,7 +106,9 @@ func (d *dbRef) GetTDS(b *basic.TxDecSet) error {
 		tmp, ok := d.TXCache[b.TxArray[i]]
 		if !ok {
 			tmp = new(CrossShardDec)
+			tmpRes = b.Result(i)
 			tmp.NewFromOther(b.ShardIndex, b.Result(i))
+
 			d.TXCache[b.TxArray[i]] = tmp
 		} else {
 			tmp.UpdateFromOther(b.ShardIndex, b.Result(i))
