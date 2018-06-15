@@ -54,6 +54,13 @@ func (a *TxDecSet) Add(b *TxDecision) {
 	a.MemD = append(a.MemD, *b)
 }
 
+//ResultMiner is the specific result of a miner
+func (a *TxDecSet) ResultMiner(index uint32, miner uint32) byte {
+	x := index / 8
+	y := byte(index % 8)
+	return byte((a.MemD[miner].Decision[x] >> y) & 1)
+}
+
 //Result is the result of the index-th transaction
 func (a *TxDecSet) Result(index uint32) bool {
 	x := index / 8

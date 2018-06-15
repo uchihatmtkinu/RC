@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 type sortType struct {
@@ -89,19 +89,19 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	}
 	SortRep(&sortData, 0, len(*a)-1)
 	b = new([][]int)
-	*b = make([][]int, basic.ShardCnt)
+	*b = make([][]int, gVar.ShardCnt)
 	//rng.Seed()
 	now := 0
-	for i := uint32(0); i < basic.ShardSize; i++ {
-		(*b)[i] = make([]int, basic.ShardSize)
-		for j := uint32(0); j < basic.ShardCnt; j++ {
+	for i := uint32(0); i < gVar.ShardSize; i++ {
+		(*b)[i] = make([]int, gVar.ShardSize)
+		for j := uint32(0); j < gVar.ShardCnt; j++ {
 			(*b)[j][i] = -1
 		}
 	}
-	for i := uint32(len(*a)); i < basic.ShardSize; i++ {
-		check := make([]int, basic.ShardCnt)
-		for j := uint32(0); j < basic.ShardCnt; j++ {
-			x := uint32((c.rng.Int() ^ int((*a)[sortData[now].ID].Rep))) % basic.ShardCnt
+	for i := uint32(len(*a)); i < gVar.ShardSize; i++ {
+		check := make([]int, gVar.ShardCnt)
+		for j := uint32(0); j < gVar.ShardCnt; j++ {
+			x := uint32((c.rng.Int() ^ int((*a)[sortData[now].ID].Rep))) % gVar.ShardCnt
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = int(sortData[now].ID)
@@ -111,7 +111,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 	}
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		c.LeaderSort(a, b, i)
 	}
 }

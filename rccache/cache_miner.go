@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 //VerifyTx verify the utxos related to transaction a
@@ -102,21 +103,37 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 
 //GetTDS and ready to verify txblock
 func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
+	index := 0
+	shift := 0
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmp, ok := d.TXCache[b.TxArray[i]]
+		tmpRes := false
 		if !ok {
 			tmp = new(CrossShardDec)
-			tmpRes := b.Result(i)
+			tmpRes = b.Result(i)
 			tmp.NewFromOther(b.ShardIndex, tmpRes)
 			d.TXCache[b.TxArray[i]] = tmp
 		} else {
-			tmp.UpdateFromOther(b.ShardIndex, b.Result(i))
+			tmpRes = b.Result(i)
+			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
 			if tmp.Total == 0 {
 				d.UnlockTx(tmp.Data)
 				delete(d.TXCache, b.TxArray[i])
 			} else {
 				d.TXCache[b.TxArray[i]] = tmp
 			}
+		}
+
+		if b.ShardIndex == d.ShardNum {
+			for j := uint32(0); j < b.MemCnt; j++ {
+				tmp.Decision[network.GlobalGroupMems[b.MemD[j].ID].InShardID] = (b.MemD[j].Decision[index] >> shift) & 1
+			}
+		}
+		if shift < 7 {
+			shift++
+		} else {
+			index++
+			shift = 0
 		}
 	}
 
