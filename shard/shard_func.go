@@ -69,14 +69,15 @@ func SortRep(a *[]sortType, l int, r int) error {
 }
 
 //GenerateSeed come out the seed used in random number
-func GenerateSeed(a *[][32]byte) int64 {
+func (c *Instance) GenerateSeed(a *[][32]byte) error {
 	var tmp []byte
 	for i := 0; i < len(*a); i++ {
 		tmp = append(tmp, (*a)[i][:]...)
 	}
 	hash := sha256.Sum256(tmp)
+	c.rng.Seed(int64(binary.BigEndian.Uint64(hash[:])))
 
-	return int64(binary.BigEndian.Uint64(hash[:]))
+	return nil
 }
 
 //Sharding do the shards given reputations
