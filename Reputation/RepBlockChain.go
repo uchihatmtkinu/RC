@@ -61,7 +61,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 }
 
 // add a new syncBlock on RepBlockChain
-func (bc *RepBlockchain) AddSyncBlock(Userlist [][32]byte,  CoSignature []byte) {
+func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 	var lastRepBlockHash []byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
