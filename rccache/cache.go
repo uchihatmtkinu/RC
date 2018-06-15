@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 
+	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -42,11 +43,11 @@ type DbRef struct {
 
 	//Leader
 	TLCache  []basic.TxList
-	TLSCache [][basic.ShardCnt]basic.TxList
-	TDSCache [][basic.ShardCnt]basic.TxDecSet
+	TLSCache [][gVar.ShardCnt]basic.TxList
+	TDSCache [][gVar.ShardCnt]basic.TxDecSet
 	TLIndex  map[[32]byte]uint32
-	TLS      *[basic.ShardCnt]basic.TxList
-	TDS      *[basic.ShardCnt]basic.TxDecSet
+	TLS      *[gVar.ShardCnt]basic.TxList
+	TDS      *[gVar.ShardCnt]basic.TxDecSet
 	TL       *basic.TxList
 	Ready    []basic.Transaction
 	TxB      *basic.TxBlock
@@ -78,7 +79,7 @@ func (d *DbRef) New() {
 //CrossShardDec  is the database of cache
 type CrossShardDec struct {
 	Data     *basic.Transaction
-	Decision [basic.ShardSize]byte
+	Decision [gVar.ShardSize]byte
 	InCheck  []int //-1: Output related
 	//0: unknown, Not-related; 1: Yes; 2: No; 3: Related-noresult
 	ShardRelated []uint32

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //MakeTXList is to create TxList given transaction
@@ -23,7 +24,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	d.TL.AddTx(b)
 	d.TXCache[b.Hash] = tmp
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if tmp.InCheck[i] != 0 {
 			d.TLS[i].AddTx(b)
 		}
@@ -34,7 +35,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 //SignTXL is to sign all txlist
 func (d *DbRef) SignTXL() {
 	d.TL.Sign(&d.prk)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if i != d.ShardNum {
 			d.TLS[i].Sign(&d.prk)
 		}
@@ -44,11 +45,11 @@ func (d *DbRef) SignTXL() {
 //BuildTDS is to sign all txDecSet
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
-	d.TDS = new([basic.ShardCnt]basic.TxDecSet)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TDS[i].Set(&d.TLS[i], d.ShardNum)
 	}
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TDS[i].Sign(&d.prk)
 	}
 }
@@ -64,8 +65,8 @@ func (d *DbRef) NewTxList() error {
 		d.TLIndex[d.TL.Hash()] = uint32(d.lastIndex)
 	}
 
-	d.TLS = new([basic.ShardCnt]basic.TxList)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	d.TLS = new([gVar.ShardCnt]basic.TxList)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TLS[i].ID = d.ID
 	}
 	d.TL = new(basic.TxList)
@@ -99,7 +100,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if a.Target != d.ShardNum {
 		return fmt.Errorf("TxDecision should be the intra-one")
 	}
-	if a.Single != 1 || uint32(len(a.Sig)) != basic.ShardCnt {
+	if a.Single != 1 || uint32(len(a.Sig)) != gVar.ShardCnt {
 		return fmt.Errorf("TxDecision parameter error")
 	}
 	tmp, ok := d.TLIndex[a.HashID]
@@ -110,8 +111,8 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	tmpTL := d.TLCache[tmpIndex]
 
 	var x, y uint32 = 0, 0
-	tmpTD := make([]basic.TxDecision, basic.ShardCnt)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 
 		tmpTD[i].Set(a.ID, i, 1)
 		tmpTD[i].HashID = d.TLSCache[tmpIndex][i].HashID
@@ -121,7 +122,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 
 	}
 	for i := uint32(0); i < tmpTL.TxCnt; i++ {
-		tmpTx := d.TXCache[tmpTL.TxArray[i].Hash]
+		tmpTx := d.TXCache[tmpTL.TxArray[i]]
 		for j := 0; j < len(tmpTx.ShardRelated); j++ {
 			tmpTD[j].Add((a.Decision[x] >> y) & 1)
 		}
@@ -135,7 +136,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 			y = 0
 		}
 	}
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TDS[i].Add(&tmpTD[i])
 	}
 	return nil
