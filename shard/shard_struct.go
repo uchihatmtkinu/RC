@@ -12,7 +12,7 @@ type MemShard struct {
 	CosiPub		ed25519.PublicKey
 	Shard       int
 	InShardId 	int
-	Role        byte //0 - member, 1 - leader
+	Role        byte //1 - member, 0 - leader
 	Legal       byte //0 - legal,  1 - kickout
 	RealAccount *account.RcAcc
 }
