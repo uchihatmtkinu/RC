@@ -6,7 +6,6 @@ import (
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/rccache"
-	"github.com/uchihatmtkinu/RC/shard"
 )
 
 const protocol = "tcp"
@@ -19,10 +18,10 @@ var LeaderAddr string
 
 //var AddrMapToInd map[string]int //ip+port
 //var GroupMems []shard.MemShard
-var ShardToGlobal [][]int
+
 var GlobalAddrMapToInd map[string]int
-var GlobalGroupMems []shard.MemShard
-var NumMems int
+
+
 var CacheDbRef rccache.DbRef
 
 //used in commitCh
