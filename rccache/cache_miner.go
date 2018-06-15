@@ -129,7 +129,16 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 
 		if b.ShardIndex == d.ShardNum {
 			for j := uint32(0); j < b.MemCnt; j++ {
-				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index] >> shift) & 1
+				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
+			}
+			if tmpRes == false {
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					if tmp.Decision[j] == 1 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTN
+					} else if tmp.Decision[j] == 2 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFP
+					}
+				}
 			}
 		}
 		if shift < 7 {
@@ -153,6 +162,13 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		}
 		if tmp.InCheckSum != 0 {
 			return fmt.Errorf("Not be fully recognized")
+		}
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			if tmp.Decision[j] == 1 {
+				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN
+			} else if tmp.Decision[j] == 2 {
+				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP
+			}
 		}
 	}
 	d.db.AddBlock(d.TxB)
