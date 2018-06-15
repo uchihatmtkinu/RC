@@ -123,6 +123,7 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	return valid
 }
 
+//rx commit
 func handleCommit(request []byte) []byte{
 	var buff bytes.Buffer
 	var payload []byte
@@ -137,7 +138,7 @@ func handleCommit(request []byte) []byte{
 }
 
 
-
+//rx announce
 func handleAnnounce(request []byte) []byte {
 	var buff bytes.Buffer
 	var payload []byte
@@ -151,6 +152,7 @@ func handleAnnounce(request []byte) []byte {
 	return payload
 }
 
+//rx challenge
 func handleChallenge(request []byte) challengeMessage {
 	var buff bytes.Buffer
 	var payload challengeMessage
@@ -164,6 +166,7 @@ func handleChallenge(request []byte) challengeMessage {
 	return payload
 }
 
+// rx response
 func handleResponse(request[]byte) cosi.SignaturePart{
 	var buff bytes.Buffer
 	var payload cosi.SignaturePart
@@ -177,6 +180,7 @@ func handleResponse(request[]byte) cosi.SignaturePart{
 	return payload
 }
 
+//rx cosisig
 func handleCosiSig(request []byte) cosiSigMessage {
 	var buff bytes.Buffer
 	var payload cosiSigMessage
@@ -190,6 +194,7 @@ func handleCosiSig(request []byte) cosiSigMessage {
 	return payload
 }
 
+//send cosi message
 func sendCosiMessage(addr string, command string, message interface{}, ) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)

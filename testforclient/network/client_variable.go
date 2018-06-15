@@ -29,16 +29,19 @@ type commitInfoCh struct {
 	request []byte
 }
 
+// challenge info
 type challengeMessage struct {
 	aggregatePublicKey ed25519.PublicKey
 	aggregateCommit    cosi.Commitment
 }
 
+//response info
 type responseInfoCh struct {
 	addr    string
 	request []byte
 }
 
+//cosisig info
 type cosiSigMessage struct {
 	pubKeys []ed25519.PublicKey
 	cosiSig cosi.SignaturePart

@@ -13,6 +13,7 @@ import (
 const dbFile = "RepBlockchain.db"
 const blocksBucket = "blocks"
 
+//reputation block chain
 type RepBlockchain struct {
 	Tip []byte
 	Db *bolt.DB
@@ -208,6 +209,7 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 	return block
 }
 
+//whether database exisits
 func dbExists(dbFile string) bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return false

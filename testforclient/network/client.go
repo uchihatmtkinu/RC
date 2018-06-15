@@ -19,6 +19,7 @@ var knownGroupNodes = []string{}
 var myheight int
 
 
+//version
 type verzion struct {
 	Version    int
 	BestHeight int
@@ -26,13 +27,13 @@ type verzion struct {
 }
 
 
-
+//address
 type addr struct {
 	AddrList []string
 }
 
 
-
+//command -> byte
 func commandToBytes(command string) []byte {
 	var bytees [commandLength]byte
 
@@ -43,6 +44,7 @@ func commandToBytes(command string) []byte {
 	return bytees[:]
 }
 
+//byte -> command
 func bytesToCommand(bytees []byte) string {
 	var command []byte
 
@@ -55,6 +57,8 @@ func bytesToCommand(bytees []byte) string {
 	return fmt.Sprintf("%s", command)
 }
 
+
+//send data to addr
 func sendData(addr string, data []byte) {
 	conn, err := net.Dial(protocol, addr)
 	if err != nil {
@@ -123,7 +127,7 @@ func handleVersion(request []byte, height int) {
 
 
 
-
+//sen my addr to addr
 func sendAddr(address string) {
 	nodes := addr{knownNodes}
 	nodes.AddrList = append(nodes.AddrList, nodeAddress)
@@ -133,7 +137,7 @@ func sendAddr(address string) {
 	sendData(address, request)
 }
 
-// add
+// handle received address
 func handleAddr(request []byte) {
 	var buff bytes.Buffer
 	var payload addr
@@ -163,7 +167,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 
 }
 
-
+//start a server
 func StartServer(nodeID string, height int) {
 	//assume in one computer.
 	//nodeAddress = fmt.Sprintf("%s", nodeID)
@@ -206,6 +210,7 @@ func StartServer(nodeID string, height int) {
 	}
 }
 
+//encode
 func gobEncode(data interface{}) []byte {
 	var buff bytes.Buffer
 
@@ -218,7 +223,7 @@ func gobEncode(data interface{}) []byte {
 }
 
 
-
+//whether it is a new node
 func nodeIsKnown(addr string) bool {
 	for _, node := range knownNodes {
 		if node == addr {

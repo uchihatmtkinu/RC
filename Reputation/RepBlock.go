@@ -12,6 +12,7 @@ import (
 
 )
 
+//reputation block
 type RepBlock struct {
 	Timestamp       int64
 	RepTransactions []*RepTransaction
