@@ -7,7 +7,7 @@ import (
 
 //MemShard is the struct of miners for sharding and leader selection
 type MemShard struct {
-	Address     string
+	Address     string //ip+port
 	Rep         uint64
 	CosiPub		ed25519.PublicKey
 	Shard       int

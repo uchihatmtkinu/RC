@@ -40,7 +40,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	}
 
 	//announcement
-	for i:=uint32(0); i <gVar.ShardSize; i++ {
+	for i:=0; i < shard.NumMems; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		pubKeys[it.InShardId] = it.CosiPub
 		sendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
@@ -57,8 +57,8 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 		}
 	}
 	//handle leader's commit
-	commits[GlobalAddrMapToInd[account.MyAccount.Addr]] = myCommit
-	setMaskBit(GlobalAddrMapToInd[account.MyAccount.Addr], cosi.Enabled)
+	commits[(*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId] = myCommit
+	setMaskBit((*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId, cosi.Enabled)
 	close(cosiCommitCh)
 
 	// The leader then combines these into an aggregate commit.
@@ -80,15 +80,15 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	for timeoutflag {
 		select {
 		case reponseInfo := <-cosiResponseCh:
-			sigParts[GlobalAddrMapToInd[reponseInfo.addr]] = handleResponse(reponseInfo.request)
+			sigParts[(*ms)[GlobalAddrMapToInd[reponseInfo.addr]].InShardId] = handleResponse(reponseInfo.request)
 		case <-time.After(10 * time.Second):
 			timeoutflag = false
 		}
 	}
 
 	mySigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
-	sigParts[GlobalAddrMapToInd[account.MyAccount.Addr]] = mySigPart
-
+	sigParts[(*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId] = mySigPart
+	close(cosiResponseCh)
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSig = cosigners.AggregateSignature(aggregateCommit, sigParts)
@@ -109,6 +109,7 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	leaderSBMessage := <-cosiAnnounceCh
 	if !verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage)) {
 		fmt.Println("Sync Block from leader is wrong!")
+		//send warning
 	}
 	myCommit, mySecret, _ = cosi.Commit(nil)
 	sendCosiMessage(LeaderAddr, "cosiCommit", myCommit)
