@@ -15,7 +15,9 @@ import (
 	"github.com/uchihatmtkinu/RC/account"
 )
 
+// timeoutflag flag for timeout
 var timeoutflag bool
+// myCommit my cosi commitment
 var myCommit 	cosi.Commitment
 var mySecret 	*cosi.Secret
 var cosimask	[]byte
