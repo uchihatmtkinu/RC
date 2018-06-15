@@ -14,11 +14,12 @@ const commandLength = 12
 const bufferSize = 1000
 const timeoutCosi = 10 * time.Second //10seconds for timeout
 
+//LeaderAddr leader address
 var LeaderAddr string
 
 //var AddrMapToInd map[string]int //ip+port
 //var GroupMems []shard.MemShard
-
+//GlobalAddrMapToInd
 var GlobalAddrMapToInd map[string]int
 
 var CacheDbRef rccache.DbRef

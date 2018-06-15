@@ -1,23 +1,21 @@
 package network
 
 import (
-	"fmt"
-	"net"
+	"bytes"
 	"encoding/gob"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
-	"bytes"
-	"io"
+	"net"
+
 	"github.com/uchihatmtkinu/RC/account"
 )
-
-
 
 var nodeAddress string
 var knownNodes = []string{"localhost:3000"}
 var knownGroupNodes = []string{}
 var myheight int
-
 
 //version
 type verzion struct {
@@ -26,12 +24,10 @@ type verzion struct {
 	AddrFrom   string
 }
 
-
 //address
 type addr struct {
 	AddrList []string
 }
-
 
 //command -> byte
 func commandToBytes(command string) []byte {
@@ -56,7 +52,6 @@ func bytesToCommand(bytees []byte) string {
 
 	return fmt.Sprintf("%s", command)
 }
-
 
 //send data to addr
 func sendData(addr string, data []byte) {
@@ -83,7 +78,6 @@ func sendData(addr string, data []byte) {
 	}
 }
 
-
 //TODO handle data in block
 //func handleGetData(request []byte, bc *Blockchain)
 
@@ -96,6 +90,7 @@ func sendVersion(addr string, height int) {
 
 	sendData(addr, request)
 }
+
 //TODO sync
 func handleVersion(request []byte, height int) {
 	var buff bytes.Buffer
@@ -113,7 +108,7 @@ func handleVersion(request []byte, height int) {
 
 	if myBestHeight < foreignerBestHeight {
 		myBestHeight = foreignerBestHeight
-		fmt.Print("update bestheigh to",myBestHeight)
+		fmt.Print("update bestheigh to", myBestHeight)
 		//sendGetBlocks(payload.AddrFrom)
 	} else if myBestHeight > foreignerBestHeight {
 		sendVersion(payload.AddrFrom, myheight)
@@ -123,9 +118,6 @@ func handleVersion(request []byte, height int) {
 		knownNodes = append(knownNodes, payload.AddrFrom)
 	}
 }
-
-
-
 
 //sen my addr to addr
 func sendAddr(address string) {
@@ -154,8 +146,6 @@ func handleAddr(request []byte) {
 	//requestBlocks()
 }
 
-
-
 // handle connection
 func handleConnection(conn net.Conn, requestChannel chan []byte) {
 	request, err := ioutil.ReadAll(conn)
@@ -167,7 +157,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 
 }
 
-//start a server
+//StartServer start a server
 func StartServer(nodeID string, height int) {
 	//assume in one computer.
 	//nodeAddress = fmt.Sprintf("%s", nodeID)
@@ -195,11 +185,11 @@ func StartServer(nodeID string, height int) {
 		}
 		go handleConnection(conn, requestChannel)
 
-		request = <- requestChannel
+		request = <-requestChannel
 		command = bytesToCommand(request[:commandLength])
 		fmt.Printf("Received %s command\n", command)
 		// TODO instead of switch, we can use select to concurrently solve different commands
-		switch command{
+		switch command {
 		case "add":
 			handleAddr(request)
 		case "version":
@@ -221,7 +211,6 @@ func gobEncode(data interface{}) []byte {
 	}
 	return buff.Bytes()
 }
-
 
 //whether it is a new node
 func nodeIsKnown(addr string) bool {

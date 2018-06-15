@@ -1,17 +1,19 @@
 package network
 
 import (
-	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation"
-	"github.com/uchihatmtkinu/RC/gVar"
 	"bytes"
 	"encoding/gob"
 	"log"
+
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 )
+
 //var currentTxList *[]basic.TxList
 //var currentTxDecSet *[]basic.TxDecSet
 
-//pow process
+//RepProcess pow process
 func RepProcess(ms *[]shard.MemShard) {
 	var it *shard.MemShard
 	flag := true
@@ -22,14 +24,16 @@ func RepProcess(ms *[]shard.MemShard) {
 
 	for flag {
 		select {
-			case item := <-Reputation.RepPowTxCh: {
+		case item := <-Reputation.RepPowTxCh:
+			{
 				for i := uint32(0); i < gVar.ShardSize; i++ {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 					sendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
 				}
 				flag = false
 			}
-			case repPowRxInfo:= <- repPowRxCh: {
+		case repPowRxInfo := <-repPowRxCh:
+			{
 				Reputation.RepPowRxCh <- handleRepPowRx(repPowRxInfo)
 				if <-Reputation.RepPowRxValidate {
 					flag = false
@@ -43,7 +47,7 @@ func RepProcess(ms *[]shard.MemShard) {
 }
 
 //send reputation block
-func sendRepPowMessage(addr string, command string, message []byte ) {
+func sendRepPowMessage(addr string, command string, message []byte) {
 	request := append(commandToBytes(command), message...)
 	sendData(addr, request)
 }
