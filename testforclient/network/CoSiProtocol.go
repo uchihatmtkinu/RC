@@ -43,7 +43,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		pubKeys[it.InShardId] = it.CosiPub
-		sendCosiMessage(it.Address, "cosiAnnouncement", sbMessage)
+		sendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 	}
 	//handle commits
 	timeoutflag = true
@@ -71,7 +71,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		if maskBit(it.InShardId)==cosi.Enabled {
-			sendCosiMessage(it.Address, "cosiChallenge", currentChaMessage)
+			sendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 		}
 	}
 	//handle response
@@ -111,11 +111,11 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 		fmt.Println("Sync Block from leader is wrong!")
 	}
 	myCommit, mySecret, _ = cosi.Commit(nil)
-	sendCosiMessage(LeaderAddr, "cosicommit", myCommit)
+	sendCosiMessage(LeaderAddr, "cosiCommit", myCommit)
 	request := <- cosiChallengeCh
 	currentChaMessage := handleChallenge(request)
 	sigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
-	sendCosiMessage(LeaderAddr, "cosiresponse", sigPart)
+	sendCosiMessage(LeaderAddr, "cosiRespon", sigPart)
 	request = <- cosiSigCh
 	currentSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
 	valid := cosi.Verify(currentSigMessage.pubKeys, nil, sbMessage, currentSigMessage.cosiSig)
