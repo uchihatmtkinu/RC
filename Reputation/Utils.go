@@ -19,6 +19,19 @@ func IntToHex(num int64) []byte {
 	return buff.Bytes()
 }
 
+// BoolToHex converts a bool to byte array
+func BoolToHex(f bool) []byte {
+	var a []byte
+	if f {
+		a = append(a,1)
+	} else {
+		a = append(a,0)
+	}
+
+	return a
+}
+
+
 /*
 func UIntToHex(num uint64) []byte {
 	buff := new(bytes.Buffer)

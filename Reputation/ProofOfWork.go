@@ -38,6 +38,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 			pow.RepBlock.PrevRepBlockHash,
 			pow.RepBlock.HashRep(),
 			pow.RepBlock.HashPrevTxBlockHashes(),
+			BoolToHex(pow.RepBlock.StartBlock),
 			//IntToHex(pow.RepBlock.Timestamp),
 			IntToHex(int64(difficulty)),
 			IntToHex(int64(nonce)),

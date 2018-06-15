@@ -1,14 +1,14 @@
 package Reputation
 
 type RepTransaction struct {
-	//ID   	[]byte
-	AddrReal 	[32]byte //public key -> id
+	GlobalID   	int
+	//AddrReal 	[32]byte //public key -> id
 	Rep			int64
 }
 
 //new reputation transaction
-func NewRepTransaction(add [32]byte, rep int64) *RepTransaction{
-	tx := RepTransaction{add,rep}
+func NewRepTransaction(globalID int, rep int64) *RepTransaction{
+	tx := RepTransaction{globalID,rep}
 	return &tx
 }
 

@@ -8,8 +8,8 @@ import (
 //MemShard is the struct of miners for sharding and leader selection
 type MemShard struct {
 	Address     string //ip+port
-	Rep         int64
-	TotalRep	int64
+	Rep         int64 //rep this epoch
+	TotalRep	int64 //rep over several epoch
 	CosiPub		ed25519.PublicKey
 	Shard       int
 	InShardId 	int
@@ -45,7 +45,7 @@ func (ms *MemShard) addRep(addRep int64) {
 }
 //addReputation add a reputation value on total rep
 func (ms *MemShard) addTotalRep(addRep int64) {
-	ms.totalRep += addRep
+	ms.TotalRep += addRep
 }
 //clearRep clear rep
 func (ms *MemShard) clearRep() {

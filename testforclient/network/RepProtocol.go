@@ -46,6 +46,15 @@ func RepProcess(ms *[]shard.MemShard) {
 	close(Reputation.RepPowRxCh)
 }
 
+//RepBlockChainSyncProcess
+func RepBlockChainSyncProcess(){
+
+}
+
+func sendMyRepBlockChain(){
+
+}
+
 // sendRepPowMessage send reputation block
 func sendRepPowMessage(addr string, command string, message []byte) {
 	request := append(commandToBytes(command), message...)

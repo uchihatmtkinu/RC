@@ -16,6 +16,7 @@ import (
 type RepBlock struct {
 	Timestamp       int64
 	RepTransactions []*RepTransaction
+	StartBlock		bool
 	/* TODO
 	PrevSyncRepBlockHash [][]byte
 	TODO END*/
@@ -26,16 +27,16 @@ type RepBlock struct {
 }
 
 // NewBlock creates and returns Block
-func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlockHash []byte) *RepBlock {
+func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes *[][32]byte, prevRepBlockHash []byte) *RepBlock {
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		repTransactions = append(repTransactions, NewRepTransaction(item.RealAccount.AddrReal, item.Rep))
+		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
 	}
 
 	//generate new block
-	block := &RepBlock{time.Now().Unix(), repTransactions, *prevTxBlockHashes, prevRepBlockHash, []byte{}, 0}
+	block := &RepBlock{time.Now().Unix(), repTransactions, startBlock, *prevTxBlockHashes, prevRepBlockHash, []byte{}, 0}
 
 	pow := NewProofOfWork(block)
 	nonce, hash, flag := pow.Run()
@@ -49,7 +50,7 @@ func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlo
 
 // NewGenesisBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	return NewRepBlock(nil, nil, []byte{0})
+	return NewRepBlock(nil, true, nil,  []byte{0})
 }
 
 // HashRep returns a hash of the RepValue in the block
