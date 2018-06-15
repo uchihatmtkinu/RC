@@ -52,5 +52,5 @@ var cosiResponseCh chan responseInfoCh
 var cosiSigCh chan []byte
 
 //channel used in pow
-var repPowTxCh chan []byte
+//var repPowTxCh chan []byte
 var repPowRxCh chan []byte

@@ -15,6 +15,7 @@ func main() {
 	a = make(chan bool)
 	go fun()
 	if <-a {
-		fmt.Print("yes")
+		fmt.Print("Yes")
 	}
+	fmt.Print("sorry")
 }

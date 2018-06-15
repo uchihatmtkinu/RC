@@ -63,7 +63,10 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 				nonce = candidateRepBlock.Nonce
 				copy(hash[:], candidateRepBlock.Hash)
 				flag = false
+				RepPowRxValidate <- true
 				return nonce, hash[:], flag
+			} else {
+				RepPowRxValidate <- false
 			}
 		}
 		default:

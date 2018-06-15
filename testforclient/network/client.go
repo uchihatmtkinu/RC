@@ -8,6 +8,7 @@ import (
 	"log"
 	"bytes"
 	"io"
+	"github.com/uchihatmtkinu/RC/account"
 )
 
 
@@ -167,8 +168,8 @@ func StartServer(nodeID string, height int) {
 	//assume in one computer.
 	//nodeAddress = fmt.Sprintf("%s", nodeID)
 	myheight = height
-	MyAccount.New(nodeID)
-	ln, err := net.Listen(protocol, MyAccount.Addr)
+	account.MyAccount.New(nodeID)
+	ln, err := net.Listen(protocol, account.MyAccount.Addr)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -177,7 +178,7 @@ func StartServer(nodeID string, height int) {
 	//TODO generate block.
 	//bc := NewBlockchain(nodeID)
 
-	if MyAccount.Addr != knownNodes[0] {
+	if account.MyAccount.Addr != knownNodes[0] {
 		sendVersion(knownNodes[0], myheight)
 	}
 	var command string

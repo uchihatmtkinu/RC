@@ -14,7 +14,9 @@ import (
 func RepProcess(ms *[]shard.MemShard) {
 	var it *shard.MemShard
 	flag := true
-
+	Reputation.RepPowTxCh = make(chan Reputation.RepBlock)
+	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
+	Reputation.RepPowRxValidate = make(chan bool)
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
 
 	for flag {
@@ -22,19 +24,24 @@ func RepProcess(ms *[]shard.MemShard) {
 			case item := <-Reputation.RepPowTxCh: {
 				for i := uint32(0); i < gVar.ShardSize; i++ {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-					sendRepPowMessage(it.Address, "RepPowAnnounce", item.Serialize())
+					sendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
 				}
 				flag = false
 			}
 			case repPowRxInfo:= <- repPowRxCh: {
-				handleRepPowRx(repPowRxInfo)
+				Reputation.RepPowRxCh <- handleRepPowRx(repPowRxInfo)
+				if <-Reputation.RepPowRxValidate {
+					flag = false
+				}
 			}
-
 		}
 	}
+	close(Reputation.RepPowRxValidate)
+	close(Reputation.RepPowTxCh)
+	close(Reputation.RepPowRxCh)
 }
 
-func sendRepPowMessage(addr string, command string, message []byte, ) {
+func sendRepPowMessage(addr string, command string, message []byte ) {
 	request := append(commandToBytes(command), message...)
 	sendData(addr, request)
 }
