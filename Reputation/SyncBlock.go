@@ -25,6 +25,7 @@ func NewSynBlock(userlist [][32]byte, prevRepBlockHash []byte, coSignature []byt
 	return block
 }
 
+//prepare []byte data
 func (b *SyncBlock) prepareData() []byte {
 	data := bytes.Join(
 		[][]byte{

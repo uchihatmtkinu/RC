@@ -50,8 +50,8 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	for timeoutflag {
 		select {
 		case commitInfo := <-cosiCommitCh:
-			commits[GlobalAddrMapToInd[commitInfo.addr]] = handleCommit(commitInfo.request)
-			setMaskBit(GlobalAddrMapToInd[commitInfo.addr], cosi.Enabled)
+			commits[(*ms)[GlobalAddrMapToInd[commitInfo.addr]].InShardId] = handleCommit(commitInfo.request)
+			setMaskBit((*ms)[GlobalAddrMapToInd[commitInfo.addr]].InShardId, cosi.Enabled)
 		case <-time.After(10 * time.Second):
 			timeoutflag = false
 		}

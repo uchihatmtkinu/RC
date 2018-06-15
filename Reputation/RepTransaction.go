@@ -6,6 +6,7 @@ type RepTransaction struct {
 	Rep			uint64
 }
 
+//new reputation transaction
 func NewRepTransaction(add [32]byte, rep uint64) *RepTransaction{
 	tx := RepTransaction{add,rep}
 	return &tx
