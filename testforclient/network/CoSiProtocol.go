@@ -26,7 +26,7 @@ var sbMessage	[]byte
 var cosiSig		cosi.SignaturePart
 
 
-//leader use this
+// leaderCosiProcess leader use this
 func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.SignaturePart{
 	//initialize
 	var it *shard.MemShard
@@ -103,7 +103,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	return cosiSig
 }
 
-//member use this
+// memberCosiProcess member use this
 func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	sbMessage = sb.Hash
 	leaderSBMessage := <-cosiAnnounceCh
@@ -123,7 +123,7 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	return valid
 }
 
-//rx commit
+// handleCommit rx commit
 func handleCommit(request []byte) []byte{
 	var buff bytes.Buffer
 	var payload []byte
@@ -138,7 +138,7 @@ func handleCommit(request []byte) []byte{
 }
 
 
-//rx announce
+// handleAnnounce rx announce
 func handleAnnounce(request []byte) []byte {
 	var buff bytes.Buffer
 	var payload []byte
@@ -152,7 +152,7 @@ func handleAnnounce(request []byte) []byte {
 	return payload
 }
 
-//rx challenge
+// handleChallenge rx challenge
 func handleChallenge(request []byte) challengeMessage {
 	var buff bytes.Buffer
 	var payload challengeMessage
@@ -166,7 +166,7 @@ func handleChallenge(request []byte) challengeMessage {
 	return payload
 }
 
-// rx response
+// handleResponse rx response
 func handleResponse(request[]byte) cosi.SignaturePart{
 	var buff bytes.Buffer
 	var payload cosi.SignaturePart
@@ -180,7 +180,7 @@ func handleResponse(request[]byte) cosi.SignaturePart{
 	return payload
 }
 
-//rx cosisig
+// handleCosiSig rx cosisig
 func handleCosiSig(request []byte) cosiSigMessage {
 	var buff bytes.Buffer
 	var payload cosiSigMessage
@@ -194,14 +194,14 @@ func handleCosiSig(request []byte) cosiSigMessage {
 	return payload
 }
 
-//send cosi message
+// sendCosiMessage send cosi message
 func sendCosiMessage(addr string, command string, message interface{}, ) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
 
-//compare whether the message from leader is the same as itself
+// verifySBMessage compare whether the message from leader is the same as itself
 func verifySBMessage(a,b []byte) bool{
 	if a == nil && b == nil {
 		return true;
@@ -220,7 +220,7 @@ func verifySBMessage(a,b []byte) bool{
 	return true
 }
 
-// enable = 0 = false, disable = 1= true
+// setMaskBit enable = 0 = false, disable = 1= true
 func setMaskBit(signer int, value cosi.MaskBit) {
 	byt := signer >> 3
 
@@ -236,8 +236,7 @@ func setMaskBit(signer int, value cosi.MaskBit) {
 	}
 }
 
-// MaskBit returns a boolean value indicating whether
-// the indicated signer is Enabled or Disabled.
+// maskBit returns a boolean value indicating whether the indicated signer is Enabled or Disabled.
 func maskBit(signer int) (value cosi.MaskBit) {
 	byt := signer >> 3
 	bit := byte(1) << uint(signer&7)

@@ -46,13 +46,13 @@ func RepProcess(ms *[]shard.MemShard) {
 	close(Reputation.RepPowRxCh)
 }
 
-//send reputation block
+// sendRepPowMessage send reputation block
 func sendRepPowMessage(addr string, command string, message []byte) {
 	request := append(commandToBytes(command), message...)
 	sendData(addr, request)
 }
 
-//receive reputation block
+// handleRepPowRx receive reputation block
 func handleRepPowRx(request []byte) Reputation.RepBlock {
 	var buff bytes.Buffer
 	var payload Reputation.RepBlock

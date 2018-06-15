@@ -17,7 +17,7 @@ type SyncBlock struct {
 	Hash          	 	[]byte
 }
 
-//TODO - add userlist
+// NewSynBlock new sync block
 func NewSynBlock(userlist [][32]byte, prevRepBlockHash []byte, coSignature []byte) *SyncBlock{
 	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, []byte{}}
 	blockhash := sha256.Sum256(block.prepareData())
@@ -25,7 +25,7 @@ func NewSynBlock(userlist [][32]byte, prevRepBlockHash []byte, coSignature []byt
 	return block
 }
 
-//prepare []byte data
+// prepareData prepare []byte data
 func (b *SyncBlock) prepareData() []byte {
 	data := bytes.Join(
 		[][]byte{
@@ -40,7 +40,7 @@ func (b *SyncBlock) prepareData() []byte {
 	return data
 }
 
-// returns a hash of the userlist in the block
+// UserlistHash returns a hash of the userlist in the block
 func (b *SyncBlock) UserlistHash() []byte {
 	var txHashes []byte
 	var txHash [32]byte
@@ -66,7 +66,7 @@ func (b *SyncBlock) hashPrevTxBlockHashList() []byte {
 	return blockHash[:]
 }*/
 
-//encode block
+// Serialize encode block
 func (b *SyncBlock) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
@@ -78,7 +78,7 @@ func (b *SyncBlock) Serialize() []byte {
 }
 
 
-//decode Syncblock
+// DeserializeSyncBlock decode Syncblock
 func DeserializeSyncBlock(d []byte) *SyncBlock {
 	var block SyncBlock
 	decoder := gob.NewDecoder(bytes.NewReader(d))
