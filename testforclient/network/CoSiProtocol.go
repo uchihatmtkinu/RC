@@ -12,6 +12,7 @@ import (
 	"log"
 	"encoding/gob"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/account"
 )
 
 var timeoutflag bool
@@ -30,9 +31,9 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	//initialize
 	var it *shard.MemShard
 	sbMessage := sb.Hash
-	cosimask = make([]byte, (NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
-	commits = make([]cosi.Commitment, NumMems)
-	pubKeys = make([]ed25519.PublicKey, NumMems)
+	cosimask = make([]byte, (shard.NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
+	commits = make([]cosi.Commitment, shard.NumMems)
+	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
 	myCommit, mySecret, _ = cosi.Commit(nil)
 	for i := range cosimask {
 		cosimask[i] = 0xff // all disabled
@@ -40,7 +41,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 
 	//announcement
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
-		it = &(*ms)[ShardToGlobal[MyMenShard.Shard][i]]
+		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		pubKeys[it.InShardId] = it.CosiPub
 		sendCosiMessage(it.Address, "cosiAnnouncement", sbMessage)
 	}
@@ -56,8 +57,8 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 		}
 	}
 	//handle leader's commit
-	commits[GlobalAddrMapToInd[MyAccount.Addr]] = myCommit
-	setMaskBit(GlobalAddrMapToInd[MyAccount.Addr], cosi.Enabled)
+	commits[GlobalAddrMapToInd[account.MyAccount.Addr]] = myCommit
+	setMaskBit(GlobalAddrMapToInd[account.MyAccount.Addr], cosi.Enabled)
 	close(cosiCommitCh)
 
 	// The leader then combines these into an aggregate commit.
@@ -68,13 +69,13 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 
 	//sign or challenge
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
-		it = &(*ms)[ShardToGlobal[MyMenShard.Shard][i]]
+		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		if maskBit(it.InShardId)==cosi.Enabled {
 			sendCosiMessage(it.Address, "cosiChallenge", currentChaMessage)
 		}
 	}
 	//handle response
-	sigParts = make([]cosi.SignaturePart, NumMems)
+	sigParts = make([]cosi.SignaturePart, shard.NumMems)
 	timeoutflag = true
 	for timeoutflag {
 		select {
@@ -85,15 +86,15 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 		}
 	}
 
-	mySigPart := cosi.Cosign(MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
-	sigParts[GlobalAddrMapToInd[MyAccount.Addr]] = mySigPart
+	mySigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
+	sigParts[GlobalAddrMapToInd[account.MyAccount.Addr]] = mySigPart
 
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSig = cosigners.AggregateSignature(aggregateCommit, sigParts)
 	currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
-		it = &(*ms)[ShardToGlobal[MyMenShard.Shard][i]]
+		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		if maskBit(it.InShardId)==cosi.Enabled {
 			sendCosiMessage(it.Address, "cosiSig", currentSigMessage)
 		}
@@ -113,7 +114,7 @@ func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
 	sendCosiMessage(LeaderAddr, "cosicommit", myCommit)
 	request := <- cosiChallengeCh
 	currentChaMessage := handleChallenge(request)
-	sigPart := cosi.Cosign(MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
+	sigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
 	sendCosiMessage(LeaderAddr, "cosiresponse", sigPart)
 	request = <- cosiSigCh
 	currentSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse

@@ -7,3 +7,4 @@ package Reputation
 var RepPowRxCh chan RepBlock
 var RepPowTxCh chan RepBlock
 
+var MyRepBlockChain RepBlockchain
