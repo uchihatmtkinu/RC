@@ -9,6 +9,7 @@ import (
 	"math/big"
 
 	"github.com/uchihatmtkinu/RC/cryptonew"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //Init initial the big.Int parameters
@@ -25,12 +26,12 @@ func (a *InType) Acc() bool {
 //ShardIndex returns the target shard of the input address
 func (a *InType) ShardIndex() uint32 {
 	tmp := cryptonew.GenerateAddr(a.Puk())
-	return uint32(tmp[0]) % ShardCnt
+	return uint32(tmp[0]) % gVar.ShardCnt
 }
 
 //ShardIndex returns the target shard of the output address
 func (a *OutType) ShardIndex() uint32 {
-	return uint32(a.Address[0]) % ShardCnt
+	return uint32(a.Address[0]) % gVar.ShardCnt
 }
 
 //Byte return the []byte of the input address used for hash

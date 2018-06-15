@@ -51,7 +51,7 @@ type TxList struct {
 	ID      uint32
 	HashID  [32]byte
 	TxCnt   uint32
-	TxArray []Transaction
+	TxArray [][32]byte
 	Sig     RCSign
 }
 

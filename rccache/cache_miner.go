@@ -49,6 +49,19 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 	return nil
 }
 
+//GetTx update the transaction
+func (d *DbRef) GetTx(a *basic.Transaction) error {
+	tmp, ok := d.TXCache[a.TxArray[i].Hash]
+	if ok {
+		tmp.Update(&a)
+	} else {
+		tmp = new(CrossShardDec)
+		tmp.New(&a)
+		d.TXCache[a.Hash] = tmp
+	}
+	return nil
+}
+
 //GetTxList and store those transactions
 func (d *DbRef) GetTxList(a *basic.TxList) error {
 	for i := uint32(0); i < a.TxCnt; i++ {

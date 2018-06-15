@@ -15,7 +15,7 @@ func (a *TxDecision) Set(ID uint32, target uint32, single uint32) error {
 	a.Target = target
 	a.Single = single
 	if single == 0 {
-		a.Sig = make([]RCSign, ShardCnt)
+		a.Sig = make([]RCSign, gVar.ShardCnt)
 	} else {
 		a.Sig = make([]RCSign, 1)
 	}
@@ -107,8 +107,8 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 			return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 		}
 	} else {
-		a.Sig = make([]RCSign, ShardCnt)
-		for i := uint32(0); i < ShardCnt; i++ {
+		a.Sig = make([]RCSign, gVar.ShardCnt)
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			err = a.Sig[i].DataToSign(buf)
 			if err != nil {
 				return fmt.Errorf("TxDecision Sig decode failed: %s", err)

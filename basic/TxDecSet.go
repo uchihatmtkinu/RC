@@ -46,7 +46,7 @@ func (a *TxDecSet) Set(b *TxList, x uint32) {
 	a.ShardIndex = x
 	a.TxArray = make([][32]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray = append(a.TxArray, b.TxArray[i].Hash)
+		a.TxArray = append(a.TxArray, b.TxArray[i])
 	}
 }
 

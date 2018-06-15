@@ -10,7 +10,7 @@ import (
 func (a *TxList) Hash() [32]byte {
 	tmp := make([]byte, 0, a.TxCnt*32)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp = append(tmp, a.TxArray[i].Hash[:]...)
+		tmp = append(tmp, a.TxArray[i][:]...)
 	}
 	return sha256.Sum256(tmp)
 }
@@ -39,7 +39,7 @@ func (a *TxList) Set(ID uint32) {
 //AddTx adds the tx into transaction list
 func (a *TxList) AddTx(tx *Transaction) {
 	a.TxCnt++
-	a.TxArray = append(a.TxArray, *tx)
+	a.TxArray = append(a.TxArray, tx.Hash)
 }
 
 //Encode returns the byte of a TxList
@@ -48,7 +48,7 @@ func (a *TxList) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray[i].Encode(tmp)
+		EncodeByteL(tmp, a.TxArray[i][:], 32)
 	}
 	a.Sig.SignToData(tmp)
 }
@@ -76,10 +76,11 @@ func (a *TxList) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxList TxCnt decode failed: %s", err)
 	}
-	a.TxArray = make([]Transaction, 0, a.TxCnt)
+	a.TxArray = make([][32]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		var xxx Transaction
-		err = xxx.Decode(buf)
+		err = DecodeByteL(buf, &tmp, 32)
+		var xxx [32]byte
+		copy(xxx[:], tmp[:32])
 		if err != nil {
 			return fmt.Errorf("TxList Tx decode failed-%d: %s", i, err)
 		}
