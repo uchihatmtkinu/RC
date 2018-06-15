@@ -94,8 +94,9 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist [][32]byte,  CoSignature []byte) 
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func NewRepBlockchain() *RepBlockchain {
-	if dbExists() == false {
+func NewRepBlockchain(nodeID string) *RepBlockchain {
+	dbFile := fmt.Sprintf(dbFile, nodeID)
+	if dbExists(dbFile) == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
 	}
@@ -136,8 +137,9 @@ func NewRepBlockchain() *RepBlockchain {
 
 
 // CreateRepBlockchain creates a new blockchain DB
-func CreateRepBlockchain(address string) *RepBlockchain {
-	if dbExists() {
+func CreateRepBlockchain(nodeID string) *RepBlockchain {
+	dbFile := fmt.Sprintf(dbFile, nodeID)
+	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
 	}
@@ -205,8 +207,7 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 	return block
 }
 
-
-func dbExists() bool {
+func dbExists(dbFile string) bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return false
 	}

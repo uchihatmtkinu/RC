@@ -20,6 +20,8 @@ var MyAccount account.RcAcc
 var LeaderAddr string
 var AddrMapToInd map[string]int //ip+port
 var GroupMems []shard.MemShard
+var GlobalAddrMapToInd map[string]int
+var GlobalGroupMems []shard.MemShard
 var NumMems int
 var CacheDbRef		rccache.DbRef
 
