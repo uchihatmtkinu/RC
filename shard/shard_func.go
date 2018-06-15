@@ -9,6 +9,12 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
+type sortType struct {
+	ID      uint32
+	Rep     uint64
+	Address string
+}
+
 //Instance is the struct for sharding
 type Instance struct {
 	rng rand.Rand
@@ -20,7 +26,7 @@ func GetRBData() {
 }
 
 //CompareRep returns whether a has a great reputation than b
-func CompareRep(a *MemShard, b *MemShard) int {
+func CompareRep(a *sortType, b *sortType) int {
 	if a.Rep > b.Rep {
 		return 1
 	} else if b.Rep > a.Rep {
@@ -31,7 +37,7 @@ func CompareRep(a *MemShard, b *MemShard) int {
 }
 
 //SortRep sorts all miners based on their reputation
-func SortRep(a *[]MemShard, l int, r int) error {
+func SortRep(a *[]sortType, l int, r int) error {
 	x := (*a)[(l+r)/2]
 	i := l
 	j := r
@@ -75,37 +81,37 @@ func GenerateSeed(a *[][32]byte) int64 {
 
 //Sharding do the shards given reputations
 func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
-	tail := 0
-	if uint32(len(*a))%basic.ShardSize > 0 {
-		tail = 1
+	sortData := make([]sortType, len(*a))
+	for i := 0; i < len(*a); i++ {
+		sortData[i].Address = (*a)[i].Address
+		sortData[i].ID = uint32(i)
+		sortData[i].Rep = (*a)[i].Rep
 	}
-	SortRep(a, 0, len(*a)-1)
+	SortRep(&sortData, 0, len(*a)-1)
+	b = new([][]int)
+	*b = make([][]int, basic.ShardCnt)
 	//rng.Seed()
 	now := 0
-	nShard := uint32(len(*a)) / basic.ShardSize
-	for i := uint32(len(*a)); i < basic.ShardSize+uint32(tail); i++ {
-		check := make([]int, nShard)
-		tmp := 0
-		final := nShard
-		if nShard > uint32(len(*a)-now) {
-			final = uint32(len(*a) - now)
+	for i := uint32(0); i < basic.ShardSize; i++ {
+		(*b)[i] = make([]int, basic.ShardSize)
+		for j := uint32(0); j < basic.ShardCnt; j++ {
+			(*b)[j][i] = -1
 		}
-		if i == basic.ShardSize {
-			for j := uint32(0); j < nShard; j++ {
-				(*b)[j][i] = -1
-			}
-		}
-		for uint32(tmp) < final {
-			x := uint32((c.rng.Int() ^ (*a)[now].Rep)) % nShard
+	}
+	for i := uint32(len(*a)); i < basic.ShardSize; i++ {
+		check := make([]int, basic.ShardCnt)
+		for j := uint32(0); j < basic.ShardCnt; j++ {
+			x := uint32((c.rng.Int() ^ int((*a)[sortData[now].ID].Rep))) % basic.ShardCnt
 			if check[x] == 0 {
 				check[x] = 1
-				(*b)[x][i] = now
+				(*b)[x][i] = int(sortData[now].ID)
 				now++
-				tmp++
+			} else {
+				j--
 			}
 		}
 	}
-	for i := uint32(0); i < nShard; i++ {
+	for i := uint32(0); i < basic.ShardCnt; i++ {
 		c.LeaderSort(a, b, i)
 	}
 }

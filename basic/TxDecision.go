@@ -7,7 +7,7 @@ import (
 )
 
 //Set initiates the TxDecision given the TxList and the account
-func (a *TxDecision) Set(ID [32]byte, target uint32, single uint32) error {
+func (a *TxDecision) Set(ID uint32, target uint32, single uint32) error {
 	a.TxCnt = 0
 	a.ID = ID
 	a.Target = target
@@ -36,25 +36,25 @@ func (a *TxDecision) Add(x byte) error {
 
 //Sign signs the TxDecision
 func (a *TxDecision) Sign(prk *ecdsa.PrivateKey, x uint32) {
-	tmp := make([]byte, 0, 64+len(a.Decision))
+	tmp := make([]byte, 0, 36+len(a.Decision))
 	tmp = append(a.HashID[:], a.Decision...)
-	tmp = append(tmp, a.ID[:]...)
+	tmp = append(tmp, byteSlice(a.ID)...)
 	tmpHash := sha256.Sum256(tmp)
 	a.Sig[x].Sign(tmpHash[:], prk)
 }
 
 //Verify the signature using public key
 func (a *TxDecision) Verify(puk *ecdsa.PublicKey, x uint32) bool {
-	tmp := make([]byte, 0, 64+len(a.Decision))
+	tmp := make([]byte, 0, 36+len(a.Decision))
 	tmp = append(a.HashID[:], a.Decision...)
-	tmp = append(tmp, a.ID[:]...)
+	tmp = append(tmp, byteSlice(a.ID)...)
 	tmpHash := sha256.Sum256(tmp)
 	return a.Sig[x].Verify(tmpHash[:], puk)
 }
 
 //Encode encodes the TxDecision into []byte
 func (a *TxDecision) Encode(tmp *[]byte) {
-	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.ID)
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.TxCnt)
 	EncodeInt(tmp, a.Target)
@@ -73,11 +73,10 @@ func (a *TxDecision) Encode(tmp *[]byte) {
 // Decode decodes the []byte into TxDecision
 func (a *TxDecision) Decode(buf *[]byte) error {
 	var tmp []byte
-	err := DecodeByteL(buf, &tmp, 32)
+	err := DecodeInt(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxDecsion ID decode failed: %s", err)
 	}
-	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
 		return fmt.Errorf("TxDecsion HashID decode failed: %s", err)

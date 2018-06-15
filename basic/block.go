@@ -10,8 +10,8 @@ import (
 //Hash generates the 32bits hash of one Tx block
 func (a *TxBlock) Hash() [32]byte {
 	tmp1 := make([]byte, 0, 136)
-	tmp1 = append(a.ID[:], a.PrevHash[:]...)
-	tmp1 = append(a.ID[:], a.HashID[:]...)
+	tmp1 = append(byteSlice(a.ID), a.PrevHash[:]...)
+	tmp1 = append(tmp1, a.HashID[:]...)
 	tmp1 = append(tmp1, a.MerkleRoot[:]...)
 	EncodeInt(&tmp1, a.Timestamp)
 	var b [32]byte
@@ -59,15 +59,15 @@ func (a *TxBlock) Verify(puk *ecdsa.PublicKey) (bool, error) {
 //NewGensisTxBlock is the gensis block
 func NewGensisTxBlock() TxBlock {
 	var a TxBlock
-	a.ID = sha256.Sum256([]byte(GenesisTxBlock))
+	a.ID = 0
 	a.TxCnt = 0
-	a.HashID = a.Hash()
+	a.HashID = sha256.Sum256([]byte(GenesisTxBlock))
 	a.Height = 0
 	return a
 }
 
 //MakeTxBlock creates the transaction blocks given verified transactions
-func (a *TxBlock) MakeTxBlock(ID [32]byte, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, kind uint32) error {
+func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, kind uint32) error {
 	a.ID = ID
 	a.Kind = kind
 	a.PrevHash = preHash
@@ -90,7 +90,7 @@ func (a *TxBlock) Serial() []byte {
 
 //Encode converts the block data into bytes
 func (a *TxBlock) Encode(tmp *[]byte) {
-	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.ID)
 	EncodeByteL(tmp, a.PrevHash[:], 32)
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeByteL(tmp, a.MerkleRoot[:], 32)
@@ -107,11 +107,10 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 //Decode converts bytes into block data
 func (a *TxBlock) Decode(buf *[]byte) error {
 	tmp := make([]byte, 0, 32)
-	err := DecodeByteL(buf, &tmp, 32)
+	err := DecodeInt(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxBlock ID failed %s", err)
 	}
-	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
 		return fmt.Errorf("TxBlock PrevHash failed %s", err)
