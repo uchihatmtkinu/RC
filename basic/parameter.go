@@ -11,6 +11,3 @@ const ShardCnt uint32 = 25
 
 //GenesisTxBlock is the predefined hash of TDS
 const GenesisTxBlock = "First TxBlock"
-
-//MaxDecSSSize is the largest size of the DecSS
-const MaxDecSSSize uint32 = 4000

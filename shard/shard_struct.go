@@ -11,6 +11,7 @@ type MemShard struct {
 	Rep         uint64
 	CosiPub		ed25519.PublicKey
 	Shard       int
+	InShardId 	int
 	Role        byte //0 - member, 1 - leader
 	Legal       byte //0 - legal,  1 - kickout
 	RealAccount *account.RcAcc
@@ -24,6 +25,9 @@ func (ms *MemShard) newMemShard(acc *account.RcAcc) {
 	ms.Rep = 0
 }
 
+func (ms *MemShard) setInShardId(id int) {
+	ms.InShardId = id
+}
 //0 - member, 1 - leader
 func (ms *MemShard) setRole(role byte) {
 	ms.Role = role
