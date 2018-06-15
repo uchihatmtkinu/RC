@@ -9,7 +9,6 @@ import (
 	"math/big"
 
 	"github.com/uchihatmtkinu/RC/base58"
-	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/ed25519"
 )
@@ -18,13 +17,13 @@ import (
 type RcAcc struct {
 	Pri      ecdsa.PrivateKey
 	Puk      ecdsa.PublicKey
-	CosiPri	 ed25519.PrivateKey
-	CosiPuk	 ed25519.PublicKey
+	CosiPri  ed25519.PrivateKey
+	CosiPuk  ed25519.PublicKey
 	Addr     string
 	AddrReal [32]byte //public key -> id
 	//AccType  int
-	ID       string
-	Rep		 int //total reputation among a period of time
+	ID  string
+	Rep int //total reputation among a period of time
 }
 
 //New generate a new wallet with different type
@@ -42,6 +41,7 @@ func (acc *RcAcc) New(ID string) {
 	//acc.AccType = accType
 }
 
+//NewCosi xx
 func (acc *RcAcc) NewCosi() {
 	pubKey, priKey, _ := ed25519.GenerateKey(nil)
 	acc.CosiPri = priKey
@@ -61,13 +61,6 @@ func (acc *RcAcc) Load(a1, a2, a3, a4, a5 string) {
 	acc.Addr = a4
 	acc.AddrReal = cryptonew.AddressGenerate(&acc.Pri)
 	//acc.AccType, _ = strconv.Atoi(a5)
-}
-
-//MakeTrans generate a transaction
-func (acc *RcAcc) MakeTrans(In []basic.InType, Out []basic.OutType) basic.Transaction {
-	var tmp basic.Transaction
-
-	return tmp
 }
 
 //RetPri return the private key
