@@ -7,7 +7,7 @@ import (
 	"os"
 	"fmt"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/testforclient/network"
+	"github.com/uchihatmtkinu/RC/rccache"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -25,7 +25,7 @@ type RepBlockchainIterator struct {
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
-func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard) {
+func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef) {
 	var lastHash []byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
@@ -39,8 +39,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard) {
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(ms, network.CacheDbRef.TBCache ,lastHash)
-	network.CacheDbRef.TBCache = nil
+	newRepBlock := NewRepBlock(ms, cache.TBCache ,lastHash)
+	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newRepBlock.Hash, newRepBlock.Serialize())
@@ -182,6 +182,7 @@ func CreateRepBlockchain(nodeID string) *RepBlockchain {
 }
 
 
+//iterator
 func (bc *RepBlockchain) Iterator() *RepBlockchainIterator {
 	bci := &RepBlockchainIterator{bc.Tip, bc.Db}
 

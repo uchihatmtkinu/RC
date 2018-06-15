@@ -85,7 +85,7 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 	return nonce, hash[:], flag
 }
 
-// Validate validates RepBlock's PoW
+// Validate RepBlock's PoW
 func (pow *ProofOfWork) Validate(nonce int) bool {
 	var hashInt big.Int
 
