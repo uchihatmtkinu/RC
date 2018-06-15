@@ -8,8 +8,8 @@ import (
 
 //Sign signs the TxDecSet
 func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
-	tmp := make([]byte, 0, 64+len(a.MemD[0].Decision)*int(a.MemCnt))
-	tmp = append(a.ID[:], a.HashID[:]...)
+	tmp := make([]byte, 0, 36+len(a.MemD[0].Decision)*int(a.MemCnt))
+	tmp = append(byteSlice(a.ID), a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		tmp = append(tmp, a.MemD[i].Decision...)
 	}
@@ -26,8 +26,8 @@ func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 	if sha256.Sum256(tmp) != a.HashID {
 		return false
 	}
-	tmp = make([]byte, 0, 64+len(a.MemD[0].Decision)*int(a.MemCnt))
-	tmp = append(a.ID[:], a.HashID[:]...)
+	tmp = make([]byte, 0, 36+len(a.MemD[0].Decision)*int(a.MemCnt))
+	tmp = append(byteSlice(a.ID), a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		tmp = append(tmp, a.MemD[i].Decision...)
 	}
@@ -71,7 +71,7 @@ func (a *TxDecSet) Result(index uint32) bool {
 
 //Encode encode the TxDecSet into []byte
 func (a *TxDecSet) Encode(tmp *[]byte) {
-	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.ID)
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.MemCnt)
 	EncodeInt(tmp, a.TxCnt)
@@ -88,11 +88,10 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 //Decode decode the []byte into TxDecSet
 func (a *TxDecSet) Decode(buf *[]byte) error {
 	tmp := make([]byte, 0, 32)
-	err := DecodeByteL(buf, &tmp, 32)
+	err := DecodeInt(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxDecSet ID decode failed: %s", err)
 	}
-	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
 		return fmt.Errorf("TxDecSet HashID decode failed: %s", err)

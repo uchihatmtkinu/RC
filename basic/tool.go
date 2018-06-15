@@ -58,6 +58,13 @@ func DecodeByteL(d *[]byte, out *[]byte, l int) error {
 	return nil
 }
 
+//byteSlice returns a slice of a integer
+func byteSlice(x uint32) []byte {
+	var tmp []byte
+	EncodeInt(&tmp, x)
+	return tmp
+}
+
 //EncodeInt Encode the data
 func EncodeInt(current *[]byte, d interface{}) error {
 	buf := new(bytes.Buffer)

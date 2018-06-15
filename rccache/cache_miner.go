@@ -106,9 +106,8 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 		tmp, ok := d.TXCache[b.TxArray[i]]
 		if !ok {
 			tmp = new(CrossShardDec)
-			tmpRes = b.Result(i)
-			tmp.NewFromOther(b.ShardIndex, b.Result(i))
-
+			tmpRes := b.Result(i)
+			tmp.NewFromOther(b.ShardIndex, tmpRes)
 			d.TXCache[b.TxArray[i]] = tmp
 		} else {
 			tmp.UpdateFromOther(b.ShardIndex, b.Result(i))
@@ -120,15 +119,13 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			}
 		}
 	}
+
 	return nil
 }
 
 //GetTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
-	if d.TxB == nil {
-		d.TxB = new([][32]byte)
-	}
-	d.TxB = append(d.TxB, a.HashID)
+
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {

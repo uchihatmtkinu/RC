@@ -30,7 +30,7 @@ func (a *TxList) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //Set init an instance of TxList given those parameters
-func (a *TxList) Set(ID [32]byte) {
+func (a *TxList) Set(ID uint32) {
 	a.ID = ID
 	a.TxCnt = 0
 	a.TxArray = nil
@@ -44,7 +44,7 @@ func (a *TxList) AddTx(tx *Transaction) {
 
 //Encode returns the byte of a TxList
 func (a *TxList) Encode(tmp *[]byte) {
-	EncodeByteL(tmp, a.ID[:], 32)
+	EncodeInt(tmp, a.ID)
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
@@ -63,11 +63,10 @@ func (a *TxList) Serial() []byte {
 //Decode decodes the TxList with []byte
 func (a *TxList) Decode(buf *[]byte) error {
 	tmp := make([]byte, 0, 32)
-	err := DecodeByteL(buf, &tmp, 32)
+	err := DecodeInt(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxList ID decode failed: %s", err)
 	}
-	copy(a.ID[:], tmp[:32])
 	err = DecodeByteL(buf, &tmp, 32)
 	if err != nil {
 		return fmt.Errorf("TxList HashID decode failed: %s", err)

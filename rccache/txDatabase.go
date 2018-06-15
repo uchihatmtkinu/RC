@@ -10,7 +10,6 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 	t.InCheck = make([]int, basic.ShardCnt)
 	tmp := make([]bool, basic.ShardCnt)
 	t.InCheckSum = 0
-
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		xx := a.In[i].ShardIndex()
 		tmp[xx] = true
@@ -18,6 +17,7 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 	}
 	for i := uint32(0); i < a.TxoutCnt; i++ {
 		tmp[a.Out[i].ShardIndex()] = true
+		t.Value += a.Out[i].Value
 	}
 
 	t.ShardRelated = make([]uint32, 0, basic.ShardCnt)
@@ -51,6 +51,7 @@ func (t *CrossShardDec) Update(a *basic.Transaction) {
 	}
 	for i := uint32(0); i < a.TxoutCnt; i++ {
 		tmp[a.Out[i].ShardIndex()] = true
+		t.Value += a.Out[i].Value
 	}
 
 	t.ShardRelated = make([]uint32, 0, basic.ShardCnt)

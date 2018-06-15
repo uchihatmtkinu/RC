@@ -151,9 +151,8 @@ func TestTxList(t *testing.T) {
 	}
 	var tmpTx Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
-	id := FindByte32(123)
 	var tmp1, tmp3 TxList
-	tmp1.Set(id)
+	tmp1.Set(123)
 	for i := 0; i < 5; i++ {
 		tmp1.AddTx(&tmpTx)
 	}

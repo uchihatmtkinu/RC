@@ -7,12 +7,12 @@ import (
 )
 
 func TestSortRep(t *testing.T) {
-	var a []MemShard
+	var a []sortType
 	c := 400000
 	for i := 0; i < c; i++ {
-		var tmp MemShard
+		var tmp sortType
 		tmp.Address = strconv.Itoa(i)
-		tmp.Rep = rand.Int() & 100
+		tmp.Rep = uint64(rand.Int() & 100)
 		a = append(a, tmp)
 	}
 	b := a[:]
