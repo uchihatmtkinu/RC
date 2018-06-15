@@ -19,6 +19,7 @@ func IntToHex(num int64) []byte {
 	return buff.Bytes()
 }
 
+/*
 func UIntToHex(num uint64) []byte {
 	buff := new(bytes.Buffer)
 	err := binary.Write(buff, binary.BigEndian, num)
@@ -27,4 +28,4 @@ func UIntToHex(num uint64) []byte {
 	}
 
 	return buff.Bytes()
-}
+}*/

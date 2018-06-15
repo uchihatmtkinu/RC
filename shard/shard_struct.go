@@ -18,6 +18,7 @@ type MemShard struct {
 	RealAccount *account.RcAcc
 }
 
+//newMemShard new a mem shard
 func (ms *MemShard) newMemShard(acc *account.RcAcc) {
 	ms.Address = acc.Addr
 	ms.RealAccount = acc
@@ -39,8 +40,12 @@ func (ms *MemShard) setShard(shard int) {
 	ms.Shard = shard
 }
 //addReputation add a reputation value
-func (ms *MemShard) addReputation(addRep int64) {
+func (ms *MemShard) addRep(addRep int64) {
 	ms.Rep += addRep
+}
+//addReputation add a reputation value on total rep
+func (ms *MemShard) addTotalRep(addRep int64) {
+	ms.totalRep += addRep
 }
 //clearRep clear rep
 func (ms *MemShard) clearRep() {

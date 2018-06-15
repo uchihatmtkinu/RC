@@ -1,12 +1,13 @@
 package shard
 
-//shard ind+in shard ind -> global index
+//ShardToGlobal shard ind+in shard ind -> global index
 var ShardToGlobal [][]int
 
+//GlobalGroupMems global memshard
 var GlobalGroupMems []MemShard
 
-//number of members within one shard
+//NumMems number of members within one shard
 var NumMems int
 
-//my
+//MyMenShard my
 var MyMenShard MemShard

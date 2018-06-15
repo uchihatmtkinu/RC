@@ -8,7 +8,7 @@ import (
 	"crypto/sha256"
 )
 
-
+//SyncBlock syncblock
 type SyncBlock struct {
 	Timestamp     	 	int64
 	Userlist			[][32]byte

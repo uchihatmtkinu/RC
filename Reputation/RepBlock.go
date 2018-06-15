@@ -12,7 +12,7 @@ import (
 
 )
 
-//reputation block
+// RepBlock reputation block
 type RepBlock struct {
 	Timestamp       int64
 	RepTransactions []*RepTransaction
@@ -52,19 +52,19 @@ func NewGenesisRepBlock() *RepBlock {
 	return NewRepBlock(nil, nil, []byte{0})
 }
 
-// returns a hash of the RepValue in the block
+// HashRep returns a hash of the RepValue in the block
 func (b *RepBlock) HashRep() []byte {
 	var txHashes []byte
 	var txHash [32]byte
 	for _, item := range b.RepTransactions {
-		txHashes = append(txHashes, UIntToHex(item.Rep)[:]...)
+		txHashes = append(txHashes, IntToHex(item.Rep)[:]...)
 		txHashes = append(txHashes, item.AddrReal[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]
 }
 
-// returns a hash of the prevTxBlocks in the block
+// HashPrevTxBlockHashes returns a hash of the prevTxBlocks in the block
 func (b *RepBlock) HashPrevTxBlockHashes() []byte {
 	var txHashes []byte
 	var txHash [32]byte
@@ -75,7 +75,7 @@ func (b *RepBlock) HashPrevTxBlockHashes() []byte {
 	return txHash[:]
 }
 
-//encode block
+// Serialize encode block
 func (b *RepBlock) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
@@ -87,7 +87,7 @@ func (b *RepBlock) Serialize() []byte {
 	return result.Bytes()
 }
 
-//decode Repblock
+// DeserializeRepBlock decode Repblock
 func DeserializeRepBlock(d []byte) *RepBlock {
 	var block RepBlock
 	decoder := gob.NewDecoder(bytes.NewReader(d))
