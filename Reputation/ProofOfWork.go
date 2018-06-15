@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 var (
@@ -59,7 +58,7 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 	fmt.Println("Mining the RepBlock containing")
 	for nonce < maxNonce && flag {
 		select {
-		case candidateRepBlock:=<-network.RepPowRxCh:{
+		case candidateRepBlock:=<-RepPowRxCh:{
 			if pow.Validate(candidateRepBlock.Nonce){
 				nonce = candidateRepBlock.Nonce
 				copy(hash[:], candidateRepBlock.Hash)

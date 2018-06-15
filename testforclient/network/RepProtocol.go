@@ -2,6 +2,7 @@ package network
 
 import (
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 //var currentTxList *[]basic.TxList
 //var currentTxDecSet *[]basic.TxDecSet
