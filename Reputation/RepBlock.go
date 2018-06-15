@@ -7,8 +7,8 @@ import (
 	"log"
 	"crypto/sha256"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/testforclient/network"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 type RepBlock struct {
@@ -28,7 +28,7 @@ func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlo
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
-		item = &(*ms)[network.ShardToGlobal[network.MyMenShard.Shard][i]]
+		item = &(*ms)[gVar.ShardToGlobal[network.MyMenShard.Shard][i]]
 		repTransactions = append(repTransactions,NewRepTransaction(item.RealAccount.AddrReal,item.Rep))
 	}
 

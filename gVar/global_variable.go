@@ -14,3 +14,7 @@ const RepTN = 1
 const RepFP = 1
 const RepFN = 1
 
+//channel
+
+
+
