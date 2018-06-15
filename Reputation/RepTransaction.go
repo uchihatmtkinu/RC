@@ -3,11 +3,11 @@ package Reputation
 type RepTransaction struct {
 	//ID   	[]byte
 	AddrReal 	[32]byte //public key -> id
-	Rep			uint64
+	Rep			int64
 }
 
 //new reputation transaction
-func NewRepTransaction(add [32]byte, rep uint64) *RepTransaction{
+func NewRepTransaction(add [32]byte, rep int64) *RepTransaction{
 	tx := RepTransaction{add,rep}
 	return &tx
 }
