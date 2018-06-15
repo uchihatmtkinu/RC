@@ -111,8 +111,21 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 	}
+	//select leader, index of 0 is the leader
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		c.LeaderSort(a, b, i)
+	}
+	//set shardid, shard, role for all the members
+	for i := uint32(0); i < gVar.ShardCnt; i++{
+		for j := uint32(0); j < gVar.ShardSize; j++{
+			(*a)[(*b)[i][j]].InShardId = int(j)
+			(*a)[(*b)[i][j]].Shard = int(i)
+			if j == 0 {
+				(*a)[(*b)[i][j]].setRole(0)
+			} else {
+				(*a)[(*b)[i][j]].setRole(1)
+			}
+		}
 	}
 }
 
