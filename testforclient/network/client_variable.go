@@ -21,7 +21,6 @@ var LeaderAddr string
 
 var GlobalAddrMapToInd map[string]int
 
-
 var CacheDbRef rccache.DbRef
 
 //used in commitCh

@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //Sign signs the TxDecSet
@@ -69,7 +71,7 @@ func (a *TxDecSet) Result(index uint32) bool {
 	for i := uint32(0); i < a.MemCnt; i++ {
 		ans = ans + uint32((a.MemD[i].Decision[x]>>y)&1)
 	}
-	if ans > (ShardSize-1)/2 {
+	if ans > (gVar.ShardSize-1)/2 {
 		return true
 	}
 
