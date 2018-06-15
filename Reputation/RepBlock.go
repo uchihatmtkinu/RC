@@ -1,35 +1,36 @@
 package Reputation
 
 import (
-	"time"
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
-	"crypto/sha256"
-	"github.com/uchihatmtkinu/RC/shard"
+	"time"
+
 	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 type RepBlock struct {
-	Timestamp     	 int64
-	RepTransactions	 []*RepTransaction
+	Timestamp       int64
+	RepTransactions []*RepTransaction
 	/* TODO
 	PrevSyncRepBlockHash [][]byte
 	TODO END*/
-	PrevTxBlockHashes	[][32]byte
-	PrevRepBlockHash []byte
-	Hash          	 []byte
-	Nonce         	 int
+	PrevTxBlockHashes [][32]byte
+	PrevRepBlockHash  []byte
+	Hash              []byte
+	Nonce             int
 }
 
 // NewBlock creates and returns Block
 func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlockHash []byte) *RepBlock {
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
-	for i:=uint32(0); i <gVar.ShardSize; i++ {
+	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[gVar.ShardToGlobal[network.MyMenShard.Shard][i]]
-		repTransactions = append(repTransactions,NewRepTransaction(item.RealAccount.AddrReal,item.Rep))
+		repTransactions = append(repTransactions, NewRepTransaction(item.RealAccount.AddrReal, item.Rep))
 	}
 
 	//generate new block
@@ -47,15 +48,14 @@ func NewRepBlock(ms *[]shard.MemShard, prevTxBlockHashes *[][32]byte, prevRepBlo
 
 // NewGenesisBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	return NewRepBlock(nil,nil,[]byte{0})
+	return NewRepBlock(nil, nil, []byte{0})
 }
-
 
 // returns a hash of the RepValue in the block
 func (b *RepBlock) HashRep() []byte {
 	var txHashes []byte
 	var txHash [32]byte
-	for _,item := range b.RepTransactions {
+	for _, item := range b.RepTransactions {
 		txHashes = append(txHashes, UIntToHex(item.Rep)[:]...)
 		txHashes = append(txHashes, item.AddrReal[:]...)
 	}
@@ -67,7 +67,7 @@ func (b *RepBlock) HashRep() []byte {
 func (b *RepBlock) HashPrevTxBlockHashes() []byte {
 	var txHashes []byte
 	var txHash [32]byte
-	for _,item := range b.PrevTxBlockHashes {
+	for _, item := range b.PrevTxBlockHashes {
 		txHashes = append(txHashes, item[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)

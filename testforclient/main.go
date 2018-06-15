@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/uchihatmtkinu/RC/testforclient/network"
 
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/account"
+	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
+var MyAccount account.RcAcc
+var MyMenShard shard.MemShard
+var MyRepBlockChain Reputation.RepBlockchain
 
-func main(){
+func main() {
 	cli := network.CLI{}
 	fmt.Println("input port")
 	var input string
@@ -15,5 +21,5 @@ func main(){
 	fmt.Println("input height")
 	var i int
 	fmt.Scanln(&i)
-	cli.StartNode(input,i)
+	cli.StartNode(input, i)
 }

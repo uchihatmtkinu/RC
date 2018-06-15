@@ -1,40 +1,29 @@
 package network
 
 import (
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
-	"github.com/uchihatmtkinu/RC/account"
-	"github.com/uchihatmtkinu/RC/ed25519"
-	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/rccache"
-	"github.com/uchihatmtkinu/RC/Reputation"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/ed25519"
+	"github.com/uchihatmtkinu/RC/rccache"
+	"github.com/uchihatmtkinu/RC/shard"
 )
-
-
 
 const protocol = "tcp"
 const nodeVersion = 1
 const commandLength = 12
 const bufferSize = 1000
-const timeoutCosi = 10*time.Second //10seconds for timeout
-
-
-
-var MyAccount account.RcAcc
-var MyMenShard shard.MemShard
-var MyRepBlockChain Reputation.RepBlockchain
+const timeoutCosi = 10 * time.Second //10seconds for timeout
 
 var LeaderAddr string
+
 //var AddrMapToInd map[string]int //ip+port
 //var GroupMems []shard.MemShard
 var ShardToGlobal [][]int
 var GlobalAddrMapToInd map[string]int
 var GlobalGroupMems []shard.MemShard
 var NumMems int
-var CacheDbRef		rccache.DbRef
-
-
-
+var CacheDbRef rccache.DbRef
 
 //used in commitCh
 type commitInfoCh struct {
@@ -67,9 +56,3 @@ var cosiSigCh chan []byte
 //channel used in pow
 var repPowTxCh chan []byte
 var repPowRxCh chan []byte
-
-
-
-
-
-
