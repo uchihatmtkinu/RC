@@ -11,7 +11,7 @@ import (
 
 type sortType struct {
 	ID      uint32
-	Rep     uint64
+	Rep     int64
 	Address string
 }
 
