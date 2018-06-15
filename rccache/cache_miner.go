@@ -6,7 +6,8 @@ import (
 	"log"
 
 	"github.com/uchihatmtkinu/RC/basic"
-	"github.com/uchihatmtkinu/RC/testforclient/network"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 //VerifyTx verify the utxos related to transaction a
@@ -51,28 +52,13 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
-	tmp, ok := d.TXCache[a.TxArray[i].Hash]
+	tmp, ok := d.TXCache[a.Hash]
 	if ok {
-		tmp.Update(&a)
+		tmp.Update(a)
 	} else {
 		tmp = new(CrossShardDec)
-		tmp.New(&a)
+		tmp.New(a)
 		d.TXCache[a.Hash] = tmp
-	}
-	return nil
-}
-
-//GetTxList and store those transactions
-func (d *DbRef) GetTxList(a *basic.TxList) error {
-	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i].Hash]
-		if ok {
-			tmp.Update(&a.TxArray[i])
-		} else {
-			tmp = new(CrossShardDec)
-			tmp.New(&a.TxArray[i])
-			d.TXCache[a.TxArray[i].Hash] = tmp
-		}
 	}
 	return nil
 }
@@ -83,29 +69,33 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
 	d.TLNow.Single = 0
-	d.TLNow.Sig = make([]basic.RCSign, 0, basic.ShardCnt)
-	var tmpHash [basic.ShardCnt][]byte
-	var tmpDecision [basic.ShardCnt]basic.TxDecision
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	d.TLNow.Sig = make([]basic.RCSign, 0, gVar.ShardCnt)
+	var tmpHash [gVar.ShardCnt][]byte
+	var tmpDecision [gVar.ShardCnt]basic.TxDecision
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		tmpHash[i] = []byte{}
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, _ := d.TXCache[a.TxArray[i].Hash]
-		var res byte
-		if tmp.InCheck[d.ShardNum] == 3 {
-			if d.VerifyTx(&a.TxArray[i]) {
-				res = byte(1)
-				d.LockTx(&a.TxArray[i])
-			}
-			d.TLNow.Add(res)
-			for j := 0; j < len(tmp.ShardRelated); j++ {
-				tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i].Hash[:]...)
-				tmpDecision[tmp.ShardRelated[j]].Add(res)
+		tmp, ok := d.TXCache[a.TxArray[i]]
+		if !ok {
+			d.TLNow.Add(0)
+		} else {
+			var res byte
+			if tmp.InCheck[d.ShardNum] == 3 {
+				if d.VerifyTx(tmp.Data) {
+					res = byte(1)
+					d.LockTx(tmp.Data)
+				}
+				d.TLNow.Add(res)
+				for j := 0; j < len(tmp.ShardRelated); j++ {
+					tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
+					tmpDecision[tmp.ShardRelated[j]].Add(res)
+				}
 			}
 		}
 	}
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		tmpDecision[i].HashID = sha256.Sum256(tmpHash[i])
 		tmpDecision[i].Sign(&d.prk, 0)
 		d.TLNow.Sig[i] = tmpDecision[i].Sig[0]
@@ -117,7 +107,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 //GetTDS and ready to verify txblock
 func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 	index := 0
-	shift := 0
+	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmp, ok := d.TXCache[b.TxArray[i]]
 		tmpRes := false
@@ -139,7 +129,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 
 		if b.ShardIndex == d.ShardNum {
 			for j := uint32(0); j < b.MemCnt; j++ {
-				tmp.Decision[network.GlobalGroupMems[b.MemD[j].ID].InShardID] = (b.MemD[j].Decision[index] >> shift) & 1
+				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index] >> shift) & 1
 			}
 		}
 		if shift < 7 {

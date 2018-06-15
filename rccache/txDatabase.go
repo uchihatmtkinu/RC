@@ -1,14 +1,17 @@
 package rccache
 
-import "github.com/uchihatmtkinu/RC/basic"
+import (
+	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/gVar"
+)
 
 //New initiate the TxDB struct
 func (t *CrossShardDec) New(a *basic.Transaction) {
 	newT := *a
 	t.Data = &newT
 	t.Res = 0
-	t.InCheck = make([]int, basic.ShardCnt)
-	tmp := make([]bool, basic.ShardCnt)
+	t.InCheck = make([]int, gVar.ShardCnt)
+	tmp := make([]bool, gVar.ShardCnt)
 	t.InCheckSum = 0
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		xx := a.In[i].ShardIndex()
@@ -20,8 +23,8 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 		t.Value += a.Out[i].Value
 	}
 
-	t.ShardRelated = make([]uint32, 0, basic.ShardCnt)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	t.ShardRelated = make([]uint32, 0, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if tmp[i] {
 			if t.InCheck[i] == 0 {
 				t.InCheck[i] = -1
@@ -39,7 +42,7 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 func (t *CrossShardDec) Update(a *basic.Transaction) {
 	newT := *a
 	t.Data = &newT
-	tmp := make([]bool, basic.ShardCnt)
+	tmp := make([]bool, gVar.ShardCnt)
 	t.InCheckSum = 0
 
 	for i := uint32(0); i < a.TxinCnt; i++ {
@@ -54,8 +57,8 @@ func (t *CrossShardDec) Update(a *basic.Transaction) {
 		t.Value += a.Out[i].Value
 	}
 
-	t.ShardRelated = make([]uint32, 0, basic.ShardCnt)
-	for i := uint32(0); i < basic.ShardCnt; i++ {
+	t.ShardRelated = make([]uint32, 0, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if tmp[i] {
 			if t.InCheck[i] == 0 {
 				t.InCheck[i] = -1
@@ -73,17 +76,17 @@ func (t *CrossShardDec) Update(a *basic.Transaction) {
 func (t *CrossShardDec) NewFromOther(index uint32, res bool) {
 	t.Data = nil
 	t.Res = 0
-	t.InCheck = make([]int, basic.ShardCnt)
+	t.InCheck = make([]int, gVar.ShardCnt)
 
-	t.Total = int(basic.ShardCnt - 1)
+	t.Total = int(gVar.ShardCnt - 1)
 	if res {
 		t.Res = 0
 		t.InCheck[index] = 1
-		t.InCheckSum = int(basic.ShardCnt - 1)
+		t.InCheckSum = int(gVar.ShardCnt - 1)
 	} else {
 		t.Res = -1
 		t.InCheck[index] = 2
-		t.InCheckSum = int(basic.ShardCnt)
+		t.InCheckSum = int(gVar.ShardCnt)
 	}
 }
 
