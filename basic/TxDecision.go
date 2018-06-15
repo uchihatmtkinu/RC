@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //Set initiates the TxDecision given the TxList and the account
@@ -63,7 +65,7 @@ func (a *TxDecision) Encode(tmp *[]byte) {
 	if a.Single == 1 {
 		a.Sig[0].SignToData(tmp)
 	} else {
-		for i := uint32(0); i < ShardCnt; i++ {
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			a.Sig[i].SignToData(tmp)
 		}
 	}
