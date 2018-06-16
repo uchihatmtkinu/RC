@@ -59,7 +59,7 @@ func (b *RepBlock) HashRep() []byte {
 	var txHash [32]byte
 	for _, item := range b.RepTransactions {
 		txHashes = append(txHashes, IntToHex(item.Rep)[:]...)
-		txHashes = append(txHashes, item.AddrReal[:]...)
+		txHashes = append(txHashes, IntToHex(int64(item.GlobalID))...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]

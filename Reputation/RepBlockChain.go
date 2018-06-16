@@ -31,7 +31,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		lastHash = b.Get([]byte("l"))
+		lastHash = b.Get([]byte("lb"))
 
 		return nil
 	})
@@ -49,7 +49,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("l"), newRepBlock.Hash)
+		err = b.Put([]byte("lb"), newRepBlock.Hash)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -66,7 +66,7 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		lastRepBlockHash = b.Get([]byte("l"))
+		lastRepBlockHash = b.Get([]byte("lb"))
 
 		return nil
 	})
@@ -82,7 +82,7 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("l"), newSyncBlock.Hash)
+		err = b.Put([]byte("lsb"), newSyncBlock.Hash)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -119,13 +119,13 @@ func NewRepBlockchain(nodeID string) *RepBlockchain {
 			if err != nil {
 				log.Panic(err)
 			}
-			err = b.Put([]byte("l"), genesis.Hash)
+			err = b.Put([]byte("lb"), genesis.Hash)
 			if err != nil {
 				log.Panic(err)
 			}
 			tip = genesis.Hash
 		} else {
-			tip = b.Get([]byte("l"))
+			tip = b.Get([]byte("lb"))
 		}
 		return nil
 	})
@@ -164,7 +164,7 @@ func CreateRepBlockchain(nodeID string) *RepBlockchain {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("l"), genesis.Hash)
+		err = b.Put([]byte("lb"), genesis.Hash)
 		if err != nil {
 			log.Panic(err)
 		}

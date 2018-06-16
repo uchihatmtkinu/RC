@@ -45,7 +45,7 @@ func (b *SyncBlock) UserlistHash() []byte {
 	var txHashes []byte
 	var txHash [32]byte
 	for _,item := range b.Userlist {
-		txHashes = append(txHashes, item[:]...)
+		txHashes = append(txHashes, IntToHex(int64(item))...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]
