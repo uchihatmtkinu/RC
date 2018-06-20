@@ -209,6 +209,47 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 	return block
 }
 
+// NextSB returns next block starting from the tip
+func (i *RepBlockchainIterator) NextFromSB() *SyncBlock {
+	var block *SyncBlock
+
+	err := i.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		encodedBlock := b.Get(i.currentHash)
+		block = DeserializeSyncBlock(encodedBlock)
+
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+	i.currentHash = block.PrevRepBlockHash
+
+	return block
+}
+
+func (i *RepBlockchainIterator) NextToStart() *RepBlock {
+	var block *RepBlock
+	var flag bool
+	flag = false
+	for !flag {
+		err := i.db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(blocksBucket))
+			encodedBlock := b.Get(i.currentHash)
+			block = DeserializeRepBlock(encodedBlock)
+
+			return nil
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		i.currentHash = block.PrevRepBlockHash
+		flag = block.StartBlock
+	}
+	return block
+}
+
+
 //whether database exisits
 func dbExists(dbFile string) bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
