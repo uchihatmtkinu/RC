@@ -35,10 +35,10 @@ func NewProofOfWork(b *RepBlock) *ProofOfWork {
 func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
-			pow.RepBlock.PrevRepBlockHash,
 			pow.RepBlock.HashRep(),
 			pow.RepBlock.HashPrevTxBlockHashes(),
 			BoolToHex(pow.RepBlock.StartBlock),
+			pow.RepBlock.PrevRepBlockHash[:],
 			//IntToHex(pow.RepBlock.Timestamp),
 			IntToHex(int64(difficulty)),
 			IntToHex(int64(nonce)),
@@ -50,7 +50,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 }
 
 // Run performs a proof-of-work
-func (pow *ProofOfWork) Run() (int, []byte, bool) {
+func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 	var hashInt big.Int
 	var hash [32]byte
 	var flag bool
@@ -62,10 +62,10 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 		case candidateRepBlock:=<-RepPowRxCh:{
 			if pow.Validate(candidateRepBlock.Nonce){
 				nonce = candidateRepBlock.Nonce
-				copy(hash[:], candidateRepBlock.Hash)
+				hash = candidateRepBlock.Hash
 				flag = false
 				RepPowRxValidate <- true
-				return nonce, hash[:], flag
+				return nonce, hash, flag
 			} else {
 				RepPowRxValidate <- false
 			}
@@ -74,11 +74,10 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 			{
 				data := pow.prepareData(nonce)
 				hash = sha256.Sum256(data)
-				fmt.Printf("\r%x", hash)
 				hashInt.SetBytes(hash[:])
 
 				if hashInt.Cmp(pow.Target) == -1 {
-					return nonce, hash[:], flag
+					return nonce, hash, flag
 				} else {
 					nonce++
 				}
@@ -86,7 +85,7 @@ func (pow *ProofOfWork) Run() (int, []byte, bool) {
 		}
 	}
 
-	return nonce, hash[:], flag
+	return nonce, hash, flag
 }
 
 // Validate RepBlock's PoW

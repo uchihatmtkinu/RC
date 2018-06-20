@@ -48,6 +48,10 @@ func (ms *MemShard) addTotalRep(addRep int64) {
 	ms.TotalRep += addRep
 }
 //clearRep clear rep
+func (ms *MemShard) clearTotalRep() {
+	ms.TotalRep = 0
+}
+//clearRep clear rep
 func (ms *MemShard) clearRep() {
 	ms.Rep = 0
 }

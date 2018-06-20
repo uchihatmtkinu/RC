@@ -12,16 +12,16 @@ import (
 type SyncBlock struct {
 	Timestamp     	 	int64
 	Userlist			[]int
-	PrevRepBlockHash 	[]byte
+	PrevRepBlockHash 	[32]byte
 	CoSignature			[]byte
-	Hash          	 	[]byte
+	Hash          	 	[32]byte
 }
 
 // NewSynBlock new sync block
-func NewSynBlock(userlist []int, prevRepBlockHash []byte, coSignature []byte) *SyncBlock{
-	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, []byte{}}
+func NewSynBlock(userlist []int, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
+	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, [32]byte{}}
 	blockhash := sha256.Sum256(block.prepareData())
-	block.Hash = blockhash[:]
+	block.Hash = blockhash
 	return block
 }
 
@@ -30,7 +30,7 @@ func (b *SyncBlock) prepareData() []byte {
 	data := bytes.Join(
 		[][]byte{
 			b.UserlistHash(),
-			b.PrevRepBlockHash,
+			b.PrevRepBlockHash[:],
 			b.CoSignature,
 			//IntToHex(b.Timestamp),
 		},

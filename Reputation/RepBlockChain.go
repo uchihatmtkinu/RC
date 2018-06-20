@@ -15,23 +15,24 @@ const blocksBucket = "blocks"
 
 //reputation block chain
 type RepBlockchain struct {
-	Tip []byte
+	Tip [32]byte
 	Db *bolt.DB
 }
 
 // RepBlockchainIterator is used to iterate over Repblockchain blocks
 type RepBlockchainIterator struct {
-	currentHash []byte
+	currentHash [32]byte
 	db          *bolt.DB
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
 func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef) {
-	var lastHash []byte
+	var lastHash [32]byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		lastHash = b.Get([]byte("lb"))
+		copy(lastHash[:], b.Get([]byte("lb")))
+		//lastHash = b.Get([]byte("lb"))
 
 		return nil
 	})
@@ -44,12 +45,12 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(newRepBlock.Hash, newRepBlock.Serialize())
+		err := b.Put(newRepBlock.Hash[:], newRepBlock.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lb"), newRepBlock.Hash)
+		err = b.Put([]byte("lb"), newRepBlock.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -62,11 +63,11 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
-	var lastRepBlockHash []byte
+	var lastRepBlockHash [32]byte
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		lastRepBlockHash = b.Get([]byte("lb"))
+		copy(lastRepBlockHash[:], b.Get([]byte("lb")))
 
 		return nil
 	})
@@ -77,12 +78,12 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(newSyncBlock.Hash, newSyncBlock.Serialize())
+		err := b.Put(newSyncBlock.Hash[:], newSyncBlock.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lsb"), newSyncBlock.Hash)
+		err = b.Put([]byte("lsb"), newSyncBlock.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -101,7 +102,7 @@ func NewRepBlockchain(nodeID string) *RepBlockchain {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
 	}
-	var tip []byte
+	var tip [32]byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
 		log.Panic(err)
@@ -115,17 +116,17 @@ func NewRepBlockchain(nodeID string) *RepBlockchain {
 			if err != nil {
 				log.Panic(err)
 			}
-			err = b.Put(genesis.Hash, genesis.Serialize())
+			err = b.Put(genesis.Hash[:], genesis.Serialize())
 			if err != nil {
 				log.Panic(err)
 			}
-			err = b.Put([]byte("lb"), genesis.Hash)
+			err = b.Put([]byte("lb"), genesis.Hash[:])
 			if err != nil {
 				log.Panic(err)
 			}
 			tip = genesis.Hash
 		} else {
-			tip = b.Get([]byte("lb"))
+			copy(tip[:], b.Get([]byte("lb")))
 		}
 		return nil
 	})
@@ -145,7 +146,7 @@ func CreateRepBlockchain(nodeID string) *RepBlockchain {
 		os.Exit(1)
 	}
 
-	var tip []byte
+	var tip [32]byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
 		log.Panic(err)
@@ -159,12 +160,12 @@ func CreateRepBlockchain(nodeID string) *RepBlockchain {
 			log.Panic(err)
 		}
 
-		err = b.Put(genesis.Hash, genesis.Serialize())
+		err = b.Put(genesis.Hash[:], genesis.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lb"), genesis.Hash)
+		err = b.Put([]byte("lb"), genesis.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -196,7 +197,7 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 
 	err := i.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		encodedBlock := b.Get(i.currentHash)
+		encodedBlock := b.Get(i.currentHash[:])
 		block = DeserializeRepBlock(encodedBlock)
 
 		return nil
@@ -215,7 +216,7 @@ func (i *RepBlockchainIterator) NextFromSB() *SyncBlock {
 
 	err := i.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		encodedBlock := b.Get(i.currentHash)
+		encodedBlock := b.Get(i.currentHash[:])
 		block = DeserializeSyncBlock(encodedBlock)
 
 		return nil
@@ -235,7 +236,7 @@ func (i *RepBlockchainIterator) NextToStart() *RepBlock {
 	for !flag {
 		err := i.db.View(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte(blocksBucket))
-			encodedBlock := b.Get(i.currentHash)
+			encodedBlock := b.Get(i.currentHash[:])
 			block = DeserializeRepBlock(encodedBlock)
 
 			return nil

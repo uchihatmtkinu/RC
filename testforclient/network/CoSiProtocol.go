@@ -6,7 +6,6 @@ import (
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation"
 	"time"
 	"bytes"
 	"log"
@@ -29,10 +28,11 @@ var cosiSig		cosi.SignaturePart
 
 
 // leaderCosiProcess leader use this
-func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.SignaturePart{
+func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash[32]byte) cosi.SignaturePart{
 	//initialize
+	var sbMessage []byte
 	var it *shard.MemShard
-	sbMessage := sb.Hash
+	sbMessage = prevRepBlockHash[:]
 	cosimask = make([]byte, (shard.NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
 	commits = make([]cosi.Commitment, shard.NumMems)
 	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
@@ -106,8 +106,9 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 }
 
 // memberCosiProcess member use this
-func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
-	sbMessage = sb.Hash
+func memberCosiProcess(prevRepBlockHash [32]byte) (bool){
+	var sbMessage []byte
+	sbMessage = prevRepBlockHash[:]
 	leaderSBMessage := <-cosiAnnounceCh
 	if !verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage)) {
 		fmt.Println("Sync Block from leader is wrong!")
