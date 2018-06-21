@@ -49,12 +49,19 @@ type cosiSigMessage struct {
 }
 
 //channel used in cosi
+//cosiAnnounceCh cosi announcement channel
 var cosiAnnounceCh chan []byte
+//cosiCommitCh	cosi commitment channel
 var cosiCommitCh chan commitInfoCh
 var cosiChallengeCh chan []byte
 var cosiResponseCh chan responseInfoCh
 var cosiSigCh chan []byte
 
 //channel used in pow
-//var repPowTxCh chan []byte
+//repPowTxCh chan []byte
+//repPowRxCh reppow receive channel
 var repPowRxCh chan []byte
+
+//channel used in sync
+//syncCh
+var syncCh chan []byte

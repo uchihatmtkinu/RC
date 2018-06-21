@@ -14,8 +14,7 @@ import (
 	"github.com/uchihatmtkinu/RC/account"
 )
 
-// timeoutflag flag for timeout
-var timeoutflag bool
+
 // myCommit my cosi commitment
 var myCommit 	cosi.Commitment
 var mySecret 	*cosi.Secret
@@ -48,7 +47,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 		sendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 	}
 	//handle commits
-	timeoutflag = true
+	timeoutflag := true
 	for timeoutflag {
 		select {
 		case commitInfo := <-cosiCommitCh:
