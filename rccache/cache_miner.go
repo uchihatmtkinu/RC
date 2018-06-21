@@ -52,13 +52,14 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
-	tmp, ok := d.TXCache[a.Hash]
+
+	tmp, ok := d.TXCache[HashCut(a.Hash)]
 	if ok {
 		tmp.Update(a)
 	} else {
 		tmp = new(CrossShardDec)
 		tmp.New(a)
-		d.TXCache[a.Hash] = tmp
+		d.TXCache[HashCut(a.Hash)] = tmp
 	}
 	return nil
 }
@@ -77,7 +78,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i]]
+		tmp, ok := d.TXCache[HashCut(a.TxArray[i])]
 		if !ok {
 			d.TLNow.Add(0)
 		} else {
@@ -109,21 +110,22 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 	index := 0
 	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {
-		tmp, ok := d.TXCache[b.TxArray[i]]
+		tmpHash := HashCut(b.TxArray[i])
+		tmp, ok := d.TXCache[tmpHash]
 		tmpRes := false
 		if !ok {
 			tmp = new(CrossShardDec)
 			tmpRes = b.Result(i)
 			tmp.NewFromOther(b.ShardIndex, tmpRes)
-			d.TXCache[b.TxArray[i]] = tmp
+			d.TXCache[tmpHash] = tmp
 		} else {
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
 			if tmp.Total == 0 {
 				d.UnlockTx(tmp.Data)
-				delete(d.TXCache, b.TxArray[i])
+				delete(d.TXCache, tmpHash)
 			} else {
-				d.TXCache[b.TxArray[i]] = tmp
+				d.TXCache[tmpHash] = tmp
 			}
 		}
 
@@ -156,7 +158,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i].Hash]
+		tmp, ok := d.TXCache[HashCut(a.TxArray[i].Hash)]
 		if !ok {
 			return fmt.Errorf("Verify txblock; No tx in cache")
 		}

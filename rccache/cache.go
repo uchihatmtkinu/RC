@@ -38,7 +38,7 @@ func byteCompare(a, b interface{}) int {
 type DbRef struct {
 	ID       uint32
 	db       TxBlockChain
-	TXCache  map[[32]byte]*CrossShardDec
+	TXCache  map[[6]byte]*CrossShardDec
 	ShardNum uint32
 
 	//Leader
@@ -66,7 +66,7 @@ type DbRef struct {
 //New is the initilization of DbRef
 func (d *DbRef) New() {
 	d.db.NewBlockchain()
-	d.TXCache = make(map[[32]byte]*CrossShardDec)
+	d.TXCache = make(map[[6]byte]*CrossShardDec)
 	d.TxB = d.db.LatestTxBlock()
 	d.TL = nil
 	d.TLCache = nil
@@ -83,7 +83,7 @@ type CrossShardDec struct {
 	InCheck  []int //-1: Output related
 	//0: unknown, Not-related; 1: Yes; 2: No; 3: Related-noresult
 	ShardRelated []uint32
-	Res          int8 //0: unknown; 1: Yes; 2: No
+	Res          int8 //0: unknown; 1: Yes; -1: No
 	InCheckSum   int
 	Total        int
 	Value        uint32

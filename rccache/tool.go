@@ -61,3 +61,10 @@ func (a *TxBlockChain) FindAcc(x [32]byte) *basic.AccCache {
 	tmp := a.AccData.Get(tmp1)
 	return tmp.(*basic.AccCache)
 }
+
+//HashCut returns the part of the hash
+func HashCut(x [32]byte) [6]byte {
+	var tmp [6]byte
+	copy(tmp[:], x[:6])
+	return tmp
+}
