@@ -12,5 +12,5 @@ var RepPowTxCh chan RepBlock
 var RepPowRxValidate chan bool
 //MyRepBlockChain my reputation blockchain
 var MyRepBlockChain RepBlockchain
-//
-var MyCurrentRepHash []byte
+//RepBlockIter an iterator on repblockchain
+var RepBlockChainIter	RepBlockchainIterator
