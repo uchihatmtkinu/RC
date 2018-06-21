@@ -12,17 +12,19 @@ import (
 
 //TxBlockChain is the blockchain database
 type TxBlockChain struct {
-	data    *bolt.DB
-	lastTB  [32]byte
-	USet    map[[32]byte]UTXOSet
-	TXCache map[[32]byte]int
-	AccData *gtreap.Treap
+	data     *bolt.DB
+	lastTB   [32]byte
+	USet     map[[32]byte]UTXOSet
+	TXCache  map[[32]byte]int
+	AccData  *gtreap.Treap
+	FileName string
 }
 
 //NewBlockchain is to init the total chain
-func (a *TxBlockChain) NewBlockchain() error {
+func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.FileName = dbFile
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		return err
 	}
@@ -30,12 +32,11 @@ func (a *TxBlockChain) NewBlockchain() error {
 
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TBBucket))
-
 		if b == nil {
 			genesis := basic.NewGensisTxBlock()
 			b, err := tx.CreateBucket([]byte(TBBucket))
 			var tmp []byte
-			err = genesis.Decode(&tmp)
+			genesis.Encode(&tmp)
 			if err != nil {
 				return nil
 			}
@@ -78,7 +79,7 @@ func (a *TxBlockChain) NewBlockchain() error {
 //AddBlock is adding a new txblock
 func (a *TxBlockChain) AddBlock(x *basic.TxBlock) error {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -113,7 +114,7 @@ func (a *TxBlockChain) AddBlock(x *basic.TxBlock) error {
 //LatestTxBlock return the highest txblock
 func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -136,7 +137,7 @@ func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 //AddAccount is adding a new account or update
 func (a *TxBlockChain) AddAccount(x *basic.AccCache) error {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -168,7 +169,7 @@ func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 	res := false
 	if !ok {
 		var err error
-		a.data, err = bolt.Open(dbFile, 0600, nil)
+		a.data, err = bolt.Open(a.FileName, 0600, nil)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -248,7 +249,7 @@ func (a *TxBlockChain) ConfirmUTXO(x *basic.InType) error {
 //MakeFinalTx generates the final blocks transactions
 func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -312,7 +313,7 @@ func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 //UpdateFinal is to update the final block
 func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -352,7 +353,7 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 //UpdateUTXO is to update utxo set
 func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 	var err error
-	a.data, err = bolt.Open(dbFile, 0600, nil)
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}

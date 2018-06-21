@@ -3,6 +3,8 @@ package rccache
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"strconv"
+	"strings"
 
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -10,7 +12,7 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
-const dbFile = "TxBlockchain.db"
+const dbFilex = "TxBlockchain.db"
 
 //UTXOBucket is the bucket of UTXO
 const UTXOBucket = "UTXO"
@@ -64,8 +66,10 @@ type DbRef struct {
 }
 
 //New is the initilization of DbRef
-func (d *DbRef) New() {
-	d.db.NewBlockchain()
+func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
+	d.ID = x
+	d.prk = prk
+	d.db.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
 	d.TXCache = make(map[[6]byte]*CrossShardDec)
 	d.TxB = d.db.LatestTxBlock()
 	d.TL = nil

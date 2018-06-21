@@ -101,7 +101,9 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 	for i := uint32(0); i < a.TxCnt; i++ {
 		a.TxArray[i].Encode(tmp)
 	}
-	a.Sig.SignToData(tmp)
+	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
+		a.Sig.SignToData(tmp)
+	}
 }
 
 //Decode converts bytes into block data
@@ -151,9 +153,11 @@ func (a *TxBlock) Decode(buf *[]byte) error {
 		}
 		a.TxArray = append(a.TxArray, xxx)
 	}
-	err = a.Sig.DataToSign(buf)
-	if err != nil {
-		return fmt.Errorf("TxBlock Signature failed: %s", err)
+	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
+		err = a.Sig.DataToSign(buf)
+		if err != nil {
+			return fmt.Errorf("TxBlock Signature failed: %s", err)
+		}
 	}
 	if len(*buf) != 0 {
 		return fmt.Errorf("TxBlock decode failed: With extra bits")
