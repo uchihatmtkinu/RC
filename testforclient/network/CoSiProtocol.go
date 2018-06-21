@@ -6,7 +6,6 @@ import (
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation"
 	"time"
 	"bytes"
 	"log"
@@ -29,10 +28,11 @@ var cosiSig		cosi.SignaturePart
 
 
 // leaderCosiProcess leader use this
-func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.SignaturePart{
+func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.SignaturePart{
 	//initialize
+	var sbMessage []byte
 	var it *shard.MemShard
-	sbMessage := sb.Hash
+	sbMessage = prevRepBlockHash[:]
 	cosimask = make([]byte, (shard.NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
 	commits = make([]cosi.Commitment, shard.NumMems)
 	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
@@ -53,14 +53,14 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 		select {
 		case commitInfo := <-cosiCommitCh:
 			commits[(*ms)[GlobalAddrMapToInd[commitInfo.addr]].InShardId] = handleCommit(commitInfo.request)
-			setMaskBit((*ms)[GlobalAddrMapToInd[commitInfo.addr]].InShardId, cosi.Enabled)
+			setMaskBit((*ms)[GlobalAddrMapToInd[commitInfo.addr]].InShardId, cosi.Enabled, &cosimask)
 		case <-time.After(10 * time.Second):
 			timeoutflag = false
 		}
 	}
 	//handle leader's commit
 	commits[(*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId] = myCommit
-	setMaskBit((*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId, cosi.Enabled)
+	setMaskBit((*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId, cosi.Enabled, &cosimask)
 	close(cosiCommitCh)
 
 	// The leader then combines these into an aggregate commit.
@@ -72,7 +72,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	//sign or challenge
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		if maskBit(it.InShardId)==cosi.Enabled {
+		if maskBit(it.InShardId, &cosimask)==cosi.Enabled {
 			sendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 		}
 	}
@@ -97,7 +97,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 	currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		if maskBit(it.InShardId)==cosi.Enabled {
+		if maskBit(it.InShardId, &cosimask)==cosi.Enabled {
 			sendCosiMessage(it.Address, "cosiSig", currentSigMessage)
 		}
 	}
@@ -106,8 +106,9 @@ func leaderCosiProcess(ms *[]shard.MemShard, sb *Reputation.SyncBlock) cosi.Sign
 }
 
 // memberCosiProcess member use this
-func memberCosiProcess(sb *Reputation.SyncBlock) (bool){
-	sbMessage = sb.Hash
+func memberCosiProcess(prevRepBlockHash [32]byte) (bool){
+	var sbMessage []byte
+	sbMessage = prevRepBlockHash[:]
 	leaderSBMessage := <-cosiAnnounceCh
 	if !verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage)) {
 		fmt.Println("Sync Block from leader is wrong!")
@@ -220,27 +221,4 @@ func verifySBMessage(a,b []byte) bool{
 		}
 	}
 	return true
-}
-
-// setMaskBit enable = 0 = false, disable = 1= true
-func setMaskBit(signer int, value cosi.MaskBit) {
-	byt := signer >> 3
-
-	bit := byte(1) << uint(signer&7)
-	if value == cosi.Disabled { // disable
-		if cosimask[byt]&bit == 0 { // was enabled
-			cosimask[byt] |= bit // disable it
-		}
-	} else { // enable
-		if cosimask[byt]&bit != 0 { // was disabled
-			cosimask[byt] &^= bit
-		}
-	}
-}
-
-// maskBit returns a boolean value indicating whether the indicated signer is Enabled or Disabled.
-func maskBit(signer int) (value cosi.MaskBit) {
-	byt := signer >> 3
-	bit := byte(1) << uint(signer&7)
-	return (cosimask[byt] & bit) != 0
 }
