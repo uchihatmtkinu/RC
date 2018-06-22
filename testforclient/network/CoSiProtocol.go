@@ -32,14 +32,13 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	var sbMessage []byte
 	var it *shard.MemShard
 	sbMessage = prevRepBlockHash[:]
-	cosimask = make([]byte, (shard.NumMems+7)>>3) //byte mask 0-7 bit in one byte represent user 0-7, 8-15...
+
 	commits = make([]cosi.Commitment, shard.NumMems)
 	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
 	myCommit, mySecret, _ = cosi.Commit(nil)
-	for i := range cosimask {
-		cosimask[i] = 0xff // all disabled
-	}
 
+	//byte mask 0-7 bit in one byte represent user 0-7, 8-15...
+	intilizeMaskBit(&cosimask, (shard.NumMems+7)>>3,false)
 	//announcement
 	for i:=0; i < shard.NumMems; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
@@ -105,7 +104,7 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 }
 
 // memberCosiProcess member use this
-func memberCosiProcess(prevRepBlockHash [32]byte) (bool){
+func memberCosiProcess(prevRepBlockHash [32]byte) (bool, []byte){
 	var sbMessage []byte
 	sbMessage = prevRepBlockHash[:]
 	leaderSBMessage := <-cosiAnnounceCh
@@ -122,7 +121,7 @@ func memberCosiProcess(prevRepBlockHash [32]byte) (bool){
 	request = <- cosiSigCh
 	currentSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
 	valid := cosi.Verify(currentSigMessage.pubKeys, nil, sbMessage, currentSigMessage.cosiSig)
-	return valid
+	return valid, currentSigMessage.cosiSig[64:]
 }
 
 // handleCommit rx commit

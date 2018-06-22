@@ -16,5 +16,5 @@ const RepFN = 1
 
 //channel
 
-
+const SlidingWindows = 10
 
