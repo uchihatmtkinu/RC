@@ -78,21 +78,21 @@ func (d *DbRef) NewTxList() error {
 //GenerateTxBlock makes the TxBlock
 func (d *DbRef) GenerateTxBlock() error {
 	height := d.TxB.Height
-	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.db.lastTB, &d.prk, height+1, 0)
+	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.lastTB, &d.prk, height+1, 0)
 	for i := 0; i < len(d.Ready); i++ {
 		delete(d.TXCache, HashCut(d.Ready[i].Hash))
 	}
 	d.Ready = nil
-	d.db.AddBlock(d.TxB)
-	d.db.UpdateUTXO(d.TxB, d.ShardNum)
+	d.DB.AddBlock(d.TxB)
+	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	return nil
 }
 
 //GenerateFinalBlock generate final block
 func (d *DbRef) GenerateFinalBlock() error {
-	tmp := d.db.MakeFinalTx()
+	tmp := d.DB.MakeFinalTx()
 	height := d.TxB.Height
-	d.TxB.MakeTxBlock(d.ID, tmp, d.db.lastTB, &d.prk, height+1, 1)
+	d.TxB.MakeTxBlock(d.ID, tmp, d.DB.lastTB, &d.prk, height+1, 1)
 	return nil
 }
 

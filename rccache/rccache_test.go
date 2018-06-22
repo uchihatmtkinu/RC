@@ -63,10 +63,10 @@ func TestOutToData(t *testing.T) {
 	t.Error("Check1")
 	for i := 0; i < numCnt; i++ {
 		for j := 0; j < numCnt; j++ {
-			dbs[i].db.AddAccount(&accWallet[j])
+			dbs[i].DB.AddAccount(&accWallet[j])
 		}
 
-		dbs[i].db.ShowAccount()
+		dbs[i].DB.ShowAccount()
 	}
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
