@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/shard"
 
 	"github.com/uchihatmtkinu/RC/basic"
 )
@@ -62,7 +61,6 @@ type DbRef struct {
 	lastIndex  int
 
 	TBCache *[][32]byte
-	Mem     *[]shard.MemShard
 }
 
 //New is the initilization of DbRef

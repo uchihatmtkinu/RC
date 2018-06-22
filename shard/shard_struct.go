@@ -19,7 +19,7 @@ type MemShard struct {
 }
 
 //newMemShard new a mem shard
-func (ms *MemShard) newMemShard(acc *account.RcAcc) {
+func (ms *MemShard) NewMemShard(acc *account.RcAcc) {
 	ms.Address = acc.Addr
 	ms.RealAccount = acc
 	ms.CosiPub = acc.CosiPuk
@@ -57,6 +57,7 @@ func (ms *MemShard) addTotalRep(addRep int64) {
 func (ms *MemShard) clearTotalRep() {
 	ms.TotalRep = 0
 }
+
 //clearRep clear rep
 func (ms *MemShard) clearRep() {
 	ms.Rep = 0

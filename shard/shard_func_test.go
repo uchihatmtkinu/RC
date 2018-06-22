@@ -12,7 +12,7 @@ func TestSortRep(t *testing.T) {
 	for i := 0; i < c; i++ {
 		var tmp sortType
 		tmp.Address = strconv.Itoa(i)
-		tmp.Rep = uint64(rand.Int() & 100)
+		tmp.Rep = int64(rand.Int() & 100)
 		a = append(a, tmp)
 	}
 	b := a[:]

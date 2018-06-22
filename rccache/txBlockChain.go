@@ -3,20 +3,19 @@ package rccache
 import (
 	"fmt"
 	"log"
-	"math/rand"
 
 	"github.com/boltdb/bolt"
 	"github.com/uchihatmtkinu/RC/basic"
-	"github.com/uchihatmtkinu/RC/treap"
 )
 
 //TxBlockChain is the blockchain database
 type TxBlockChain struct {
-	data     *bolt.DB
-	lastTB   [32]byte
-	USet     map[[32]byte]UTXOSet
-	TXCache  map[[32]byte]int
-	AccData  *gtreap.Treap
+	data    *bolt.DB
+	lastTB  [32]byte
+	USet    map[[32]byte]UTXOSet
+	TXCache map[[32]byte]int
+	//AccData  *gtreap.Treap
+	AccData  map[[32]byte]uint32
 	FileName string
 }
 
@@ -47,7 +46,8 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 			copy(a.lastTB[:], b.Get([]byte("XB"))[:32])
 		}
 		b = tx.Bucket([]byte(ACCBucket))
-		a.AccData = gtreap.NewTreap(byteCompare)
+		//a.AccData = gtreap.NewTreap(byteCompare)
+		a.AccData = make(map[[32]byte]uint32, 1000)
 		if b == nil {
 			_, err := tx.CreateBucket([]byte(ACCBucket))
 			if err != nil {
@@ -61,7 +61,8 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 				copy(tmp.ID[:], k[:32])
 				tmpStr := v
 				basic.DecodeInt(&tmpStr, &tmp.Value)
-				a.AccData = a.AccData.Upsert(tmp, rand.Int())
+				//a.AccData = a.AccData.Upsert(tmp, rand.Int())
+				a.AccData[tmp.ID] = tmp.Value
 			}
 		}
 		b = tx.Bucket([]byte(UTXOBucket))
@@ -145,11 +146,13 @@ func (a *TxBlockChain) AddAccount(x *basic.AccCache) error {
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ACCBucket))
 		if x.Value == 0 {
+			delete(a.AccData, x.ID)
 			err := b.Delete(x.ID[:])
 			return err
 		}
 		var tmp []byte
 		basic.EncodeInt(&tmp, x.Value)
+		a.AccData[x.ID] = x.Value
 		err := b.Put(x.ID[:], tmp)
 		return err
 	})
@@ -162,8 +165,8 @@ func (a *TxBlockChain) AddAccount(x *basic.AccCache) error {
 //CheckUTXO is to check whether the utxo is available
 func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 	if x.Acc() {
-		tmp := a.FindAcc(x.PrevTx)
-		return tmp.Value >= x.Index
+		tmp := a.AccData[x.PrevTx]
+		return tmp >= x.Index
 	}
 	tmp, ok := a.USet[x.PrevTx]
 	res := false
@@ -207,8 +210,9 @@ func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 //LockUTXO is to lock the value
 func (a *TxBlockChain) LockUTXO(x *basic.InType) error {
 	if x.Acc() {
-		tmp := a.FindAcc(x.PrevTx)
-		tmp.Value -= x.Index
+		//tmp := a.FindAcc(x.PrevTx)
+		//tmp.Value -= x.Index
+		a.AccData[x.PrevTx] -= x.Index
 	} else {
 		tmp, ok := a.USet[x.PrevTx]
 		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 0 {
@@ -222,8 +226,9 @@ func (a *TxBlockChain) LockUTXO(x *basic.InType) error {
 //UnlockUTXO is to lock the value
 func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
 	if x.Acc() {
-		tmp := a.FindAcc(x.PrevTx)
-		tmp.Value += x.Index
+		//tmp := a.FindAcc(x.PrevTx)
+		//tmp.Value += x.Index
+		a.AccData[x.PrevTx] += x.Index
 	} else {
 		tmp, ok := a.USet[x.PrevTx]
 		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 2 {
@@ -256,20 +261,18 @@ func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	defer a.data.Close()
 	res := make([]basic.Transaction, 0, 10000)
 	tmpMap := make(map[[32]byte]uint32)
-	tmp := a.AccData.Min()
-	a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
+	for k, v := range a.AccData {
 		var tmpTx basic.Transaction
-		tmpIn := basic.InType{PrevTx: i.(*basic.AccCache).ID, Index: i.(*basic.AccCache).Value}
+		tmpIn := basic.InType{PrevTx: k, Index: v}
 		var tmpOut basic.OutType
-		tmpOut.Value = i.(*basic.AccCache).Value
-		tmpOut.Address = i.(*basic.AccCache).ID
+		tmpOut.Value = v
+		tmpOut.Address = k
 		tmpTx.New(1)
 		tmpTx.AddIn(tmpIn)
 		tmpTx.AddOut(tmpOut)
 		res = append(res, tmpTx)
 		tmpMap[tmpOut.Address] = uint32(len(res) - 1)
-		return true
-	})
+	}
 
 	err = a.data.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(UTXOBucket))
@@ -319,7 +322,7 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	}
 	defer a.data.Close()
 	for i := uint32(0); i < x.TxCnt; i++ {
-		tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
+		/*tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
 		if tmp != nil {
 			tmp.Value = x.TxArray[i].Out[0].Value
 		} else {
@@ -327,14 +330,24 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 			tmp.ID = x.TxArray[i].Out[0].Address
 			tmp.Value = x.TxArray[i].Out[0].Value
 			a.AccData.Upsert(tmp, rand.Int())
-		}
+		}*/
+		a.AccData[x.TxArray[i].Out[0].Address] = x.TxArray[i].Out[0].Value
 	}
 
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		tx.DeleteBucket([]byte(UTXOBucket))
 		tx.CreateBucket([]byte(UTXOBucket))
 		b := tx.Bucket([]byte(ACCBucket))
-		tmp := a.AccData.Min()
+		for k, v := range a.AccData {
+			if v == 0 {
+				b.Delete(k[:])
+			} else {
+				var tmp []byte
+				basic.EncodeInt(&tmp, v)
+				b.Put(k[:], tmp)
+			}
+		}
+		/*tmp := a.AccData.Min()
 		a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
 			if i.(*basic.AccCache).Value == 0 {
 				b.Delete(i.(*basic.AccCache).ID[:])
@@ -344,10 +357,54 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 				b.Put(i.(*basic.AccCache).ID[:], tmp)
 			}
 			return true
-		})
+		})*/
 		return nil
 	})
 	return err
+}
+
+//UpdateAccount save the current account data into database
+func (a *TxBlockChain) UpdateAccount() error {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ACCBucket))
+		for k, v := range a.AccData {
+			if v == 0 {
+				b.Delete(k[:])
+			} else {
+				var tmp []byte
+				basic.EncodeInt(&tmp, v)
+				b.Put(k[:], tmp)
+			}
+		}
+		/*
+			tmp := a.AccData.Min()
+			a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
+				if i.(*basic.AccCache).Value == 0 {
+					b.Delete(i.(*basic.AccCache).ID[:])
+				} else {
+					var tmp []byte
+					basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
+					b.Put(i.(*basic.AccCache).ID[:], tmp)
+				}
+				return true
+			})*/
+		return nil
+	})
+	return err
+}
+
+//ShowAccount prints all account information
+func (a *TxBlockChain) ShowAccount() error {
+	for k, v := range a.AccData {
+		fmt.Println(k, ": ", v)
+	}
+	return nil
 }
 
 //UpdateUTXO is to update utxo set
@@ -365,9 +422,9 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 			for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
 				if x.TxArray[i].In[j].ShardIndex() == shardindex {
 					if x.TxArray[i].In[j].Acc() {
-						tmp := a.FindAcc(x.TxArray[i].In[j].PrevTx)
-						if tmp != nil && !oktx {
-							tmp.Value -= x.TxArray[i].In[j].Index
+						_, ok := a.AccData[x.TxArray[i].In[j].PrevTx]
+						if ok && !oktx {
+							a.AccData[x.TxArray[i].In[j].PrevTx] -= x.TxArray[i].In[j].Index
 						}
 					} else {
 						tmp, ok := a.USet[x.TxArray[i].In[j].PrevTx]
