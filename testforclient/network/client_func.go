@@ -1,6 +1,21 @@
 package network
 
-import "github.com/uchihatmtkinu/RC/Reputation/cosi"
+import (
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+)
+
+func intilizeMaskBit(mask *[]byte, len int, value cosi.MaskBit){
+	var setValue byte
+	*mask = make([]byte, len)
+	if value == cosi.Disabled {
+		setValue = 0xff
+	} else {
+		setValue = 0x00
+	}
+	for i := 0; i < len; i++ {
+		(*mask)[i] = setValue // all disabled
+	}
+}
 
 // setMaskBit enable = 0 = false, disable = 1= true
 func setMaskBit(signer int, value cosi.MaskBit, mask *[]byte) {

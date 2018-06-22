@@ -6,19 +6,32 @@ import (
 	"encoding/gob"
 	"log"
 	"crypto/sha256"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 //SyncBlock syncblock
 type SyncBlock struct {
 	Timestamp     	 	int64
-	Userlist			[]int
+	//userlist			[]int
 	PrevRepBlockHash 	[32]byte
+	PrevSyncBlockHash 	[][32]byte
+	TotalRep			[gVar.SlidingWindows][] *RepTransaction
 	CoSignature			[]byte
 	Hash          	 	[32]byte
 }
 
 // NewSynBlock new sync block
-func NewSynBlock(userlist []int, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
+func NewSynBlock(ms *[]shard.MemShard, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
+	var item *shard.MemShard
+	var repTransactions []*RepTransaction
+	for k := 0; k < int(gVar.SlidingWindows); k++ {
+		for i := 0; i < int(gVar.ShardSize); i++ {
+			item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+			repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.TotalRep[k]))
+		}
+	}
+
 	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, [32]byte{}}
 	blockhash := sha256.Sum256(block.prepareData())
 	block.Hash = blockhash
