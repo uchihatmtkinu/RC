@@ -32,20 +32,7 @@ func (ms *MemShard) NewMemShard(acc *account.RcAcc) {
 func (ms *MemShard) NewTotalRep() {
 	ms.TotalRep = []int64{0}
 }
-//SetInShardId set in shard id
-func (ms *MemShard) SetInShardId(id int) {
-	ms.InShardId = id
-}
 
-//SetRole 0 - member, 1 - leader
-func (ms *MemShard) SetRole(role byte) {
-	ms.Role = role
-}
-
-//SetShard set shard
-func (ms *MemShard) SetShard(shard int) {
-	ms.Shard = shard
-}
 //CopyTotalRepFromSB copy total rep from sync bock
 func (ms *MemShard) CopyTotalRepFromSB(value []int64) {
 	ms.TotalRep = value

@@ -92,8 +92,27 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 
 		return nil
 	})
+	if err != nil {
+		log.Panic(err)
+	}
 
 }
+
+//AddSyncBlockFromOtherShards add sync block from other shards
+func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock) {
+	err := bc.Db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		err := b.Put(syncBlock.Hash[:], syncBlock.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
 
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewRepBlockchain(nodeID string) *RepBlockchain {
