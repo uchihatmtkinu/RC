@@ -8,6 +8,15 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 )
 
+//Hash returns the ID of the TxList
+func (a *TxDecSet) Hash() [32]byte {
+	tmp := make([]byte, 0, a.TxCnt*32)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		tmp = append(tmp, a.TxArray[i][:]...)
+	}
+	return sha256.Sum256(tmp)
+}
+
 //Sign signs the TxDecSet
 func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
 	tmp := make([]byte, 0, 36+len(a.MemD[0].Decision)*int(a.MemCnt))

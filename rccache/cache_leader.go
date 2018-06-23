@@ -5,6 +5,7 @@ import (
 
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 //MakeTXList is to create TxList given transaction
@@ -37,14 +38,6 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	return nil
 }
 
-//SignTXL is to sign all txlist
-func (d *DbRef) SignTXL() {
-	//d.TL.Sign(&d.prk)
-	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TLS[i].Sign(&d.prk)
-	}
-}
-
 //BuildTDS is to build all txDecSet
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
@@ -60,9 +53,9 @@ func (d *DbRef) BuildTDS() {
 }
 
 //SignTDS is to sign all txDecSet
-func (d *DbRef) SignTDS() {
+func (d *DbRef) SignTDS(x int) {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TDS[i].Sign(&d.prk)
+		d.TDSCache[x][i].Sign(&d.prk)
 	}
 }
 
@@ -109,11 +102,12 @@ func (d *DbRef) GenerateFinalBlock() error {
 
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
 func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
-	if a.Target != d.ShardNum {
-		return fmt.Errorf("TxDecision should be the intra-one")
-	}
-	if a.Single == 1 || uint32(len(a.Sig)) != gVar.ShardCnt {
+	if a.Single == 1 {
 		return fmt.Errorf("TxDecision parameter error")
+	}
+	err := d.PreTxDecision(a, a.HashID)
+	if err != nil {
+		return err
 	}
 	tmp, ok := d.TLIndex[a.HashID]
 	if !ok {
@@ -141,14 +135,16 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 			y++
 		} else {
 			x++
-			if x >= uint32(len(a.Decision)) {
-				break
-			}
 			y = 0
 		}
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TDS[i].Add(&tmpTD[i])
+		if !tmpTD[i].Verify(&shard.GlobalGroupMems[a.ID].RealAccount.Puk, 0) {
+			return fmt.Errorf("Signature not match")
+		}
+	}
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		d.TDSCache[tmpIndex][i].Add(&tmpTD[i])
 	}
 	return nil
 }

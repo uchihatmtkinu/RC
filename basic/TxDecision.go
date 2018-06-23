@@ -57,7 +57,6 @@ func (a *TxDecision) Verify(puk *ecdsa.PublicKey, x uint32) bool {
 //Encode encodes the TxDecision into []byte
 func (a *TxDecision) Encode(tmp *[]byte) {
 	Encode(tmp, a.ID)
-	Encode(tmp, &a.HashID)
 	Encode(tmp, a.TxCnt)
 	Encode(tmp, a.Target)
 	Encode(tmp, &a.Decision)
@@ -65,6 +64,7 @@ func (a *TxDecision) Encode(tmp *[]byte) {
 	if a.Single == 1 {
 		Encode(tmp, &a.Sig[0])
 	} else {
+		Encode(tmp, &a.HashID)
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			Encode(tmp, &a.Sig[i])
 		}
@@ -77,10 +77,6 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxDecsion ID decode failed: %s", err)
-	}
-	err = Decode(buf, &a.HashID)
-	if err != nil {
-		return fmt.Errorf("TxDecsion HashID decode failed: %s", err)
 	}
 	err = Decode(buf, &a.TxCnt)
 	if err != nil {
@@ -105,6 +101,10 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 			return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 		}
 	} else {
+		err = Decode(buf, &a.HashID)
+		if err != nil {
+			return fmt.Errorf("TxDecsion HashID decode failed: %s", err)
+		}
 		a.Sig = make([]RCSign, gVar.ShardCnt)
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			err = Decode(buf, a.Sig[i])

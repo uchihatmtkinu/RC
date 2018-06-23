@@ -42,7 +42,7 @@ func (a *TxBlock) Verify(puk *ecdsa.PublicKey) (bool, error) {
 
 	tmp := a.Hash()
 	//Verify the hash, the cnt of in and out address
-	if tmp != a.HashID || a.TxCnt != uint32(len(a.TxArray)) {
+	if tmp != a.HashID {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
 	var tmpHash [32]byte
