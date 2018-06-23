@@ -32,7 +32,7 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes *[][32
 	var repTransactions []*RepTransaction
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		repTransactions = append(repTransactions, NewSyncRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
+		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
 	}
 
 	//generate new block

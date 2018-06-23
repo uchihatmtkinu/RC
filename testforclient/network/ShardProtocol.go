@@ -49,14 +49,17 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 	//txblock flag
 	tbrxflag := true
 	timeoutflag := false
+	//txBlock Transaction block
+	var txBlock basic.TxBlock
+	//syncBlock SyncBlock
+	var syncBlock Reputation.SyncBlock
 	for (sbrxflag || tbrxflag) && !timeoutflag {
 		select {
 		case sbinfo := <-syncSBCh[k]:
 			{
 				if sbinfo.id == aski[k] {
-					syncBlock := handleSBMessage(sbinfo.request)
+					syncBlock = handleSBMessage(sbinfo.request)
 					sbrxflag = false
-					//TODO add SyncBlock
 				}
 				//sbRxFlag[k] <- true
 
@@ -64,10 +67,10 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 		case tbinfo := <-syncTBCh[k]:
 			{
 				if tbinfo.id == aski[k] {
-					txBlock := handleTBMessage(tbinfo.request)
+					txBlock = handleTBMessage(tbinfo.request)
 					tbrxflag = false
-					CacheDbRef.GetFinalTxBlock(&txBlock)
-					//TODO add TxBlock
+
+
 				}
 				//tbRxFlag[k] <- true
 
@@ -81,6 +84,10 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 		}
 	}
 	if !sbrxflag && !tbrxflag {
+		//add transaction block
+		CacheDbRef.GetFinalTxBlock(&txBlock)
+		//add sync Block
+		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock)
 		sbrxCounter.mux.Lock()
 		sbrxCounter.cnt++
 		sbrxCounter.mux.Unlock()

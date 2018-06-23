@@ -15,22 +15,24 @@ import (
 )
 
 
-// myCommit my cosi commitment
-var myCommit 	cosi.Commitment
-var mySecret 	*cosi.Secret
-var cosimask	[]byte
-var commits		[]cosi.Commitment
-var	pubKeys		[]ed25519.PublicKey
-var sigParts 	[]cosi.SignaturePart
-var sbMessage	[]byte
-var cosiSig		cosi.SignaturePart
+
+
 
 
 // leaderCosiProcess leader use this
 func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.SignaturePart{
 	//initialize
+	// myCommit my cosi commitment
+	var myCommit 	cosi.Commitment
+	var mySecret 	*cosi.Secret
 	var sbMessage []byte
 	var it *shard.MemShard
+	var cosimask	[]byte
+	var commits		[]cosi.Commitment
+	var	pubKeys		[]ed25519.PublicKey
+	var sigParts 	[]cosi.SignaturePart
+	var cosiSig		cosi.SignaturePart
+	//To simplify the problem, we just validate the previous repblock hash
 	sbMessage = prevRepBlockHash[:]
 
 	commits = make([]cosi.Commitment, shard.NumMems)
@@ -92,25 +94,36 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSig = cosigners.AggregateSignature(aggregateCommit, sigParts)
-	currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
+	//currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
 	for i:=uint32(0); i <gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		if maskBit(it.InShardId, &cosimask)==cosi.Enabled {
-			sendCosiMessage(it.Address, "cosiSig", currentSigMessage)
+			sendCosiMessage(it.Address, "cosiSig", cosiSig)
 		}
 	}
-
 	return cosiSig
 }
 
 // memberCosiProcess member use this
-func memberCosiProcess(prevRepBlockHash [32]byte) (bool, []byte){
+func memberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, []byte){
 	var sbMessage []byte
+	// myCommit my cosi commitment
+	var myCommit 	cosi.Commitment
+	var mySecret 	*cosi.Secret
+	var	pubKeys		[]ed25519.PublicKey
+	var it *shard.MemShard
+	//generate pubKeys
+	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
+	for i:=0; i < shard.NumMems; i++ {
+		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+		pubKeys[it.InShardId] = it.CosiPub
+	}
+
 	sbMessage = prevRepBlockHash[:]
 	leaderSBMessage := <-cosiAnnounceCh
 	if !verifySBMessage(sbMessage, handleAnnounce(leaderSBMessage)) {
 		fmt.Println("Sync Block from leader is wrong!")
-		//send warning
+		//TODO send warning
 	}
 	myCommit, mySecret, _ = cosi.Commit(nil)
 	sendCosiMessage(LeaderAddr, "cosiCommit", myCommit)
@@ -119,10 +132,12 @@ func memberCosiProcess(prevRepBlockHash [32]byte) (bool, []byte){
 	sigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
 	sendCosiMessage(LeaderAddr, "cosiRespon", sigPart)
 	request = <- cosiSigCh
-	currentSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
-	valid := cosi.Verify(currentSigMessage.pubKeys, nil, sbMessage, currentSigMessage.cosiSig)
-	return valid, currentSigMessage.cosiSig[64:]
+	cosiSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
+	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
+	return valid, cosiSigMessage
 }
+
+
 
 // handleCommit rx commit
 func handleCommit(request []byte) []byte{
@@ -182,9 +197,9 @@ func handleResponse(request[]byte) cosi.SignaturePart{
 }
 
 // handleCosiSig rx cosisig
-func handleCosiSig(request []byte) cosiSigMessage {
+func handleCosiSig(request []byte) cosi.SignaturePart {
 	var buff bytes.Buffer
-	var payload cosiSigMessage
+	var payload cosi.SignaturePart
 
 	buff.Write(request[commandLength:])
 	dec := gob.NewDecoder(&buff)
