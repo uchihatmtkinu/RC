@@ -46,12 +46,12 @@ func (a *Transaction) VerifyTx(i uint32, b *OutType) bool {
 
 //Encode converts the transaction into bytes
 func (a *Transaction) Encode(tmp *[]byte) {
-	EncodeInt(tmp, a.Timestamp)
-	EncodeInt(tmp, a.TxinCnt)
-	EncodeInt(tmp, a.TxoutCnt)
-	EncodeInt(tmp, a.Kind)
-	EncodeInt(tmp, a.Locktime)
-	EncodeByteL(tmp, a.Hash[:], 32)
+	Encode(tmp, a.Timestamp)
+	Encode(tmp, a.TxinCnt)
+	Encode(tmp, a.TxoutCnt)
+	Encode(tmp, a.Kind)
+	Encode(tmp, a.Locktime)
+	Encode(tmp, &a.Hash)
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		a.In[i].InToData(tmp)
 		//EncodeByte(&tmp, &xxx)
@@ -65,32 +65,30 @@ func (a *Transaction) Encode(tmp *[]byte) {
 func (a *Transaction) Decode(buf *[]byte) error {
 	//buf := *data
 
-	err := DecodeInt(buf, &a.Timestamp)
+	err := Decode(buf, &a.Timestamp)
 	if err != nil {
 		return fmt.Errorf("TX timestamp Read failed: %s", err)
 	}
-	err = DecodeInt(buf, &a.TxinCnt)
+	err = Decode(buf, &a.TxinCnt)
 	if err != nil {
 		return fmt.Errorf("TX TxinCnt Read failed; %s", err)
 	}
-	err = DecodeInt(buf, &a.TxoutCnt)
+	err = Decode(buf, &a.TxoutCnt)
 	if err != nil {
 		return fmt.Errorf("TX TxoutCnt Read failed: %s", err)
 	}
-	err = DecodeInt(buf, &a.Kind)
+	err = Decode(buf, &a.Kind)
 	if err != nil {
 		return fmt.Errorf("TX Kind Read failed: %s", err)
 	}
-	err = DecodeInt(buf, &a.Locktime)
+	err = Decode(buf, &a.Locktime)
 	if err != nil {
 		return fmt.Errorf("TX Locktime Read failed: %s", err)
 	}
-	var tmp1 []byte
-	err = DecodeByteL(buf, &tmp1, 32)
+	err = Decode(buf, &a.Hash)
 	if err != nil {
 		return fmt.Errorf("TX hash Read failed: %s", err)
 	}
-	copy(a.Hash[:], tmp1[:32])
 	a.In = make([]InType, 0, a.TxinCnt)
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		//var tmpArray *[]byte

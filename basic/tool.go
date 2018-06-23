@@ -16,6 +16,53 @@ func HashCut(x [32]byte) [sHash]byte {
 	return tmp
 }
 
+//Encode is the general function of decoding
+func Encode(tmp *[]byte, out interface{}) error {
+	switch out := out.(type) {
+	case *[]byte:
+		EncodeByte(tmp, out)
+	case *[32]byte:
+		EncodeByteL(tmp, out[:], 32)
+	case *[sHash]byte:
+		EncodeByteL(tmp, out[:], sHash)
+	case *RCSign:
+		out.SignToData(tmp)
+	case *big.Int:
+		EncodeBig(tmp, out)
+	default:
+		EncodeInt(tmp, out)
+	}
+	return nil
+}
+
+//Decode is the general function of decoding
+func Decode(tmp *[]byte, out interface{}) error {
+	var err error
+	switch out := out.(type) {
+	case *[]byte:
+		err = DecodeByte(tmp, out)
+	case *[32]byte:
+		xxx := make([]byte, 0, 32)
+		err = DecodeByteL(tmp, &xxx, 32)
+		if err == nil {
+			copy(out[:], xxx[:32])
+		}
+	case *[sHash]byte:
+		xxx := make([]byte, 0, sHash)
+		err = DecodeByteL(tmp, &xxx, sHash)
+		if err == nil {
+			copy(out[:], xxx[:sHash])
+		}
+	case *RCSign:
+		err = out.DataToSign(tmp)
+	case *big.Int:
+		err = DecodeBig(tmp, out)
+	default:
+		err = DecodeInt(tmp, out)
+	}
+	return err
+}
+
 //DoubleHash256 returns the double hash result of hash256
 func DoubleHash256(a *[]byte, b *[32]byte) {
 	*b = sha256.Sum256(*a)
