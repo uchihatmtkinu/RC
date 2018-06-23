@@ -13,6 +13,7 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"math/rand"
 )
 
 //sbrxCounter count for the block receive
@@ -26,11 +27,14 @@ func syncProcess(ms *[]shard.MemShard) {
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
+	rand.Seed(int64(shard.MyMenShard.Shard * 3000 + shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
+	shard.PreviousSyncBlockHash = nil
+	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	//intilizeMaskBit(&syncmask, int((gVar.ShardCnt+7)>>3),false)
 	for i := 0; i < int(gVar.ShardCnt); i++ {
 		syncSBCh[i] = make(chan sbInfoCh, 10)
 		syncTBCh[i] = make(chan sbInfoCh, 10)
-		aski[i] = 0
+		aski[i] = rand.Intn(int(gVar.ShardSize))
 	}
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
@@ -64,7 +68,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 					if syncBlock.VerifyCoSignature(ms, k) {
 						sbrxflag = false
 					}	else {
-						aski[k]++
+						aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 						timeoutflag = true
 						go sendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
 					}
@@ -90,10 +94,10 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	if !sbrxflag && !tbrxflag {
 		//add transaction block
 		CacheDbRef.GetFinalTxBlock(&txBlock)
-		//add sync Block
-		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
 		//update reputation of members
 		syncBlock.UpdateTotalRepInMS(ms)
+		//add sync Block
+		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
 		//sbrxCounter.mux.Lock()
 		//sbrxCounter.cnt++
 		//sbrxCounter.mux.Unlock()
