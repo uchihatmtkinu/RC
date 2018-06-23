@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"log"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 
@@ -31,6 +32,12 @@ func BoolToHex(f bool) []byte {
 	return a
 }
 
+// maskBit returns a boolean value indicating whether the indicated signer is Enabled or Disabled.
+func maskBit(signer int, mask *[]byte) (value cosi.MaskBit) {
+	byt := signer >> 3
+	bit := byte(1) << uint(signer&7)
+	return ((*mask)[byt] & bit) != 0
+}
 
 /*
 func UIntToHex(num uint64) []byte {
