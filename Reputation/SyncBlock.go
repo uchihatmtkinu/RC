@@ -107,6 +107,7 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
 	}
 	sbMessage := b.PrevRepBlockHash[:]
 	valid := cosi.Verify(pubKeys, nil, sbMessage, b.CoSignature)
+	return valid
 }
 
 // Serialize encode block
