@@ -39,7 +39,7 @@ func (a *TxList) Set(ID uint32) {
 //AddTx adds the tx into transaction list
 func (a *TxList) AddTx(tx *Transaction) {
 	a.TxCnt++
-	a.TxArray = append(a.TxArray, tx.Hash)
+	a.TxArray = append(a.TxArray, HashCut(tx.Hash))
 }
 
 //Encode returns the byte of a TxList
@@ -48,7 +48,7 @@ func (a *TxList) Encode(tmp *[]byte) {
 	EncodeByteL(tmp, a.HashID[:], 32)
 	EncodeInt(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		EncodeByteL(tmp, a.TxArray[i][:], 32)
+		EncodeByteL(tmp, a.TxArray[i][:], sHash)
 	}
 	a.Sig.SignToData(tmp)
 }
@@ -76,11 +76,11 @@ func (a *TxList) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxList TxCnt decode failed: %s", err)
 	}
-	a.TxArray = make([][32]byte, 0, a.TxCnt)
+	a.TxArray = make([][sHash]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = DecodeByteL(buf, &tmp, 32)
-		var xxx [32]byte
-		copy(xxx[:], tmp[:32])
+		err = DecodeByteL(buf, &tmp, sHash)
+		var xxx [sHash]byte
+		copy(xxx[:], tmp[:sHash])
 		if err != nil {
 			return fmt.Errorf("TxList Tx decode failed-%d: %s", i, err)
 		}

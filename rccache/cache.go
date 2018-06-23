@@ -37,22 +37,23 @@ func byteCompare(a, b interface{}) int {
 
 //DbRef is the structure stores the cache of a miner for the database
 type DbRef struct {
-	ID       uint32
-	DB       TxBlockChain
-	TXCache  map[[6]byte]*CrossShardDec
-	ShardNum uint32
+	ID        uint32
+	DB        TxBlockChain
+	TXCache   map[[basic.sHash]byte]*CrossShardDec
+	LastShard uint32
+	ShardNum  uint32
 
 	//Leader
-	TLCache  []basic.TxList
+	//TLCache  []basic.TxList
 	TLSCache [][gVar.ShardCnt]basic.TxList
 	TDSCache [][gVar.ShardCnt]basic.TxDecSet
 	TLIndex  map[[32]byte]uint32
 	TLS      *[gVar.ShardCnt]basic.TxList
 	TDS      *[gVar.ShardCnt]basic.TxDecSet
-	TL       *basic.TxList
-	Ready    []basic.Transaction
-	TxB      *basic.TxBlock
-	prk      ecdsa.PrivateKey
+	//TL       *basic.TxList
+	Ready []basic.Transaction
+	TxB   *basic.TxBlock
+	prk   ecdsa.PrivateKey
 
 	//Miner
 	TLNow      *basic.TxDecision
@@ -70,8 +71,9 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.DB.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
 	d.TXCache = make(map[[6]byte]*CrossShardDec)
 	d.TxB = d.DB.LatestTxBlock()
-	d.TL = nil
-	d.TLCache = nil
+	//d.TL = nil
+	//d.TLCache = nil
+	d.TLS = nil
 	d.TLSCache = nil
 	d.TDSCache = nil
 	d.startIndex = 0
@@ -85,7 +87,7 @@ type CrossShardDec struct {
 	InCheck  []int //-1: Output related
 	//0: unknown, Not-related; 1: Yes; 2: No; 3: Related-noresult
 	ShardRelated []uint32
-	Res          int8 //0: unknown; 1: Yes; -1: No
+	Res          int8 //0: unknown; 1: Yes; -1: No; -2: Can be deleted
 	InCheckSum   int
 	Total        int
 	Value        uint32

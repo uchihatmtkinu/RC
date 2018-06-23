@@ -38,15 +38,20 @@ func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //Set init an instance of TxDecSet given those parameters
-func (a *TxDecSet) Set(b *TxList, x uint32) {
+func (a *TxDecSet) Set(b *TxList, x uint32, y int) {
 	a.ID = b.ID
 	a.HashID = b.HashID
 	a.MemCnt = 0
-	a.TxCnt = b.TxCnt
 	a.ShardIndex = x
-	a.TxArray = make([][32]byte, 0, a.TxCnt)
-	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray = append(a.TxArray, b.TxArray[i])
+	if y == 1 {
+		a.TxCnt = 0
+		a.TxArray = nil
+	} else {
+		a.TxCnt = b.TxCnt
+		a.TxArray = make([][sHash]byte, 0, a.TxCnt)
+		for i := uint32(0); i < a.TxCnt; i++ {
+			a.TxArray = append(a.TxArray, b.TxArray[i])
+		}
 	}
 }
 
@@ -90,6 +95,7 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		*tmp = append(*tmp, a.TxArray[i][:]...)
+		EncodeByteL(tmp, a.TxArray[i][:], sHash)
 	}
 	a.Sig.SignToData(tmp)
 }
@@ -127,14 +133,14 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 		}
 		a.MemD = append(a.MemD, tmp1)
 	}
-	a.TxArray = make([][32]byte, 0, a.TxCnt)
+	a.TxArray = make([][sHash]byte, 0, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = DecodeByteL(buf, &tmp, 32)
+		err = DecodeByteL(buf, &tmp, sHash)
 		if err != nil {
 			return fmt.Errorf("TxDecSet TxArray decode failed-%d: %s", i, err)
 		}
-		var tmp1 [32]byte
-		copy(tmp1[:], tmp[:32])
+		var tmp1 [sHash]byte
+		copy(tmp1[:], tmp[:sHash])
 		a.TxArray = append(a.TxArray, tmp1)
 	}
 	err = a.Sig.DataToSign(buf)

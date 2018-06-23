@@ -55,6 +55,15 @@ type TxList struct {
 	Sig     RCSign
 }
 
+//TxListX is the list of tx sent by Leader to miner for their verification
+type TxListX struct {
+	ID      uint32
+	HashID  [32]byte
+	TxCnt   uint32
+	TxArray [][sHash]byte
+	Sig     RCSign
+}
+
 //TxDecision is the decisions based on given TxList
 type TxDecision struct {
 	ID       uint32   // miner id what id?  hash256(pubkey)
@@ -78,6 +87,18 @@ type TxDecSet struct {
 	Sig        RCSign
 }
 
+//TxDecSetX is the set of all decisions from one shard, signed by leader
+type TxDecSetX struct {
+	ID         uint32
+	HashID     [32]byte
+	MemCnt     uint32
+	ShardIndex uint32
+	MemD       []TxDecision
+	TxCnt      uint32
+	TxArray    [][sHash]byte
+	Sig        RCSign
+}
+
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
 	ID         uint32
@@ -89,6 +110,20 @@ type TxBlock struct {
 	Height     uint32
 	TxCnt      uint32
 	TxArray    []Transaction
+	Sig        RCSign
+}
+
+//TxBlockX introduce the struct of the transaction block
+type TxBlockX struct {
+	ID         uint32
+	PrevHash   [32]byte
+	HashID     [32]byte
+	MerkleRoot [32]byte
+	Kind       uint32
+	Timestamp  int64
+	Height     uint32
+	TxCnt      uint32
+	TxArray    [][sHash]byte
 	Sig        RCSign
 }
 

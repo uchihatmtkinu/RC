@@ -9,6 +9,13 @@ import (
 	"math/big"
 )
 
+//HashCut returns the part of the hash
+func HashCut(x [32]byte) [sHash]byte {
+	var tmp [sHash]byte
+	copy(tmp[:], x[:sHash])
+	return tmp
+}
+
 //DoubleHash256 returns the double hash result of hash256
 func DoubleHash256(a *[]byte, b *[32]byte) {
 	*b = sha256.Sum256(*a)

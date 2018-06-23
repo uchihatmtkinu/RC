@@ -74,7 +74,10 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 	a.Timestamp = time.Now().Unix()
 	a.TxCnt = uint32(len(*b))
 	a.Height = h
-	a.TxArray = *b
+	for i := 0; i <= len(*b); {
+		a.TxArray = append(a.TxArray, HashCut((*b)[i].Hash))
+	}
+
 	GenMerkTree(&a.TxArray, &a.MerkleRoot)
 	a.HashID = a.Hash()
 	a.Sig.Sign(a.HashID[:], prk)
@@ -99,7 +102,7 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 	EncodeInt(tmp, a.TxCnt)
 	EncodeInt(tmp, a.Kind)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray[i].Encode(tmp)
+		EncodeByteL(tmp, a.TxArray[i][:], sHash)
 	}
 	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
 		a.Sig.SignToData(tmp)
@@ -144,14 +147,16 @@ func (a *TxBlock) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxBlock Kind failed: %s", err)
 	}
-	a.TxArray = make([]Transaction, 0, a.TxCnt)
-	var xxx Transaction
+	a.TxArray = make([][sHash]byte, 0, a.TxCnt)
+	var xxx []byte
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = xxx.Decode(buf)
+		err = DecodeByteL(buf, &xxx, sHash)
+		var tmp [sHash]byte
+		copy(tmp[:], xxx[:sHash])
 		if err != nil {
 			return fmt.Errorf("TxBlock decode Tx failed-%d: %s", i, err)
 		}
-		a.TxArray = append(a.TxArray, xxx)
+		a.TxArray = append(a.TxArray, tmp)
 	}
 	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
 		err = a.Sig.DataToSign(buf)

@@ -52,15 +52,21 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
-
-	tmp, ok := d.TXCache[HashCut(a.Hash)]
+	tmpHash := HashCut(a.Hash)
+	tmp, ok := d.TXCache[tmpHash]
 	if ok {
 		tmp.Update(a)
 	} else {
 		tmp = new(CrossShardDec)
 		tmp.New(a)
-		d.TXCache[HashCut(a.Hash)] = tmp
 	}
+	if tmp.InCheck[d.ShardNum] == 0 {
+		if ok {
+			delete(d.TXCache, tmpHash)
+		}
+		return fmt.Errorf("Not related TX")
+	}
+	d.TXCache[tmpHash] = tmp
 	return nil
 }
 

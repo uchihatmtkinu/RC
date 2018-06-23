@@ -52,10 +52,3 @@ func byteSlice(x uint32) []byte {
 	basic.EncodeInt(&tmp, x)
 	return tmp
 }
-
-//HashCut returns the part of the hash
-func HashCut(x [32]byte) [6]byte {
-	var tmp [6]byte
-	copy(tmp[:], x[:6])
-	return tmp
-}

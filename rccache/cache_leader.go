@@ -23,11 +23,15 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 		}
 		return fmt.Errorf("Not related TX")
 	}
-	d.TL.AddTx(b)
+	if tmp.Res == 1 {
+		d.Ready = append(d.Ready, *tmp.Data)
+	}
 	d.TXCache[tmpHash] = tmp
-	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		if tmp.InCheck[i] != 0 {
-			d.TLS[i].AddTx(b)
+	if tmp.InCheck[d.ShardNum] != -1 {
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			if tmp.InCheck[i] != 0 {
+				d.TLS[i].AddTx(b)
+			}
 		}
 	}
 	return nil
@@ -35,21 +39,28 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 
 //SignTXL is to sign all txlist
 func (d *DbRef) SignTXL() {
-	d.TL.Sign(&d.prk)
+	//d.TL.Sign(&d.prk)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		if i != d.ShardNum {
-			d.TLS[i].Sign(&d.prk)
-		}
+		d.TLS[i].Sign(&d.prk)
 	}
 }
 
-//BuildTDS is to sign all txDecSet
+//BuildTDS is to build all txDecSet
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TDS[i].Set(&d.TLS[i], d.ShardNum)
+		if i == d.ShardNum {
+			d.TDS[i].Set(&d.TLS[i], d.ShardNum, 1)
+		} else {
+			d.TDS[i].Set(&d.TLS[i], d.ShardNum, 0)
+		}
 	}
+
+}
+
+//SignTDS is to sign all txDecSet
+func (d *DbRef) SignTDS() {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TDS[i].Sign(&d.prk)
 	}
@@ -58,20 +69,20 @@ func (d *DbRef) BuildTDS() {
 //NewTxList initialize the txList
 //Must after BuildTDS
 func (d *DbRef) NewTxList() error {
-	if d.TL != nil {
-		d.TLCache = append(d.TLCache, *d.TL)
+	if d.TLS != nil {
+		//d.TLCache = append(d.TLCache, *d.TL)
 		d.TLSCache = append(d.TLSCache, *d.TLS)
 		d.TDSCache = append(d.TDSCache, *d.TDS)
 		d.lastIndex++
-		d.TLIndex[d.TL.Hash()] = uint32(d.lastIndex)
+		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.lastIndex)
 	}
 
 	d.TLS = new([gVar.ShardCnt]basic.TxList)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TLS[i].ID = d.ID
 	}
-	d.TL = new(basic.TxList)
-	d.TL.Set(d.ID)
+	//d.TL = new(basic.TxList)
+	//d.TL.Set(d.ID)
 	return nil
 }
 
@@ -101,7 +112,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if a.Target != d.ShardNum {
 		return fmt.Errorf("TxDecision should be the intra-one")
 	}
-	if a.Single != 1 || uint32(len(a.Sig)) != gVar.ShardCnt {
+	if a.Single == 1 || uint32(len(a.Sig)) != gVar.ShardCnt {
 		return fmt.Errorf("TxDecision parameter error")
 	}
 	tmp, ok := d.TLIndex[a.HashID]
@@ -109,7 +120,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
 	tmpIndex := tmp - uint32(d.startIndex)
-	tmpTL := d.TLCache[tmpIndex]
+	tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 
 	var x, y uint32 = 0, 0
 	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
@@ -117,7 +128,6 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 
 		tmpTD[i].Set(a.ID, i, 1)
 		tmpTD[i].HashID = d.TLSCache[tmpIndex][i].HashID
-		tmpTD[i].Single = 1
 		tmpTD[i].Sig = nil
 		tmpTD[i].Sig = append(tmpTD[i].Sig, a.Sig[i])
 
@@ -171,8 +181,8 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 
 //Release delete the first element of the cache
 func (d *DbRef) Release() {
-	delete(d.TLIndex, d.TLCache[0].HashID)
-	d.TLCache = d.TLCache[1:]
+	delete(d.TLIndex, d.TLSCache[0][d.ShardNum].HashID)
+	//d.TLCache = d.TLCache[1:]
 	d.TDSCache = d.TDSCache[1:]
 	d.TLSCache = d.TLSCache[1:]
 	d.startIndex++
