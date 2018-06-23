@@ -16,13 +16,13 @@ type SyncBlock struct {
 	//userlist			[]int
 	PrevRepBlockHash 	[32]byte
 	PrevSyncBlockHash 	[][32]byte
-	TotalRep			[gVar.SlidingWindows][] *RepTransaction
+	TotalRepTrans		[gVar.SlidingWindows][] *RepTransaction
 	CoSignature			[]byte
 	Hash          	 	[32]byte
 }
 
 // NewSynBlock new sync block
-func NewSynBlock(ms *[]shard.MemShard, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
+func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	for k := 0; k < int(gVar.SlidingWindows); k++ {
@@ -32,7 +32,7 @@ func NewSynBlock(ms *[]shard.MemShard, prevRepBlockHash [32]byte, coSignature []
 		}
 	}
 
-	block := &SyncBlock{time.Now().Unix(), userlist, prevRepBlockHash,coSignature, [32]byte{}}
+	block := &SyncBlock{time.Now().Unix(), prevRepBlockHash,prevSyncBlockHash, repTransactions,coSignature, [32]byte{}}
 	blockhash := sha256.Sum256(block.prepareData())
 	block.Hash = blockhash
 	return block
@@ -42,8 +42,9 @@ func NewSynBlock(ms *[]shard.MemShard, prevRepBlockHash [32]byte, coSignature []
 func (b *SyncBlock) prepareData() []byte {
 	data := bytes.Join(
 		[][]byte{
-			b.UserlistHash(),
+			b.HashPrevSyncBlock(),
 			b.PrevRepBlockHash[:],
+			b.HashTotalRep(),
 			b.CoSignature,
 			//IntToHex(b.Timestamp),
 		},
@@ -53,12 +54,28 @@ func (b *SyncBlock) prepareData() []byte {
 	return data
 }
 
-// UserlistHash returns a hash of the userlist in the block
-func (b *SyncBlock) UserlistHash() []byte {
+
+// HashRep returns a hash of the TotalRepTransactions in the block
+func (b *SyncBlock) HashTotalRep() []byte {
 	var txHashes []byte
 	var txHash [32]byte
-	for _,item := range b.Userlist {
-		txHashes = append(txHashes, IntToHex(int64(item))...)
+	for i := range b.TotalRepTrans {
+		for _,item := range b.TotalRepTrans[i] {
+			txHashes = append(txHashes, IntToHex(item.Rep)[:]...)
+			txHashes = append(txHashes, IntToHex(int64(item.GlobalID))...)
+		}
+
+	}
+	txHash = sha256.Sum256(txHashes)
+	return txHash[:]
+}
+
+// UserlistHash returns a hash of the userlist in the block
+func (b *SyncBlock) HashPrevSyncBlock() []byte {
+	var txHashes []byte
+	var txHash [32]byte
+	for _,item := range b.PrevSyncBlockHash {
+		txHashes = append(txHashes, item[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]
