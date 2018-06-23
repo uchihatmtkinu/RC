@@ -12,7 +12,7 @@ import (
 
 const protocol = "tcp"
 const nodeVersion = 1
-const commandLength = 12
+const commandLength = 16
 const bufferSize = 1000
 const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 20 * time.Second

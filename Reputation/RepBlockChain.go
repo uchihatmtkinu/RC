@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/rccache"
+	"strconv"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -62,19 +64,31 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 }
 
 // add a new syncBlock on RepBlockChain
-func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
+func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
-
+	var prevSyncBlockHash [][32]byte
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		copy(lastRepBlockHash[:], b.Get([]byte("lb")))
+		copy(lastRepBlockHash[:], b.Get([]byte("lsb")))
 
 		return nil
 	})
 	if err != nil {
 		log.Panic(err)
 	}
-	newSyncBlock := NewSynBlock(Userlist, lastRepBlockHash,  CoSignature)
+	prevSyncBlockHash = make([][32]byte, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		err = bc.Db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(blocksBucket))
+			copy(prevSyncBlockHash[i][:], b.Get([]byte("lsb"+strconv.FormatInt(int64(i), 10))))
+			return nil
+		})
+	}
+	if err != nil {
+		log.Panic(err)
+	}
+
+	newSyncBlock := NewSynBlock(ms, prevSyncBlockHash, lastRepBlockHash,  CoSignature)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -83,7 +97,7 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lsb"), newSyncBlock.Hash[:])
+		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(shard.MyMenShard.Shard), 10)), newSyncBlock.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -98,14 +112,20 @@ func (bc *RepBlockchain) AddSyncBlock(Userlist []int,  CoSignature []byte) {
 
 }
 
-//AddSyncBlockFromOtherShards add sync block from other shards
-func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock) {
+//AddSyncBlockFromOtherShards add sync block from k-th shard
+func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int) {
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(syncBlock.Hash[:], syncBlock.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
+
+		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
+		if err != nil {
+			log.Panic(err)
+		}
+
 		return nil
 	})
 	if err != nil {

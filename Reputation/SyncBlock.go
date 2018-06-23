@@ -96,16 +96,28 @@ func (b *SyncBlock) HashPrevSyncBlock() []byte {
 }
 
 
-// VerifyCosign verify CoSignature
-func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
+// VerifyCosign verify CoSignature, k-th shard
+func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard, k int) bool {
+	// count whether half of the user sign the block
+	count := uint32(0)
+	mask := b.CoSignature[64:]
+	for i := range mask {
+		if maskBit(i, &mask) == cosi.Enabled{
+			count++
+		}
+	}
+	if count < gVar.ShardSize/2 {
+		return false
+	}
+	//verify signature
 	var	pubKeys		[]ed25519.PublicKey
 	var it *shard.MemShard
+	sbMessage := b.PrevRepBlockHash[:]
 	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
 	for i:=0; i < shard.NumMems; i++ {
 		it = &(*ms)[b.IDlist[i]]
-		pubKeys[it.InShardId] = it.CosiPub
+		pubKeys[i] = it.CosiPub
 	}
-	sbMessage := b.PrevRepBlockHash[:]
 	valid := cosi.Verify(pubKeys, nil, sbMessage, b.CoSignature)
 	return valid
 }

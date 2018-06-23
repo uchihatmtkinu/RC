@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 const n = 5
 
@@ -15,7 +18,7 @@ func main() {
 			tmp[j] = j
 		}
 		a = append(a, tmp)
-		copy(b[i][:],a[i])
+		copy(b[i][:],tmp)
 	}
 	sum := 0
 	for i:= range a{
@@ -26,4 +29,9 @@ func main() {
 	fmt.Println(a)
 	fmt.Println(b)
 	fmt.Println(sum)
+	var s string
+	s = "abc"
+	var ss string
+	ss = s+strconv.FormatInt(int64(sum), 10)
+	fmt.Println(ss)
 }
