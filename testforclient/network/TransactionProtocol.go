@@ -21,6 +21,7 @@ func sendTxMessage(addr string, command string, message []byte) {
 func TxGeneralLoop() {
 	tmp := 0
 	flag := false
+	rand.Seed(time.Now().Unix())
 	for {
 		tmp++
 		time.Sleep(time.Second * 10)

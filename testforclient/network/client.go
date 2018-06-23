@@ -9,6 +9,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/uchihatmtkinu/RC/shard"
+
 	"github.com/uchihatmtkinu/RC/account"
 )
 
@@ -194,6 +196,32 @@ func StartServer(nodeID string, height int) {
 			handleAddr(request)
 		case "version":
 			handleVersion(request, myheight)
+		case "Tx":
+			go HandleAndSendTx(request)
+		case "TxM":
+			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
+				go HandleTxLeader(request)
+			} else {
+				go HandleTx(request)
+			}
+		case "TxList":
+			go HandleTxList(request)
+		case "TxDec":
+			go HandleTxDecLeader(request)
+		case "TxDecSet":
+			go HandleAndSentTxDecSet(request)
+		case "TxDecSetM":
+			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
+				go HandleTxDecSetLeader(request)
+			} else {
+				go HandleTxDecSet(request)
+			}
+		case "TxB":
+			go HandleTxBlock(request)
+		case "FinalTxB":
+			go HandleAndSentFinalTxBlock(request)
+		case "FinalTxBM":
+			go HandleFinalTxBlock(request)
 		default:
 			fmt.Println("Unknown command!")
 		}
