@@ -91,7 +91,7 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 		//add transaction block
 		CacheDbRef.GetFinalTxBlock(&txBlock)
 		//add sync Block
-		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock)
+		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
 		//sbrxCounter.mux.Lock()
 		//sbrxCounter.cnt++
 		//sbrxCounter.mux.Unlock()
