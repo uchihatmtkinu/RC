@@ -80,49 +80,48 @@ func (a *OutType) OutToData(b *[]byte) {
 
 //DataToOut converts bytes into output address data
 func (a *OutType) DataToOut(data *[]byte) error {
-	tmp1 := make([]byte, 0, 32)
-	err := DecodeInt(data, &a.Value)
+	err := Decode(data, &a.Value)
 	if err != nil {
 		return fmt.Errorf("Out Value read failed: %s", err)
 	}
-	err = DecodeByteL(data, &tmp1, 32)
+	err = Decode(data, &a.Address)
 	if err != nil {
 		return fmt.Errorf("Out Address read failed: %s", err)
 	}
-	copy(a.Address[:], tmp1[:32])
 	return nil
 }
 
 //InToData converts the input address data into bytes
 func (a *InType) InToData(b *[]byte) {
-	EncodeByteL(b, a.PrevTx[:], 32)
-	EncodeInt(b, a.Index)
-	a.Sig.SignToData(b)
-	EncodeDoubleBig(b, a.PukX, a.PukY)
-	//fmt.Println(len(a.PrevTx), len(buf.Bytes()), lenX, lenY, lenPX, lenPY, len(tmp))
+	Encode(b, &a.PrevTx)
+	Encode(b, &a.Index)
+	Encode(b, &a.Sig)
+	Encode(b, a.PukX)
+	Encode(b, a.PukY)
 }
 
 //DataToIn converts bytes into input address data
 func (a *InType) DataToIn(data *[]byte) error {
-	tmp1 := make([]byte, 0, 32)
 	a.Init()
-	err := DecodeByteL(data, &tmp1, 32)
+	err := Decode(data, &a.PrevTx)
 	if err != nil {
 		return fmt.Errorf("Input PrevHash read failed: %s", err)
 	}
-	copy(a.PrevTx[:], tmp1[:32])
-	err = DecodeInt(data, &a.Index)
+	err = Decode(data, &a.Index)
 	if err != nil {
 		return fmt.Errorf("Input Index read failed: %s", err)
 	}
-	err = a.Sig.DataToSign(data)
+	err = Decode(data, &a.Sig)
 	if err != nil {
 		return fmt.Errorf("Input Signature read failed: %s", err)
 	}
-	err = DecodeDoubleBig(data, a.PukX, a.PukY)
+	err = Decode(data, a.PukX)
 	if err != nil {
 		return fmt.Errorf("Input Publick Key read failed: %s", err)
 	}
-	return nil
-
+	err = Decode(data, a.PukY)
+	if err != nil {
+		return fmt.Errorf("Input Publick Key read failed: %s", err)
+	}
+	return err
 }

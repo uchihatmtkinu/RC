@@ -14,6 +14,14 @@ func (a *RCSign) Sign(b []byte, prk *ecdsa.PrivateKey) {
 	a.R, a.S, _ = ecdsa.Sign(rand.Reader, prk, b)
 }
 
+//New assign a new value
+func (a *RCSign) New(b *RCSign) {
+	a.R = new(big.Int)
+	a.S = new(big.Int)
+	(*a.R) = (*b.R)
+	(*a.S) = (*b.S)
+}
+
 //Verify return the verification
 func (a *RCSign) Verify(b []byte, puk *ecdsa.PublicKey) bool {
 	return ecdsa.Verify(puk, b, a.R, a.S)

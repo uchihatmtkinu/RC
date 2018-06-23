@@ -39,7 +39,8 @@ func byteCompare(a, b interface{}) int {
 type DbRef struct {
 	ID        uint32
 	DB        TxBlockChain
-	TXCache   map[[basic.sHash]byte]*CrossShardDec
+	TXCache   map[[32]byte]*CrossShardDec
+	HashCache map[[sHash]byte][][32]byte
 	LastShard uint32
 	ShardNum  uint32
 
@@ -62,6 +63,8 @@ type DbRef struct {
 	lastIndex  int
 
 	TBCache *[][32]byte
+
+	Leader uint32
 }
 
 //New is the initilization of DbRef

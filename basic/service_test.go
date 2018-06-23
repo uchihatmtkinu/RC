@@ -162,11 +162,10 @@ func TestTxList(t *testing.T) {
 	tmp1.Sig.R.SetString("123123", 10)
 	tmp1.Sig.S.SetString("123123123", 10)
 	var tmp2 []byte
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100000; i++ {
 		tmp1.Encode(&tmp2)
 		err := tmp3.Decode(&tmp2)
 		//Serialize(&tmp1, &tmp2)
-
 		//err := Deserialize(&tmp2, &tmp3)
 		if err != nil {
 			t.Error(err)
@@ -182,5 +181,10 @@ func TestTxList(t *testing.T) {
 	}
 	if tmp1.Hash() != tmp3.Hash() {
 		t.Error(`Hash is wrong`)
+	}
+	for i := uint32(0); i < tmp1.TxCnt; i++ {
+		if tmp1.TxArray[i] != tmp3.TxArray[i] {
+			t.Error("Tx hash is wrong")
+		}
 	}
 }

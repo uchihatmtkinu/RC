@@ -56,17 +56,17 @@ func (a *TxDecision) Verify(puk *ecdsa.PublicKey, x uint32) bool {
 
 //Encode encodes the TxDecision into []byte
 func (a *TxDecision) Encode(tmp *[]byte) {
-	EncodeInt(tmp, a.ID)
-	EncodeByteL(tmp, a.HashID[:], 32)
-	EncodeInt(tmp, a.TxCnt)
-	EncodeInt(tmp, a.Target)
-	EncodeByte(tmp, &a.Decision)
-	EncodeInt(tmp, a.Single)
+	Encode(tmp, a.ID)
+	Encode(tmp, &a.HashID)
+	Encode(tmp, a.TxCnt)
+	Encode(tmp, a.Target)
+	Encode(tmp, &a.Decision)
+	Encode(tmp, a.Single)
 	if a.Single == 1 {
-		a.Sig[0].SignToData(tmp)
+		Encode(tmp, &a.Sig[0])
 	} else {
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			a.Sig[i].SignToData(tmp)
+			Encode(tmp, &a.Sig[i])
 		}
 	}
 
@@ -74,42 +74,40 @@ func (a *TxDecision) Encode(tmp *[]byte) {
 
 // Decode decodes the []byte into TxDecision
 func (a *TxDecision) Decode(buf *[]byte) error {
-	var tmp []byte
-	err := DecodeInt(buf, &a.ID)
+	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxDecsion ID decode failed: %s", err)
 	}
-	err = DecodeByteL(buf, &tmp, 32)
+	err = Decode(buf, &a.HashID)
 	if err != nil {
 		return fmt.Errorf("TxDecsion HashID decode failed: %s", err)
 	}
-	copy(a.HashID[:], tmp[:32])
-	err = DecodeInt(buf, &a.TxCnt)
+	err = Decode(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxDecsion TxCnt decode failed: %s", err)
 	}
-	err = DecodeInt(buf, &a.Target)
+	err = Decode(buf, &a.Target)
 	if err != nil {
 		return fmt.Errorf("TxDecsion Target decode failed: %s", err)
 	}
-	err = DecodeByte(buf, &a.Decision)
+	err = Decode(buf, &a.Decision)
 	if err != nil {
 		return fmt.Errorf("TxDecsion Decision decode failed: %s", err)
 	}
-	err = DecodeInt(buf, &a.Single)
+	err = Decode(buf, &a.Single)
 	if err != nil {
 		return fmt.Errorf("TxDecision Single decode failed: %s", err)
 	}
 	if a.Single == 1 {
 		a.Sig = make([]RCSign, 1)
-		err = a.Sig[0].DataToSign(buf)
+		err = Decode(buf, a.Sig[0])
 		if err != nil {
 			return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 		}
 	} else {
 		a.Sig = make([]RCSign, gVar.ShardCnt)
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			err = a.Sig[i].DataToSign(buf)
+			err = Decode(buf, a.Sig[i])
 			if err != nil {
 				return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 			}

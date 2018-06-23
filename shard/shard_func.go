@@ -123,10 +123,10 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			(*a)[(*b)[i][j]].Shard = int(i)
 			if j == 0 {
 				//leader
-				(*a)[(*b)[i][j]].Role = 0
+				(*a)[(*b)[i][j]].SetRole(0)
 			} else {
 				//miner
-				(*a)[(*b)[i][j]].Role = 1
+				(*a)[(*b)[i][j]].SetRole(1)
 			}
 		}
 	}

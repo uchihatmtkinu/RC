@@ -39,54 +39,42 @@ func (a *TxList) Set(ID uint32) {
 //AddTx adds the tx into transaction list
 func (a *TxList) AddTx(tx *Transaction) {
 	a.TxCnt++
-	a.TxArray = append(a.TxArray, HashCut(tx.Hash))
+	a.TxArray = append(a.TxArray, tx.Hash)
 }
 
 //Encode returns the byte of a TxList
 func (a *TxList) Encode(tmp *[]byte) {
-	EncodeInt(tmp, a.ID)
-	EncodeByteL(tmp, a.HashID[:], 32)
-	EncodeInt(tmp, a.TxCnt)
+	Encode(tmp, a.ID)
+	Encode(tmp, &a.HashID)
+	Encode(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		EncodeByteL(tmp, a.TxArray[i][:], sHash)
+		Encode(tmp, a.TxArray[i])
 	}
-	a.Sig.SignToData(tmp)
-}
-
-//Serial outputs a serial of []byte
-func (a *TxList) Serial() []byte {
-	var tmp []byte
-	a.Encode(&tmp)
-	return tmp
+	Encode(tmp, &a.Sig)
 }
 
 //Decode decodes the TxList with []byte
 func (a *TxList) Decode(buf *[]byte) error {
-	tmp := make([]byte, 0, 32)
-	err := DecodeInt(buf, &a.ID)
+	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxList ID decode failed: %s", err)
 	}
-	err = DecodeByteL(buf, &tmp, 32)
+	err = Decode(buf, &a.HashID)
 	if err != nil {
 		return fmt.Errorf("TxList HashID decode failed: %s", err)
 	}
-	copy(a.HashID[:], tmp[:32])
-	err = DecodeInt(buf, &a.TxCnt)
+	err = Decode(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxList TxCnt decode failed: %s", err)
 	}
-	a.TxArray = make([][sHash]byte, 0, a.TxCnt)
+	a.TxArray = make([][32]byte, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = DecodeByteL(buf, &tmp, sHash)
-		var xxx [sHash]byte
-		copy(xxx[:], tmp[:sHash])
+		err = Decode(buf, &a.TxArray[i])
 		if err != nil {
 			return fmt.Errorf("TxList Tx decode failed-%d: %s", i, err)
 		}
-		a.TxArray = append(a.TxArray, xxx)
 	}
-	err = a.Sig.DataToSign(buf)
+	err = Decode(buf, &a.Sig)
 	if err != nil {
 		return fmt.Errorf("TxList signature decode failed: %s", err)
 	}
