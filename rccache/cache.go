@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/uchihatmtkinu/RC/gVar"
 
@@ -37,6 +38,7 @@ func byteCompare(a, b interface{}) int {
 
 //DbRef is the structure stores the cache of a miner for the database
 type DbRef struct {
+	Mu        sync.RWMutex
 	ID        uint32
 	DB        TxBlockChain
 	TXCache   map[[32]byte]*CrossShardDec

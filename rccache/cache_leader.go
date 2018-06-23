@@ -41,6 +41,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 //BuildTDS is to build all txDecSet
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
+	d.TLS[d.ShardNum].Sign(&d.prk)
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if i == d.ShardNum {

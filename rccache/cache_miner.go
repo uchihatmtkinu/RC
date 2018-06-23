@@ -190,23 +190,5 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 //GetFinalTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
 
-	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i].Hash]
-		if !ok {
-			return fmt.Errorf("Verify txblock; No tx in cache")
-		}
-		if tmp.InCheckSum != 0 {
-			return fmt.Errorf("Not be fully recognized")
-		}
-		for j := uint32(0); j < gVar.ShardSize; j++ {
-			if tmp.Decision[j] == 1 {
-				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
-			} else if tmp.Decision[j] == 2 {
-				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
-			}
-		}
-	}
-	d.DB.AddBlock(d.TxB)
-	d.DB.UpdateUTXO(a, d.ShardNum)
 	return nil
 }
