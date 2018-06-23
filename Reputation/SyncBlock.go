@@ -18,7 +18,7 @@ type SyncBlock struct {
 	PrevRepBlockHash 	[32]byte
 	PrevSyncBlockHash 	[][32]byte
 	IDlist				[]int
-	TotalRep			[][] int64//*RepTransaction
+	TotalRep			[][] int64//Total reputation over epoch, [i][j] i-th user, j-th epoch
 	CoSignature			[]byte
 	Hash          	 	[32]byte
 }
@@ -28,9 +28,18 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 	var item *shard.MemShard
 	var repList [][]int64
 	var idList	[]int
+	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
 	for i := 0; i < int(gVar.ShardSize); i++{
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+		//need to consider if a node fail to sign the syncBlock but it is a good node indeed
+		item.SetTotalRep(item.Rep)
+		/*
+		if maskBit(i, &mask) == cosi.Enabled {
+			item.SetTotalRep(item.Rep)
+		}	else {
+			item.SetTotalRep(0)
+		}*/
 		idList = append(idList,shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 		repList = append(repList, item.TotalRep)
 	}
@@ -121,6 +130,16 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard, k int) bool {
 	valid := cosi.Verify(pubKeys, nil, sbMessage, b.CoSignature)
 	return valid
 }
+
+// UpdateRepToTotalRepInMS update the rep to total rep in memshards
+func (b *SyncBlock) UpdateTotalRepInMS(ms *[]shard.MemShard) {
+	var item *shard.MemShard
+	for i,id := range b.IDlist{
+		item = &(*ms)[id]
+		item.CopyTotalRepFromSB(b.TotalRep[i])
+	}
+}
+
 
 // Serialize encode block
 func (b *SyncBlock) Serialize() []byte {

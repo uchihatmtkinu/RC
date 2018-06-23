@@ -22,7 +22,7 @@ import (
 var aski []int
 
 //syncProcess processing sync after one epoch
-func syncProcess() {
+func syncProcess(ms *[]shard.MemShard) {
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
@@ -35,8 +35,8 @@ func syncProcess() {
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
 		wg.Add(1)
-		go sendSyncMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][aski[i]]].Address, "requestsync", nil)
-		go receiveSync(i, &wg)
+		go sendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestsync", nil)
+		go receiveSync(i, &wg, ms)
 		//}
 	}
 	wg.Wait()
@@ -44,7 +44,7 @@ func syncProcess() {
 }
 
 //receiveSync listen to the block from shard k
-func receiveSync(k int, wg *sync.WaitGroup) {
+func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	defer wg.Done()
 	//syncblock flag
 	sbrxflag := true
@@ -61,12 +61,12 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 			{
 				if sbinfo.id == aski[k] {
 					syncBlock = handleSBMessage(sbinfo.request)
-					if syncBlock.VerifyCoSignature(&shard.GlobalGroupMems, k) {
+					if syncBlock.VerifyCoSignature(ms, k) {
 						sbrxflag = false
 					}	else {
 						aski[k]++
 						timeoutflag = true
-						go sendSyncMessage(shard.GlobalGroupMems[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
+						go sendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
 					}
 				}
 			}
@@ -83,7 +83,7 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 			{
 				aski[k]++
 				timeoutflag = true
-				go sendSyncMessage(shard.GlobalGroupMems[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
+				go sendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
 			}
 		}
 	}
@@ -92,12 +92,14 @@ func receiveSync(k int, wg *sync.WaitGroup) {
 		CacheDbRef.GetFinalTxBlock(&txBlock)
 		//add sync Block
 		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
+		//update reputation of members
+		syncBlock.UpdateTotalRepInMS(ms)
 		//sbrxCounter.mux.Lock()
 		//sbrxCounter.cnt++
 		//sbrxCounter.mux.Unlock()
 	} else {
 		wg.Add(1)
-		go receiveSync(k, wg)
+		go receiveSync(k, wg, ms)
 	}
 }
 

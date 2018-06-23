@@ -30,7 +30,7 @@ func (ms *MemShard) NewMemShard(acc *account.RcAcc) {
 
 //NewTotalRep set a new total rep to 0
 func (ms *MemShard) NewTotalRep() {
-	ms.TotalRep = []int64{0}
+	ms.TotalRep = []int64{}
 }
 
 //CopyTotalRepFromSB copy total rep from sync bock
