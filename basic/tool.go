@@ -10,9 +10,9 @@ import (
 )
 
 //HashCut returns the part of the hash
-func HashCut(x [32]byte) [sHash]byte {
-	var tmp [sHash]byte
-	copy(tmp[:], x[:sHash])
+func HashCut(x [32]byte) [SHash]byte {
+	var tmp [SHash]byte
+	copy(tmp[:], x[:SHash])
 	return tmp
 }
 
@@ -23,8 +23,8 @@ func Encode(tmp *[]byte, out interface{}) error {
 		EncodeByte(tmp, out)
 	case *[32]byte:
 		EncodeByteL(tmp, out[:], 32)
-	case *[sHash]byte:
-		EncodeByteL(tmp, out[:], sHash)
+	case *[SHash]byte:
+		EncodeByteL(tmp, out[:], SHash)
 	case *RCSign:
 		out.SignToData(tmp)
 	case *big.Int:
@@ -47,11 +47,11 @@ func Decode(tmp *[]byte, out interface{}) error {
 		if err == nil {
 			copy(out[:], xxx[:32])
 		}
-	case *[sHash]byte:
-		xxx := make([]byte, 0, sHash)
-		err = DecodeByteL(tmp, &xxx, sHash)
+	case *[SHash]byte:
+		xxx := make([]byte, 0, SHash)
+		err = DecodeByteL(tmp, &xxx, SHash)
 		if err == nil {
-			copy(out[:], xxx[:sHash])
+			copy(out[:], xxx[:SHash])
 		}
 	case *RCSign:
 		err = out.DataToSign(tmp)

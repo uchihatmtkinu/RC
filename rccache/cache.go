@@ -40,7 +40,7 @@ type DbRef struct {
 	ID        uint32
 	DB        TxBlockChain
 	TXCache   map[[32]byte]*CrossShardDec
-	HashCache map[[sHash]byte][][32]byte
+	HashCache map[[basic.SHash]byte][][32]byte
 	LastShard uint32
 	ShardNum  uint32
 
@@ -72,7 +72,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
 	d.prk = prk
 	d.DB.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
-	d.TXCache = make(map[[6]byte]*CrossShardDec)
+	d.TXCache = make(map[[32]byte]*CrossShardDec)
 	d.TxB = d.DB.LatestTxBlock()
 	//d.TL = nil
 	//d.TLCache = nil
@@ -94,4 +94,34 @@ type CrossShardDec struct {
 	InCheckSum   int
 	Total        int
 	Value        uint32
+}
+
+//ClearCache is to handle the TxCache of hash
+func (d *DbRef) ClearCache(HashID [32]byte) error {
+	tmp := basic.HashCut(HashID)
+	xxx := d.HashCache[tmp]
+	if len(xxx) == 0 && xxx[0] == HashID {
+		delete(d.HashCache, tmp)
+	} else {
+		for i := 0; i < len(xxx); i++ {
+			if xxx[i] == HashID {
+				xxx = append(xxx[:i], xxx[i+1:]...)
+				d.HashCache[tmp] = xxx
+			}
+		}
+	}
+	delete(d.TXCache, HashID)
+	return nil
+}
+
+//AddCache is to handle the TxCache of hash
+func (d *DbRef) AddCache(HashID [32]byte) error {
+	tmp := basic.HashCut(HashID)
+	xxx, ok := d.HashCache[tmp]
+	if !ok {
+		d.HashCache[tmp] = [][32]byte{HashID}
+	} else {
+		d.HashCache[tmp] = append(xxx, HashID)
+	}
+	return nil
 }

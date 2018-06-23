@@ -52,8 +52,7 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
-	tmpHash := HashCut(a.Hash)
-	tmp, ok := d.TXCache[tmpHash]
+	tmp, ok := d.TXCache[a.Hash]
 	if ok {
 		tmp.Update(a)
 	} else {
@@ -62,11 +61,12 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {
 		if ok {
-			delete(d.TXCache, tmpHash)
+			delete(d.TXCache, a.Hash)
 		}
 		return fmt.Errorf("Not related TX")
 	}
-	d.TXCache[tmpHash] = tmp
+	d.TXCache[a.Hash] = tmp
+	d.AddCache(a.Hash)
 	return nil
 }
 
@@ -84,7 +84,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[HashCut(a.TxArray[i])]
+		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
 			d.TLNow.Add(0)
 		} else {
@@ -116,7 +116,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 	index := 0
 	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {
-		tmpHash := HashCut(b.TxArray[i])
+		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
 		tmpRes := false
 		if !ok {
@@ -166,7 +166,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		return fmt.Errorf("Not valid txblock type")
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[HashCut(a.TxArray[i].Hash)]
+		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {
 			return fmt.Errorf("Verify txblock; No tx in cache")
 		}
@@ -180,6 +180,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
 			}
 		}
+		d.ClearCache(a.TxArray[i].Hash)
 	}
 	d.DB.AddBlock(d.TxB)
 	d.DB.UpdateUTXO(a, d.ShardNum)
@@ -190,7 +191,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
 
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[HashCut(a.TxArray[i].Hash)]
+		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {
 			return fmt.Errorf("Verify txblock; No tx in cache")
 		}

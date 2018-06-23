@@ -35,7 +35,7 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 			genesis := basic.NewGensisTxBlock()
 			b, err := tx.CreateBucket([]byte(TBBucket))
 			var tmp []byte
-			genesis.Encode(&tmp)
+			genesis.Encode(&tmp, 0)
 			if err != nil {
 				return nil
 			}
@@ -128,7 +128,7 @@ func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 		return nil
 	})
 	var tmp basic.TxBlock
-	err = tmp.Decode(&tmpStr)
+	err = tmp.Decode(&tmpStr, 1)
 	if err != nil {
 		return nil
 	}

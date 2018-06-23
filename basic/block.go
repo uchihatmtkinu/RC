@@ -84,12 +84,21 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 //Serial outputs a serial of []byte
 func (a *TxBlock) Serial() []byte {
 	var tmp []byte
-	a.Encode(&tmp)
+	a.Encode(&tmp, 1)
 	return tmp
 }
 
+//Transform is to minimize the txdecset size
+func (a *TxBlock) Transform() error {
+	a.TxArrayX = make([][SHash]byte, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArrayX[i] = HashCut(a.TxArray[i].Hash)
+	}
+	return nil
+}
+
 //Encode converts the block data into bytes
-func (a *TxBlock) Encode(tmp *[]byte) {
+func (a *TxBlock) Encode(tmp *[]byte, full int) {
 	Encode(tmp, a.ID)
 	Encode(tmp, &a.PrevHash)
 	Encode(tmp, &a.HashID)
@@ -98,8 +107,14 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 	Encode(tmp, a.Height)
 	Encode(tmp, a.TxCnt)
 	Encode(tmp, a.Kind)
-	for i := uint32(0); i < a.TxCnt; i++ {
-		a.TxArray[i].Encode(tmp)
+	if full == 1 {
+		for i := uint32(0); i < a.TxCnt; i++ {
+			a.TxArray[i].Encode(tmp)
+		}
+	} else {
+		for i := uint32(0); i < a.TxCnt; i++ {
+			Encode(tmp, &a.TxArrayX[i])
+		}
 	}
 	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
 		Encode(tmp, &a.Sig)
@@ -107,7 +122,7 @@ func (a *TxBlock) Encode(tmp *[]byte) {
 }
 
 //Decode converts bytes into block data
-func (a *TxBlock) Decode(buf *[]byte) error {
+func (a *TxBlock) Decode(buf *[]byte, full int) error {
 	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxBlock ID failed %s", err)
@@ -140,11 +155,21 @@ func (a *TxBlock) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxBlock Kind failed: %s", err)
 	}
-	a.TxArray = make([]Transaction, a.TxCnt)
-	for i := uint32(0); i < a.TxCnt; i++ {
-		err = a.TxArray[i].Decode(buf)
-		if err != nil {
-			return fmt.Errorf("TxBlock decode Tx failed-%d: %s", i, err)
+	if full == 1 {
+		a.TxArray = make([]Transaction, a.TxCnt)
+		for i := uint32(0); i < a.TxCnt; i++ {
+			err = a.TxArray[i].Decode(buf)
+			if err != nil {
+				return fmt.Errorf("TxBlock decode Tx failed-%d: %s", i, err)
+			}
+		}
+	} else {
+		a.TxArrayX = make([][SHash]byte, a.TxCnt)
+		for i := uint32(0); i < a.TxCnt; i++ {
+			err = Decode(buf, &a.TxArrayX[i])
+			if err != nil {
+				return fmt.Errorf("TxBlock decode Tx failed-%d: %s", i, err)
+			}
 		}
 	}
 	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {

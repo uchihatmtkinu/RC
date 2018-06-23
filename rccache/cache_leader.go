@@ -9,8 +9,7 @@ import (
 
 //MakeTXList is to create TxList given transaction
 func (d *DbRef) MakeTXList(b *basic.Transaction) error {
-	tmpHash := HashCut(b.Hash)
-	tmp, ok := d.TXCache[tmpHash]
+	tmp, ok := d.TXCache[b.Hash]
 	if !ok {
 		tmp.New(b)
 	} else {
@@ -19,14 +18,15 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {
 		if ok {
-			delete(d.TXCache, tmpHash)
+			delete(d.TXCache, b.Hash)
 		}
 		return fmt.Errorf("Not related TX")
 	}
 	if tmp.Res == 1 {
 		d.Ready = append(d.Ready, *tmp.Data)
 	}
-	d.TXCache[tmpHash] = tmp
+	d.AddCache(b.Hash)
+	d.TXCache[b.Hash] = tmp
 	if tmp.InCheck[d.ShardNum] != -1 {
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			if tmp.InCheck[i] != 0 {
@@ -91,7 +91,7 @@ func (d *DbRef) GenerateTxBlock() error {
 	height := d.TxB.Height
 	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.lastTB, &d.prk, height+1, 0)
 	for i := 0; i < len(d.Ready); i++ {
-		delete(d.TXCache, HashCut(d.Ready[i].Hash))
+		d.ClearCache(d.Ready[i].Hash)
 	}
 	d.Ready = nil
 	d.DB.AddBlock(d.TxB)
@@ -133,7 +133,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 
 	}
 	for i := uint32(0); i < tmpTL.TxCnt; i++ {
-		tmpTx := d.TXCache[HashCut(tmpTL.TxArray[i])]
+		tmpTx := d.TXCache[tmpTL.TxArray[i]]
 		for j := 0; j < len(tmpTx.ShardRelated); j++ {
 			tmpTD[j].Add((a.Decision[x] >> y) & 1)
 		}
@@ -159,7 +159,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 
 	}
 	for i := uint32(0); i < b.TxCnt; i++ {
-		tmpHash := HashCut(b.TxArray[i])
+		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
 		if !ok {
 			tmp = new(CrossShardDec)

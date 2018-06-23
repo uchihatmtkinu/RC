@@ -50,8 +50,10 @@ func (a *TxDecSet) Set(b *TxList, x uint32, y int) {
 	} else {
 		a.TxCnt = b.TxCnt
 		a.TxArray = make([][32]byte, 0, a.TxCnt)
+		a.TxArrayX = make([][SHash]byte, 0, a.TxCnt)
 		for i := uint32(0); i < a.TxCnt; i++ {
 			a.TxArray = append(a.TxArray, b.TxArray[i])
+			a.TxArrayX = append(a.TxArrayX, HashCut(b.TxArray[i]))
 		}
 	}
 }
@@ -95,7 +97,7 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 		a.MemD[i].Encode(tmp)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		Encode(tmp, &a.TxArray[i])
+		Encode(tmp, &a.TxArrayX[i])
 	}
 	Encode(tmp, &a.Sig)
 }
@@ -129,9 +131,9 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 			return fmt.Errorf("TxDecSet MemDecision decode failed-%d: %s", i, err)
 		}
 	}
-	a.TxArray = make([][32]byte, a.TxCnt)
+	a.TxArrayX = make([][SHash]byte, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = Decode(buf, &a.TxArray[i])
+		err = Decode(buf, &a.TxArrayX[i])
 		if err != nil {
 			return fmt.Errorf("TxDecSet TxArray decode failed-%d: %s", i, err)
 		}
