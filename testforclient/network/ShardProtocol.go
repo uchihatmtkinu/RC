@@ -9,6 +9,7 @@ func shardProcess(){
 	var beginShard	shard.Instance
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
+	shard.MyMenShard = shard.GlobalGroupMems[shard.MyGlobalID]
 	if shard.MyMenShard.Role == 1{
 		minerReadyProcess()
 	}	else {
