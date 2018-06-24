@@ -42,7 +42,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(ms, false,  cache.TBCache ,lastHash)
+	newRepBlock := NewRepBlock(ms, shard.StartFlag,  cache.TBCache ,lastHash)
+	shard.StartFlag = false
 	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))

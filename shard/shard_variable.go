@@ -18,4 +18,6 @@ var MyGlobalID int
 //PreviousSyncBlockHash the hash array of previous sync block from all the shards
 var PreviousSyncBlockHash [][32]byte
 
+//StartFlag indicate whether it is the first block generated in this epoch
+var StartFlag bool
 

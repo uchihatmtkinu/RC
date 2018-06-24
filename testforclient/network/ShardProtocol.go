@@ -7,6 +7,7 @@ import (
 
 func shardProcess(){
 	var beginShard	shard.Instance
+	shard.StartFlag = true
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
 	shard.MyMenShard = shard.GlobalGroupMems[shard.MyGlobalID]
@@ -29,6 +30,8 @@ func minerReadyProcess(){
 	myShard := shard.GlobalGroupMems[shard.MyGlobalID].Shard
 	sendShardReadyMessage(shard.GlobalGroupMems[shard.ShardToGlobal[myShard][0]].Address, "shardReady", nil)
 }
+
+
 func sendShardReadyMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
