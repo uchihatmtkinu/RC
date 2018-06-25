@@ -9,7 +9,6 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/rccache"
 	"strconv"
-	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 const dbFile = "RepBlockchain.db"
@@ -43,7 +42,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(ms, false,  cache.TBCache ,lastHash)
+	newRepBlock := NewRepBlock(ms, shard.StartFlag,  cache.TBCache ,lastHash)
+	shard.StartFlag = false
 	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -66,7 +66,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
-	var prevSyncBlockHash [][32]byte
+	//var prevSyncBlockHash [][32]byte
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		copy(lastRepBlockHash[:], b.Get([]byte("lsb")))
@@ -76,6 +76,7 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	if err != nil {
 		log.Panic(err)
 	}
+	/*
 	prevSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		err = bc.Db.View(func(tx *bolt.Tx) error {
@@ -86,9 +87,9 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	}
 	if err != nil {
 		log.Panic(err)
-	}
+	}*/
 
-	newSyncBlock := NewSynBlock(ms, prevSyncBlockHash, lastRepBlockHash,  CoSignature)
+	newSyncBlock := NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -120,11 +121,12 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 		if err != nil {
 			log.Panic(err)
 		}
-
+		shard.PreviousSyncBlockHash[k] = syncBlock.Hash
+		/*
 		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
 		if err != nil {
 			log.Panic(err)
-		}
+		}*/
 
 		return nil
 	})

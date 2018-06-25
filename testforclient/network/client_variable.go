@@ -6,8 +6,8 @@ import (
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/rccache"
-	"sync"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"sync"
 )
 
 const protocol = "tcp"
@@ -26,11 +26,6 @@ var GlobalAddrMapToInd map[string]int
 
 var CacheDbRef rccache.DbRef
 
-//SafeCounter used in
-type safeCounter struct {
-	cnt	int
-	mux sync.Mutex
-}
 
 
 //used in commitCh
@@ -83,3 +78,14 @@ var syncSBCh [gVar.ShardCnt] chan sbInfoCh
 var syncTBCh [gVar.ShardCnt] chan sbInfoCh
 var sbRxFlag [gVar.ShardCnt] chan bool
 var tbRxFlag [gVar.ShardCnt] chan bool
+
+
+
+//safeCounter used in
+type safeCounter struct {
+	cnt	int
+	mux sync.Mutex
+}
+
+//readyCh channel for ready a new epoch
+var readyCh	chan int

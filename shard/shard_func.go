@@ -121,6 +121,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			(*a)[(*b)[i][j]].InShardId = int(j)
 			(*a)[(*b)[i][j]].Shard = int(i)
+			(*a)[(*b)[i][j]].ClearRep()
 			if j == 0 {
 				//leader
 				(*a)[(*b)[i][j]].Role = 0
