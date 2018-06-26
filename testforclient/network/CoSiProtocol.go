@@ -11,7 +11,6 @@ import (
 	"log"
 	"encoding/gob"
 	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/account"
 )
 
 
@@ -59,8 +58,9 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 		}
 	}
 	//handle leader's commit
-	commits[(*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId] = myCommit
-	setMaskBit((*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId, cosi.Enabled, &cosimask)
+
+	commits[(*ms)[GlobalAddrMapToInd[shard.MyMenShard.Address]].InShardId] = myCommit
+	setMaskBit((*ms)[GlobalAddrMapToInd[shard.MyMenShard.Address]].InShardId, cosi.Enabled, &cosimask)
 	close(cosiCommitCh)
 
 	// The leader then combines these into an aggregate commit.
@@ -88,8 +88,8 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 		}
 	}
 
-	mySigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
-	sigParts[(*ms)[GlobalAddrMapToInd[account.MyAccount.Addr]].InShardId] = mySigPart
+	mySigPart := cosi.Cosign(shard.MyMenShard.RealAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
+	sigParts[(*ms)[GlobalAddrMapToInd[shard.MyMenShard.Address]].InShardId] = mySigPart
 	close(cosiResponseCh)
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
@@ -129,7 +129,7 @@ func memberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, [
 	sendCosiMessage(LeaderAddr, "cosiCommit", myCommit)
 	request := <- cosiChallengeCh
 	currentChaMessage := handleChallenge(request)
-	sigPart := cosi.Cosign(account.MyAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
+	sigPart := cosi.Cosign(shard.MyMenShard.RealAccount.CosiPri, mySecret, sbMessage, currentChaMessage.aggregatePublicKey, currentChaMessage.aggregateCommit)
 	sendCosiMessage(LeaderAddr, "cosiRespon", sigPart)
 	request = <- cosiSigCh
 	cosiSigMessage := handleCosiSig(request) // handleCosiSig is the same as handleResponse
