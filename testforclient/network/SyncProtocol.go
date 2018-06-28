@@ -41,7 +41,7 @@ func syncProcess(ms *[]shard.MemShard) {
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
 		wg.Add(1)
-		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", nil)
+		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", currentEpoch)
 		go receiveSync(i, &wg, ms)
 		//}
 	}
@@ -75,7 +75,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				} else {
 					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					timeoutflag = true
-					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", nil)
+					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", currentEpoch)
 				}
 			}
 		case txBlock = <-syncTBCh[k]:
@@ -86,7 +86,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				aski[k]++
 				timeoutflag = true
-				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", nil)
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", currentEpoch)
 			}
 		}
 	}
@@ -114,13 +114,30 @@ func SendSyncMessage(addr string, command string, message interface{}) {
 func HandleSyncNotReady(addr string) {
 	syncNotReadyCh[GlobalAddrMapToInd[addr]] <- true
 }
+func HandleRequestSync(addr string, request []byte){
+	var buff bytes.Buffer
+	var payload int
 
+	buff.Write(request)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	if payload > currentEpoch{
+		go SendSyncMessage(addr, "syncNReady", nil)
+	}	else{
+		go sendTxMessage(addr, "syncTB", CacheDbRef.FB.Serial())
+		go SendSyncMessage(addr, "syncSB", Reputation.CurrentSyncBlock)
+	}
+
+}
 // HandleChallenge rx challenge
 func HandleSyncSBMessage(addr string, request []byte) {
 	var buff bytes.Buffer
 	var payload Reputation.SyncBlock
 
-	buff.Write(request[commandLength:])
+	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 var readymask	[]byte
 func shardProcess(){
 	var beginShard	shard.Instance
+	currentEpoch++
 	shard.StartFlag = true
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)

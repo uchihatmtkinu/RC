@@ -2,7 +2,8 @@ package network
 
 import "github.com/uchihatmtkinu/RC/shard"
 
-func intilize(ID int){
+func intilizeProcess(ID int){
+	currentEpoch = 0
 	shard.MyGlobalID = ID
 	//shard.GlobalGroupMems =
 }

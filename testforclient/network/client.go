@@ -11,7 +11,6 @@ import (
 
 	"github.com/uchihatmtkinu/RC/shard"
 
-	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/account"
 )
 
@@ -261,12 +260,7 @@ func StartServer(nodeID string, height int) {
 			}
 		//sync
 		case "requestSync":
-			if syncReady {
-				go sendTxMessage(conn.RemoteAddr().String(), "syncTB", CacheDbRef.FB.Serial())
-				go SendSyncMessage(conn.RemoteAddr().String(), "syncSB", Reputation.CurrentSyncBlock)
-			} else {
-				go SendSyncMessage(conn.RemoteAddr().String(), "syncNReady", nil)
-			}
+			go HandleRequestSync(conn.RemoteAddr().String(), request)
 		case "syncNReady":
 			go HandleSyncNotReady(conn.RemoteAddr().String())
 		case "syncSB":

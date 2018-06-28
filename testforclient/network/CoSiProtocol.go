@@ -198,19 +198,20 @@ func SendCosiMessage(addr string, command string, message interface{}, ) {
 //-------------------------used in client.go----------------
 //--------leader------------------//
 
-// handleCommit rx commit
+// HandleCommit rx commit
 func HandleCoSiCommit(addr string, request []byte) {
-	payload := request[commandLength:]
+	payload := request
 	cosiCommitCh <- commitInfoCh{addr, payload}
 }
 
 
-// handleResponse rx response
+
+// HandleCoSiResponse rx response
 func HandleCoSiResponse(addr string, request[]byte) {
 	var buff bytes.Buffer
 	var payload cosi.SignaturePart
 
-	buff.Write(request[commandLength:])
+	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
@@ -227,7 +228,7 @@ func HandleCoSiAnnounce(request []byte)  {
 	var buff bytes.Buffer
 	var payload []byte
 
-	buff.Write(request[commandLength:])
+	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
@@ -238,12 +239,12 @@ func HandleCoSiAnnounce(request []byte)  {
 }
 
 
-// handleChallenge rx challenge
+// HandleCoSiChallenge rx challenge
 func HandleCoSiChallenge(request []byte)  {
 	var buff bytes.Buffer
 	var payload challengeMessage
 
-	buff.Write(request[commandLength:])
+	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
@@ -260,7 +261,7 @@ func HandleCoSiSig(request []byte) {
 	var buff bytes.Buffer
 	var payload cosi.SignaturePart
 
-	buff.Write(request[commandLength:])
+	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {

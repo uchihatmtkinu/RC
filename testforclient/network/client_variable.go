@@ -19,6 +19,9 @@ const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 20 * time.Second
 const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
+
+//currentEpoch epoch now
+var currentEpoch int
 //LeaderAddr leader address
 var LeaderAddr string
 
