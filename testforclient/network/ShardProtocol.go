@@ -25,7 +25,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 	//var readaddr string
 	readyCount := 0
 
-	for readyCount <= int(gVar.ShardSize/2) {
+	for readyCount <= int(gVar.ShardSize/2*3) {
 		<-readyCh
 		readyCount++
 		//setMaskBit((*ms)[GlobalAddrMapToInd[readaddr]].InShardId, cosi.Enabled, &readymask)
