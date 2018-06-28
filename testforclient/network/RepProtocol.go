@@ -16,6 +16,7 @@ import (
 //RepProcess pow process
 func RepProcess(ms *[]shard.MemShard) {
 	var it *shard.MemShard
+	var validateFlag bool
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepBlock)
 	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
@@ -28,14 +29,13 @@ func RepProcess(ms *[]shard.MemShard) {
 			{
 				for i := uint32(0); i < gVar.ShardSize; i++ {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-					sendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
+					SendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
 				}
 				flag = false
 			}
-		case repPowRxInfo := <-repPowRxCh:
+		case validateFlag = <-Reputation.RepPowRxValidate:
 			{
-				Reputation.RepPowRxCh <- handleRepPowRx(repPowRxInfo)
-				if <-Reputation.RepPowRxValidate {
+				if validateFlag {
 					flag = false
 				}
 			}
@@ -48,13 +48,13 @@ func RepProcess(ms *[]shard.MemShard) {
 
 
 // sendRepPowMessage send reputation block
-func sendRepPowMessage(addr string, command string, message []byte) {
+func SendRepPowMessage(addr string, command string, message []byte) {
 	request := append(commandToBytes(command), message...)
 	sendData(addr, request)
 }
 
 // handleRepPowRx receive reputation block
-func handleRepPowRx(request []byte) Reputation.RepBlock {
+func HandleRepPowRx(request []byte)  {
 	var buff bytes.Buffer
 	var payload Reputation.RepBlock
 
@@ -64,5 +64,5 @@ func handleRepPowRx(request []byte) Reputation.RepBlock {
 	if err != nil {
 		log.Panic(err)
 	}
-	return payload
+	Reputation.RepPowRxCh  <- payload
 }

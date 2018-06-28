@@ -32,19 +32,27 @@ func syncProcess(ms *[]shard.MemShard) {
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	//intilizeMaskBit(&syncmask, int((gVar.ShardCnt+7)>>3),false)
 	for i := 0; i < int(gVar.ShardCnt); i++ {
-		syncSBCh[i] = make(chan sbInfoCh, 10)
-		syncTBCh[i] = make(chan sbInfoCh, 10)
+		syncSBCh[i] = make(chan Reputation.SyncBlock, 10)
+		syncTBCh[i] = make(chan basic.TxBlock, 10)
+		syncNotReadyCh[i] = make(chan bool, 10)
 		aski[i] = rand.Intn(int(gVar.ShardSize))
 	}
+	//TODO
+	syncReady = true
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
 		wg.Add(1)
-		go sendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestsync", nil)
+		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", nil)
 		go receiveSync(i, &wg, ms)
 		//}
 	}
 	wg.Wait()
 
+	for i := 0; i < int(gVar.ShardCnt); i++ {
+		close(syncSBCh[i])
+		close(syncTBCh[i])
+	}
+	shardProcess()
 }
 
 //receiveSync listen to the block from shard k
@@ -61,33 +69,25 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	var syncBlock Reputation.SyncBlock
 	for (sbrxflag || tbrxflag) && !timeoutflag {
 		select {
-		case sbinfo := <-syncSBCh[k]:
+		case syncBlock = <-syncSBCh[k]:
 			{
-				if sbinfo.id == aski[k] {
-					syncBlock = handleSBMessage(sbinfo.request)
-					if syncBlock.VerifyCoSignature(ms, k) {
-						sbrxflag = false
-					}	else {
-						aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
-						timeoutflag = true
-						go sendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
-					}
+				if syncBlock.VerifyCoSignature(ms, k) {
+					sbrxflag = false
+				}	else {
+					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
+					timeoutflag = true
+					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", nil)
 				}
 			}
-		case tbinfo := <-syncTBCh[k]:
-			{
-				if tbinfo.id == aski[k] {
-					txBlock = handleTBMessage(tbinfo.request)
-					tbrxflag = false
-
-
-				}
-			}
+		case txBlock = <-syncTBCh[k]:
+			tbrxflag = false
+		case <- syncNotReadyCh[k]:
+			time.Sleep(timeSyncNotReadySleep)
 		case time.After(timeoutSync):
 			{
 				aski[k]++
 				timeoutflag = true
-				go sendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestsync", nil)
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", nil)
 			}
 		}
 	}
@@ -98,9 +98,6 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		syncBlock.UpdateTotalRepInMS(ms)
 		//add sync Block
 		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
-		//sbrxCounter.mux.Lock()
-		//sbrxCounter.cnt++
-		//sbrxCounter.mux.Unlock()
 	} else {
 		wg.Add(1)
 		go receiveSync(k, wg, ms)
@@ -108,14 +105,18 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 }
 
 // sendCosiMessage send cosi message
-func sendSyncMessage(addr string, command string, message interface{}) {
+func SendSyncMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
+// HandleChallenge rx challenge
+func HandleSyncNotReady(addr string)  {
+	syncNotReadyCh[GlobalAddrMapToInd[addr]] <- true
+}
 
-// handleChallenge rx challenge
-func handleSBMessage(request []byte) Reputation.SyncBlock {
+// HandleChallenge rx challenge
+func HandleSyncSBMessage(addr string, request []byte)  {
 	var buff bytes.Buffer
 	var payload Reputation.SyncBlock
 
@@ -125,10 +126,11 @@ func handleSBMessage(request []byte) Reputation.SyncBlock {
 	if err != nil {
 		log.Panic(err)
 	}
-	return payload
+	syncSBCh[GlobalAddrMapToInd[addr]] <- payload
 }
 
-func handleTBMessage(request []byte) basic.TxBlock {
+//TODO
+func HandleSyncTBMessage(addr string, request []byte) {
 	var buff bytes.Buffer
 	var payload basic.TxBlock
 
@@ -138,5 +140,6 @@ func handleTBMessage(request []byte) basic.TxBlock {
 	if err != nil {
 		log.Panic(err)
 	}
-	return payload
+	syncTBCh[GlobalAddrMapToInd[addr]] <- payload
+
 }

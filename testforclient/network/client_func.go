@@ -4,6 +4,7 @@ import (
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
+//intilizeMaskBit set all the mas to disable
 func intilizeMaskBit(mask *[]byte, len int, value cosi.MaskBit){
 	var setValue byte
 	*mask = make([]byte, len)

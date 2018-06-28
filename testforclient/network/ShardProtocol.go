@@ -4,38 +4,47 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/gVar"
 )
-
+var readymask	[]byte
 func shardProcess(){
 	var beginShard	shard.Instance
 	shard.StartFlag = true
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
 	shard.MyMenShard = shard.GlobalGroupMems[shard.MyGlobalID]
+	//intilizeMaskBit(&readymask, (shard.NumMems+7)>>3,false)
+
 	if shard.MyMenShard.Role == 1{
-		minerReadyProcess()
+		MinerReadyProcess()
 	}	else {
-		leaderReadyProcess()
+		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
 
 }
-func leaderReadyProcess(){
+func LeaderReadyProcess(ms *[]shard.MemShard){
+	//var readaddr string
 	readyCount := 0
+
 	for readyCount <= int(gVar.ShardSize/2) {
 		<-readyCh
 		readyCount++
+		//setMaskBit((*ms)[GlobalAddrMapToInd[readaddr]].InShardId, cosi.Enabled, &readymask)
 	}
 
 }
-func minerReadyProcess(){
+func MinerReadyProcess(){
 	myShard := shard.GlobalGroupMems[shard.MyGlobalID].Shard
-	sendShardReadyMessage(shard.GlobalGroupMems[shard.ShardToGlobal[myShard][0]].Address, "shardReady", nil)
+	SendShardReadyMessage(shard.GlobalGroupMems[shard.ShardToGlobal[myShard][0]].Address, "shardReady", nil)
 }
 
 
-func sendShardReadyMessage(addr string, command string, message interface{}) {
+func SendShardReadyMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
 
 
+func HandleShardReady(addr string) {
+	readyCh <- addr
+
+}

@@ -1,19 +1,20 @@
 package main
 
+import (
+	"fmt"
+	"time"
+)
+
 const n = 5
 
 func main() {
-	var a [][]int
-	var b [][n]int
-	//a = make([][]int, 0)
-	b = make([][n]int, 3)
-	for i :=0; i < 3; i++{
-		tmp := make([]int, n)
-		for j := 0; j< n; j++{
-			tmp[j] = j
+	count := 0
+	for count < 3 {
+		select {
+		case <-time.After(2 * time.Second):
+			fmt.Println("timeout 2")
+			count++
 		}
-		a = append(a, tmp)
-		copy(b[i][:],tmp)
 	}
 
 }

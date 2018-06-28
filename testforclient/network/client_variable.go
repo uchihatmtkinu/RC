@@ -1,13 +1,14 @@
 package network
 
 import (
-	"time"
-
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/rccache"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"sync"
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/basic"
+	"time"
 )
 
 const protocol = "tcp"
@@ -16,6 +17,8 @@ const commandLength = 16
 const bufferSize = 1000
 const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 20 * time.Second
+const timeSyncNotReadySleep = 5 * time.Second
+const timeoutResponse = 120 * time.Second
 //LeaderAddr leader address
 var LeaderAddr string
 
@@ -31,7 +34,7 @@ var CacheDbRef rccache.DbRef
 //used in commitCh
 type commitInfoCh struct {
 	addr    string
-	request []byte
+	commit []byte
 }
 
 // challenge info
@@ -43,7 +46,7 @@ type challengeMessage struct {
 //response info
 type responseInfoCh struct {
 	addr    string
-	request []byte
+	sig cosi.SignaturePart
 }
 
 //cosisig info
@@ -54,30 +57,32 @@ type cosiSigMessage struct {
 
 //channel used in cosi
 //cosiAnnounceCh cosi announcement channel
-var cosiAnnounceCh chan []byte
-//cosiCommitCh	cosi commitment channel
-var cosiCommitCh chan commitInfoCh
-var cosiChallengeCh chan []byte
-var cosiResponseCh chan responseInfoCh
-var cosiSigCh chan []byte
+var cosiAnnounceCh 	chan []byte
+//cosiCommitCh		cosi commitment channel
+var cosiCommitCh 	chan commitInfoCh
+var cosiChallengeCh chan challengeMessage
+var cosiResponseCh 	chan responseInfoCh
+var cosiSigCh  		chan cosi.SignaturePart
 
-//channel used in pow
-//repPowTxCh chan []byte
-//repPowRxCh reppow receive channel
-var repPowRxCh chan []byte
+
 
 //sbInfoCh
 type sbInfoCh struct {
 	id		int
-	request	[]byte
+	block 	Reputation.SyncBlock
+}
+
+//tbInfoCh
+type tbInfoCh struct {
+	id		int
+	block 	basic.TxBlock
 }
 
 //channel used in sync
 //syncCh
-var syncSBCh [gVar.ShardCnt] chan sbInfoCh
-var syncTBCh [gVar.ShardCnt] chan sbInfoCh
-var sbRxFlag [gVar.ShardCnt] chan bool
-var tbRxFlag [gVar.ShardCnt] chan bool
+var syncSBCh [gVar.ShardCnt] 		chan Reputation.SyncBlock
+var syncTBCh [gVar.ShardCnt]	 	chan basic.TxBlock
+var syncNotReadyCh [gVar.ShardCnt]	chan bool
 
 
 
@@ -87,5 +92,14 @@ type safeCounter struct {
 	mux sync.Mutex
 }
 
+
+
 //readyCh channel for ready a new epoch
-var readyCh	chan int
+var readyCh	chan string
+
+
+//CoSiFlag flag determine the process has began
+var CoSiFlag	bool
+
+//syncReady sync is ready
+var syncReady	bool

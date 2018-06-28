@@ -12,6 +12,7 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 
 	"github.com/uchihatmtkinu/RC/account"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 
 var nodeAddress string
@@ -196,6 +197,7 @@ func StartServer(nodeID string, height int) {
 			handleAddr(request)
 		case "version":
 			handleVersion(request, myheight)
+
 		case "Tx":
 			go HandleAndSendTx(request)
 		case "TxM":
@@ -222,6 +224,49 @@ func StartServer(nodeID string, height int) {
 			go HandleAndSentFinalTxBlock(request)
 		case "FinalTxBM":
 			go HandleFinalTxBlock(request)
+		//shard
+		case "shardReady":
+			if shard.StartFlag {
+				go HandleShardReady(conn.RemoteAddr().String())
+			}
+		//rep pow
+		case "RepPowAnnou":
+			go HandleRepPowRx(request)
+		//cosi protocol
+		case "cosiAnnoun":
+			if CoSiFlag {
+				go HandleCoSiAnnounce(request)
+			}
+		case "cosiChallen":
+			if CoSiFlag {
+				go HandleCoSiChallenge(request)
+			}
+		case "cosiSig":
+			if CoSiFlag {
+				go HandleCoSiSig(request)
+			}
+		case "cosiCommit":
+			if CoSiFlag {
+				go HandleCoSiCommit(conn.RemoteAddr().String(), request)
+			}
+		case "cosiRespon":
+			if CoSiFlag {
+				go HandleCoSiResponse(conn.RemoteAddr().String(), request)
+			}
+		//sync
+		case "requestSync":
+			if syncReady {
+				//go SendSyncMessage(conn.RemoteAddr().String(), "syncTB")   transaction block
+				go SendSyncMessage(conn.RemoteAddr().String(), "syncSB", Reputation.CurrentSyncBlock)
+			}	else {
+				go SendSyncMessage(conn.RemoteAddr().String(), "syncNReady", nil)
+			}
+		case "syncNReady":
+			go HandleSyncNotReady(conn.RemoteAddr().String())
+		case "syncSB":
+			go HandleSyncSBMessage(conn.RemoteAddr().String(), request)
+		case "syncTB":
+			go HandleSyncTBMessage(conn.RemoteAddr().String(), request)
 		default:
 			fmt.Println("Unknown command!")
 		}

@@ -89,21 +89,21 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 		log.Panic(err)
 	}*/
 
-	newSyncBlock := NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
+	CurrentSyncBlock = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(newSyncBlock.Hash[:], newSyncBlock.Serialize())
+		err := b.Put(CurrentSyncBlock.Hash[:], CurrentSyncBlock.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(shard.MyMenShard.Shard), 10)), newSyncBlock.Hash[:])
+		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(shard.MyMenShard.Shard), 10)), CurrentSyncBlock.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
 
-		bc.Tip = newSyncBlock.Hash
+		bc.Tip = CurrentSyncBlock.Hash
 
 		return nil
 	})

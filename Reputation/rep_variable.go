@@ -14,3 +14,5 @@ var RepPowRxValidate chan bool
 var MyRepBlockChain RepBlockchain
 //RepBlockIter an iterator on repblockchain
 var RepBlockChainIter	RepBlockchainIterator
+//CurrentSyncBlock current sync block
+var CurrentSyncBlock	*SyncBlock
