@@ -1,7 +1,5 @@
 package network
 
-
-
 import (
 	"bytes"
 	"encoding/gob"
@@ -9,11 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"math/rand"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"math/rand"
 )
 
 //sbrxCounter count for the block receive
@@ -27,7 +26,7 @@ func syncProcess(ms *[]shard.MemShard) {
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
-	rand.Seed(int64(shard.MyMenShard.Shard * 3000 + shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
+	rand.Seed(int64(shard.MyMenShard.Shard*3000+shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
 	shard.PreviousSyncBlockHash = nil
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	//intilizeMaskBit(&syncmask, int((gVar.ShardCnt+7)>>3),false)
@@ -73,7 +72,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				if syncBlock.VerifyCoSignature(ms, k) {
 					sbrxflag = false
-				}	else {
+				} else {
 					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					timeoutflag = true
 					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", nil)
@@ -81,9 +80,9 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			}
 		case txBlock = <-syncTBCh[k]:
 			tbrxflag = false
-		case <- syncNotReadyCh[k]:
+		case <-syncNotReadyCh[k]:
 			time.Sleep(timeSyncNotReadySleep)
-		case time.After(timeoutSync):
+		case <-time.After(timeoutSync):
 			{
 				aski[k]++
 				timeoutflag = true
@@ -110,13 +109,14 @@ func SendSyncMessage(addr string, command string, message interface{}) {
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
+
 // HandleChallenge rx challenge
-func HandleSyncNotReady(addr string)  {
+func HandleSyncNotReady(addr string) {
 	syncNotReadyCh[GlobalAddrMapToInd[addr]] <- true
 }
 
 // HandleChallenge rx challenge
-func HandleSyncSBMessage(addr string, request []byte)  {
+func HandleSyncSBMessage(addr string, request []byte) {
 	var buff bytes.Buffer
 	var payload Reputation.SyncBlock
 
@@ -129,14 +129,11 @@ func HandleSyncSBMessage(addr string, request []byte)  {
 	syncSBCh[GlobalAddrMapToInd[addr]] <- payload
 }
 
-//TODO
+//HandleSyncTBMessage decodes the txblock
 func HandleSyncTBMessage(addr string, request []byte) {
-	var buff bytes.Buffer
 	var payload basic.TxBlock
 
-	buff.Write(request[commandLength:])
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
+	err := payload.Decode(&request, 1)
 	if err != nil {
 		log.Panic(err)
 	}

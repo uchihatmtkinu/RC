@@ -11,8 +11,8 @@ import (
 
 	"github.com/uchihatmtkinu/RC/shard"
 
-	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/account"
 )
 
 var nodeAddress string
@@ -189,7 +189,13 @@ func StartServer(nodeID string, height int) {
 		go handleConnection(conn, requestChannel)
 
 		request = <-requestChannel
+		if len(request) < commandLength {
+			continue
+		}
 		command = bytesToCommand(request[:commandLength])
+		if len(request) > commandLength {
+			request = request[commandLength:]
+		}
 		fmt.Printf("Received %s command\n", command)
 		// TODO instead of switch, we can use select to concurrently solve different commands
 		switch command {
@@ -256,9 +262,9 @@ func StartServer(nodeID string, height int) {
 		//sync
 		case "requestSync":
 			if syncReady {
-				//go SendSyncMessage(conn.RemoteAddr().String(), "syncTB")   transaction block
+				go sendTxMessage(conn.RemoteAddr().String(), "syncTB", CacheDbRef.FB.Serial())
 				go SendSyncMessage(conn.RemoteAddr().String(), "syncSB", Reputation.CurrentSyncBlock)
-			}	else {
+			} else {
 				go SendSyncMessage(conn.RemoteAddr().String(), "syncNReady", nil)
 			}
 		case "syncNReady":

@@ -56,6 +56,7 @@ type DbRef struct {
 	//TL       *basic.TxList
 	Ready []basic.Transaction
 	TxB   *basic.TxBlock
+	FB    *basic.TxBlock
 	prk   ecdsa.PrivateKey
 
 	//Miner
