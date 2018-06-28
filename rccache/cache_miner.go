@@ -127,7 +127,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 		} else {
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
-			if tmp.Total == 0 {
+			if tmp.Total == 0 { //Review
 				d.UnlockTx(tmp.Data)
 				delete(d.TXCache, tmpHash)
 			} else {
@@ -182,7 +182,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		}
 		d.ClearCache(a.TxArray[i].Hash)
 	}
-	d.DB.AddBlock(d.TxB)
+	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
 	return nil
 }
