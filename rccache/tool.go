@@ -12,6 +12,7 @@ type UTXOSet struct {
 	Data   []basic.OutType
 	Stat   []uint32
 	Remain uint32
+	viewer uint32
 }
 
 //Encode is to serial

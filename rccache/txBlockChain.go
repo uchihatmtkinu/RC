@@ -88,7 +88,7 @@ func (a *TxBlockChain) AddBlock(x *basic.TxBlock) error {
 	var lastHash [32]byte
 	err = a.data.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TBBucket))
-		copy(lastHash[:], b.Get([]byte("lTB"))[:32])
+		copy(lastHash[:], b.Get([]byte("XB"))[:32])
 
 		return nil
 	})
@@ -184,10 +184,13 @@ func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
 				return nil
 			}
 			res = true
-			err = tmp.Decode(&tmpStr)
+			var xxx UTXOSet
+			err = xxx.Decode(&tmpStr)
 			if err != nil {
 				return fmt.Errorf("Decoding error")
 			}
+			xxx.viewer = 0
+			tmp = xxx
 			return nil
 		})
 		if !res {
@@ -219,6 +222,8 @@ func (a *TxBlockChain) LockUTXO(x *basic.InType) error {
 			return fmt.Errorf("Locking utxo failed")
 		}
 		tmp.Stat[x.Index] = 2
+		tmp.viewer++
+		a.USet[x.PrevTx] = tmp
 	}
 	return nil
 }
@@ -235,10 +240,25 @@ func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
 			return fmt.Errorf("Unlocking utxo failed")
 		}
 		tmp.Stat[x.Index] = 0
+		tmp.viewer--
+		if tmp.viewer == 0 {
+			err := a.data.Update(func(tx *bolt.Tx) error {
+				b := tx.Bucket([]byte(UTXOBucket))
+				b.Put(x.PrevTx[:], tmp.Encode())
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+			delete(a.USet, x.PrevTx)
+		} else {
+			a.USet[x.PrevTx] = tmp
+		}
 	}
 	return nil
 }
 
+/*
 //ConfirmUTXO is to make the value used
 func (a *TxBlockChain) ConfirmUTXO(x *basic.InType) error {
 	if !x.Acc() {
@@ -250,6 +270,7 @@ func (a *TxBlockChain) ConfirmUTXO(x *basic.InType) error {
 	}
 	return nil
 }
+*/
 
 //MakeFinalTx generates the final blocks transactions
 func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
@@ -432,10 +453,15 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 							if tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
 								tmp.Stat[x.TxArray[i].In[j].Index] = 1
 								tmp.Remain--
+								tmp.viewer--
 								if tmp.Remain == 0 {
 									delete(a.USet, x.TxArray[i].In[j].PrevTx)
 									b.Delete(x.TxArray[i].In[j].PrevTx[:])
 								} else {
+									if tmp.viewer == 0 {
+										delete(a.USet, x.TxArray[i].In[j].PrevTx)
+										b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
+									}
 									a.USet[x.TxArray[i].In[j].PrevTx] = tmp
 								}
 							}
