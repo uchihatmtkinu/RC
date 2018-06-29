@@ -14,12 +14,12 @@ import (
 	"github.com/uchihatmtkinu/RC/Reputation"
 )
 
-func intilizeProcess(ID int) {
+func IntilizeProcess(ID int) {
 
 	// IP + port
 	var IPAddr string
 	//current epoch = 0
-	currentEpoch = 0
+	CurrentEpoch = 0
 
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
@@ -27,7 +27,7 @@ func intilizeProcess(ID int) {
 	acc := make([]account.RcAcc, numCnt)
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
 
-	shard.MyGlobalID = ID
+	MyGlobalID = ID
 	port := int64(19000)
 	file, _ := os.Open("PriKeys.txt")
 	accWallet := make([]basic.AccCache, numCnt)
@@ -60,5 +60,5 @@ func intilizeProcess(ID int) {
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
-	Reputation.CreateRepBlockchain(acc[ID].Addr)
+	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(shard.MyMenShard.Address)
 }

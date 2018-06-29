@@ -21,8 +21,10 @@ import (
 //aski ask user i for sync, -1 means done, otherwise ask i+1
 var aski []int
 
-//syncProcess processing sync after one epoch
-func syncProcess(ms *[]shard.MemShard) {
+//SyncProcess processing sync after one epoch
+func SyncProcess(ms *[]shard.MemShard) {
+	//clear ready channel
+	readyCh = make(chan string, bufferSize)
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
@@ -36,12 +38,10 @@ func syncProcess(ms *[]shard.MemShard) {
 		syncNotReadyCh[i] = make(chan bool, 10)
 		aski[i] = rand.Intn(int(gVar.ShardSize))
 	}
-	//TODO
-	syncReady = true
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
 		wg.Add(1)
-		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", currentEpoch)
+		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", CurrentEpoch)
 		go receiveSync(i, &wg, ms)
 		//}
 	}
@@ -50,8 +50,9 @@ func syncProcess(ms *[]shard.MemShard) {
 	for i := 0; i < int(gVar.ShardCnt); i++ {
 		close(syncSBCh[i])
 		close(syncTBCh[i])
+		close(syncNotReadyCh[i])
 	}
-	shardProcess()
+	ShardProcess()
 }
 
 //receiveSync listen to the block from shard k
@@ -75,7 +76,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				} else {
 					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					timeoutflag = true
-					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", currentEpoch)
+					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
 				}
 			}
 		case txBlock = <-syncTBCh[k]:
@@ -86,7 +87,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				aski[k]++
 				timeoutflag = true
-				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", currentEpoch)
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
 			}
 		}
 	}
@@ -124,7 +125,7 @@ func HandleRequestSync(addr string, request []byte){
 	if err != nil {
 		log.Panic(err)
 	}
-	if payload > currentEpoch{
+	if payload > CurrentEpoch{
 		go SendSyncMessage(addr, "syncNReady", nil)
 	}	else{
 		go sendTxMessage(addr, "syncTB", CacheDbRef.FB.Serial())

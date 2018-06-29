@@ -21,10 +21,11 @@ const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
 
 //currentEpoch epoch now
-var currentEpoch int
+var CurrentEpoch int
 //LeaderAddr leader address
 var LeaderAddr string
-
+//MyGlobalID my global ID
+var MyGlobalID int
 //var AddrMapToInd map[string]int //ip+port
 //var GroupMems []shard.MemShard
 //GlobalAddrMapToInd
@@ -103,6 +104,3 @@ var readyCh	chan string
 
 //CoSiFlag flag determine the process has began
 var CoSiFlag	bool
-
-//syncReady sync is ready
-var syncReady	bool

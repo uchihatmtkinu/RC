@@ -15,7 +15,7 @@ import (
 
 
 // leaderCosiProcess leader use this
-func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.SignaturePart{
+func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.SignaturePart{
 	//initialize
 	// myCommit my cosi commitment
 	var myCommit 	cosi.Commitment
@@ -120,8 +120,8 @@ func leaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	return cosiSig
 }
 
-// memberCosiProcess member use this
-func memberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, []byte){
+// MemberCosiProcess member use this
+func MemberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, []byte){
 	var sbMessage []byte
 	// myCommit my cosi commitment
 	var myCommit 	cosi.Commitment
