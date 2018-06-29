@@ -5,14 +5,14 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 )
 var readymask	[]byte
-func shardProcess(){
+func ShardProcess(){
 	var beginShard	shard.Instance
-	currentEpoch++
+	CurrentEpoch++
 	shard.StartFlag = true
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
-	//shard.MyMenShard = &shard.GlobalGroupMems[shard.MyGlobalID]
-	myShard := shard.GlobalGroupMems[shard.MyGlobalID].Shard
+	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
+	myShard := shard.GlobalGroupMems[MyGlobalID].Shard
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[myShard][0]].Address
 	//intilizeMaskBit(&readymask, (shard.NumMems+7)>>3,false)
 

@@ -1,20 +1,13 @@
 package main
 
 import (
-	"time"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 	"fmt"
+	"github.com/uchihatmtkinu/RC/account"
 )
 
-var a chan bool
-func fun(){
-	time.Sleep(5*time.Second)
-	a <- true
-}
-
 func main() {
-	a = make(chan bool)
-	go fun()
-	if <-a {
-		fmt.Print("yes")
-	}
+	fmt.Println("test begin")
+	network.IntilizeProcess(1)
+	fmt.Println(account.MyAccount)
 }

@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-const dbFile = "RepBlockchain.db"
+const dbFile = "RepBlockchain"
 const blocksBucket = "blocks"
 
 //reputation block chain
@@ -42,7 +42,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 		log.Panic(err)
 	}
 
-	newRepBlock := NewRepBlock(ms, shard.StartFlag,  cache.TBCache ,lastHash)
+	newRepBlock := NewRepBlock(ms, shard.StartFlag,  *cache.TBCache ,lastHash)
 	shard.StartFlag = false
 	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
@@ -137,8 +137,8 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func NewRepBlockchain(nodeID string) *RepBlockchain {
-	dbFile := fmt.Sprintf(dbFile, nodeID)
+func NewRepBlockchain(nodeAdd string) *RepBlockchain {
+	dbFile := dbFile+nodeAdd+".db"
 	if dbExists(dbFile) == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
@@ -181,10 +181,17 @@ func NewRepBlockchain(nodeID string) *RepBlockchain {
 
 // CreateRepBlockchain creates a new blockchain DB
 func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
-	dbFile := fmt.Sprintf(dbFile, nodeAdd)
+	dbFile := dbFile+nodeAdd+".db"
+	fmt.Println(dbFile)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
-		os.Exit(1)
+		err := os.Remove(dbFile)
+		err = os.Remove(dbFile+".lock")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 	}
 
 	var tip [32]byte
