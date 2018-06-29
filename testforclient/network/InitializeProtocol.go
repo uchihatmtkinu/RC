@@ -12,6 +12,7 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/Reputation"
+	"fmt"
 )
 
 func IntilizeProcess(ID int) {
@@ -26,12 +27,17 @@ func IntilizeProcess(ID int) {
 
 	acc := make([]account.RcAcc, numCnt)
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
-
+	GlobalAddrMapToInd = make(map[string]int)
 	MyGlobalID = ID
 	port := int64(19000)
-	file, _ := os.Open("PriKeys.txt")
+	file, err := os.Open("PriKeys.txt")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
+		fmt.Println(i)
 		acc[i].New(strconv.Itoa(i))
 		acc[i].NewCosi()
 		tmp1 := make([]byte, 121)
@@ -60,5 +66,5 @@ func IntilizeProcess(ID int) {
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
-	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(shard.MyMenShard.Address)
+	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID),10))
 }
