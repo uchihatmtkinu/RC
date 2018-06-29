@@ -3,12 +3,14 @@ package network
 import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"fmt"
 )
 var readymask	[]byte
 func ShardProcess(){
 	var beginShard	shard.Instance
 	CurrentEpoch++
 	shard.StartFlag = true
+	fmt.Println(shard.PreviousSyncBlockHash)
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]

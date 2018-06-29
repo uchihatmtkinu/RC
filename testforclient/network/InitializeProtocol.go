@@ -29,7 +29,7 @@ func IntilizeProcess(ID int) {
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
 	GlobalAddrMapToInd = make(map[string]int)
 	MyGlobalID = ID
-	port := int64(19000)
+	port := int64(18999)
 	file, err := os.Open("PriKeys.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -37,7 +37,6 @@ func IntilizeProcess(ID int) {
 	}
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
-		fmt.Println(i)
 		acc[i].New(strconv.Itoa(i))
 		acc[i].NewCosi()
 		tmp1 := make([]byte, 121)
@@ -57,6 +56,7 @@ func IntilizeProcess(ID int) {
 		port++
 		IPAddr =  "143.89.147.72:"+strconv.FormatInt(port,10)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
+		shard.GlobalGroupMems[i].NewTotalRep()
 		//map ip+port -> global ID
 		GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
@@ -65,6 +65,7 @@ func IntilizeProcess(ID int) {
 	account.MyAccount = acc[ID]
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
+	shard.PreviousSyncBlockHash = [][32]byte{{123}}
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID),10))
 }

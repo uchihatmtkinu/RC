@@ -4,6 +4,7 @@ import (
 	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/gVar"
+	"fmt"
 )
 
 //MemShard is the struct of miners for sharding and leader selection
@@ -25,6 +26,7 @@ func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string) {
 	ms.RealAccount = acc
 	ms.CosiPub = acc.CosiPuk
 	ms.Legal = 0
+	ms.Role = 1
 	ms.Rep = 0
 }
 
@@ -64,3 +66,19 @@ func (ms *MemShard) CalTotalRep() int64 {
 func (ms *MemShard) ClearRep() {
 	ms.Rep = 0
 }
+
+func (ms*MemShard) Print(){
+	fmt.Println("Addres:", ms.Address)
+	fmt.Println("Rep:", ms.Rep)
+	fmt.Println("TotalRep:", ms.TotalRep)
+	fmt.Println("Shard:", ms.Shard)
+	fmt.Println("InShardId:", ms.InShardId)
+	if ms.Role == 0 {
+		fmt.Println("Role:Leader")
+	}	else {
+		fmt.Println("Role:Member")
+	}
+
+}
+
+
