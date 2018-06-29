@@ -34,12 +34,6 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		//need to consider if a node fail to sign the syncBlock but it is a good node indeed
 		item.SetTotalRep(item.Rep)
-		/*
-		if maskBit(i, &mask) == cosi.Enabled {
-			item.SetTotalRep(item.Rep)
-		}	else {
-			item.SetTotalRep(0)
-		}*/
 		idList = append(idList,shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 		repList = append(repList, item.TotalRep)
 	}
@@ -110,7 +104,7 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard, k int) bool {
 	// count whether half of the user sign the block
 	count := uint32(0)
 	mask := b.CoSignature[64:]
-	for i := range mask {
+	for i := 0; i < int(gVar.ShardSize); i++ {
 		if maskBit(i, &mask) == cosi.Enabled{
 			count++
 		}

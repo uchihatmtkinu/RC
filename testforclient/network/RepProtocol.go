@@ -8,6 +8,7 @@ import (
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"fmt"
 )
 
 //var currentTxList *[]basic.TxList
@@ -19,7 +20,7 @@ func RepProcess(ms *[]shard.MemShard) {
 	var validateFlag bool
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepBlock)
-	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
+
 	Reputation.RepPowRxValidate = make(chan bool)
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
 
@@ -28,8 +29,9 @@ func RepProcess(ms *[]shard.MemShard) {
 		case item := <-Reputation.RepPowTxCh:
 			{
 				for i := 0; i < int(gVar.ShardSize); i++ {
-					if i != shard.MyMenShard.Shard {
+					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+						fmt.Println("have sent"+it.Address)
 						SendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
 					}
 				}
@@ -45,7 +47,7 @@ func RepProcess(ms *[]shard.MemShard) {
 	}
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
-	close(Reputation.RepPowRxCh)
+	//close(Reputation.RepPowRxCh)
 }
 
 

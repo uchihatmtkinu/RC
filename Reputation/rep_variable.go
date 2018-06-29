@@ -1,7 +1,6 @@
 package Reputation
 
-
-
+import "github.com/uchihatmtkinu/RC/Reputation/cosi"
 
 //channel used in rep pow
 //RepPowRxCh rx pow repblock from others
@@ -16,3 +15,5 @@ var MyRepBlockChain *RepBlockchain
 var RepBlockChainIter	*RepBlockchainIterator
 //CurrentSyncBlock current sync block
 var CurrentSyncBlock	*SyncBlock
+//CurrentCoSignature current cosinature
+var CurrentCoSignature	cosi.SignaturePart

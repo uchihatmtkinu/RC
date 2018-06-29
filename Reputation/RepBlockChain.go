@@ -72,25 +72,13 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	//var prevSyncBlockHash [][32]byte
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		copy(lastRepBlockHash[:], b.Get([]byte("lsb")))
+		copy(lastRepBlockHash[:], b.Get([]byte("lb")))
 
 		return nil
 	})
 	if err != nil {
 		log.Panic(err)
 	}
-	/*
-	prevSyncBlockHash = make([][32]byte, gVar.ShardCnt)
-	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		err = bc.Db.View(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(blocksBucket))
-			copy(prevSyncBlockHash[i][:], b.Get([]byte("lsb"+strconv.FormatInt(int64(i), 10))))
-			return nil
-		})
-	}
-	if err != nil {
-		log.Panic(err)
-	}*/
 
 	CurrentSyncBlock = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
 

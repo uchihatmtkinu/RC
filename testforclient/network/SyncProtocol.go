@@ -25,6 +25,8 @@ var aski []int
 func SyncProcess(ms *[]shard.MemShard) {
 	//clear ready channel
 	readyCh = make(chan string, bufferSize)
+	//Add sync block
+	Reputation.MyRepBlockChain.AddSyncBlock(ms, Reputation.CurrentCoSignature)
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))

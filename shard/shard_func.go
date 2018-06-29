@@ -87,7 +87,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	for i := 0; i < len(*a); i++ {
 		sortData[i].Address = (*a)[i].Address
 		sortData[i].ID = uint32(i)
-		sortData[i].Rep = (*a)[i].Rep
+		sortData[i].Rep = (*a)[i].CalTotalRep()
 	}
 	SortRep(&sortData, 0, len(*a)-1)
 	now := 0
@@ -99,7 +99,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		check := make([]int, gVar.ShardCnt)
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
-			x := uint32(c.rng.Int()^int((*a)[sortData[now].ID].Rep)) % gVar.ShardCnt
+			x := uint32(c.rng.Int()^int((*a)[sortData[now].ID].CalTotalRep())) % gVar.ShardCnt
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = int(sortData[now].ID)
@@ -120,7 +120,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			(*a)[(*b)[i][j]].InShardId = int(j)
 			(*a)[(*b)[i][j]].Shard = int(i)
-			(*a)[(*b)[i][j]].ClearRep()
+			//(*a)[(*b)[i][j]].ClearRep()
 			if j == 0 {
 				//leader
 				(*a)[(*b)[i][j]].Role = 0

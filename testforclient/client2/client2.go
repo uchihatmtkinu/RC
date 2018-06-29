@@ -1,22 +1,25 @@
 package main
 
 import (
-	"github.com/uchihatmtkinu/RC/testforclient/network"
-	"fmt"
-	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/gVar"
+"github.com/uchihatmtkinu/RC/testforclient/network"
+"fmt"
+"github.com/uchihatmtkinu/RC/shard"
+	"time"
 )
 
 
 func main() {
-	totalNum := int(gVar.ShardSize*gVar.ShardCnt)
+	network.IntialReadyCh = make(chan bool)
+	//totalNum := int(gVar.ShardSize*gVar.ShardCnt)
 	fmt.Println("test begin")
-	network.StartServer(1)
+	go network.StartServer(1)
+	<- network.IntialReadyCh
+	close(network.IntialReadyCh)
 
-	fmt.Println(network.MyGlobalID)
+	fmt.Println("MyGloablID: ", network.MyGlobalID)
 
 	network.ShardProcess()
-
+	/*
 	for i:=0 ; i < totalNum; i++ {
 		fmt.Println()
 		shard.GlobalGroupMems[i].AddRep(int64(i))
@@ -25,6 +28,7 @@ func main() {
 		shard.GlobalGroupMems[i].SetTotalRep(int64(i+2))
 		shard.GlobalGroupMems[i].Print()
 		fmt.Println(shard.GlobalGroupMems[i].CalTotalRep())
-	}
+	}*/
+	time.Sleep(5*time.Second)
 	network.RepProcess(&shard.GlobalGroupMems)
 }

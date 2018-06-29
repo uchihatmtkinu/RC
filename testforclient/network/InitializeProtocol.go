@@ -12,6 +12,7 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"fmt"
 )
 
@@ -68,4 +69,8 @@ func IntilizeProcess(ID int) {
 	shard.PreviousSyncBlockHash = [][32]byte{{123}}
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID),10))
+	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
+	cosiAnnounceCh = make(chan []byte)
+	cosiChallengeCh = make(chan challengeMessage)
+	cosiSigCh = make(chan cosi.SignaturePart)
 }

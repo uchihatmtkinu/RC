@@ -65,9 +65,11 @@ func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 				hash = candidateRepBlock.Hash
 				flag = false
 				RepPowRxValidate <- true
+				fmt.Println("validate PoW from others - true")
 				return nonce, hash, flag
 			} else {
 				RepPowRxValidate <- false
+				fmt.Println("validate PoW from others - false")
 			}
 		}
 		default:

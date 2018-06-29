@@ -104,3 +104,6 @@ var readyCh	chan string
 
 //CoSiFlag flag determine the process has began
 var CoSiFlag	bool
+
+
+var IntialReadyCh chan bool

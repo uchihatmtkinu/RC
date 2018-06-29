@@ -10,8 +10,6 @@ import (
 	"net"
 
 	"github.com/uchihatmtkinu/RC/shard"
-
-	"github.com/uchihatmtkinu/RC/account"
 )
 
 var nodeAddress string
@@ -160,12 +158,12 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 }
 
 //StartServer start a server
-func StartServer(nodeID string, height int) {
-	//assume in one computer.
-	//nodeAddress = fmt.Sprintf("%s", nodeID)
-	myheight = height
-	account.MyAccount.New(nodeID)
-	ln, err := net.Listen(protocol, account.MyAccount.Addr)
+func StartServer(ID int) {
+
+	IntilizeProcess(ID)
+
+	ln, err := net.Listen(protocol, shard.MyMenShard.Address)
+	fmt.Println("My IP+Port: ",shard.MyMenShard.Address)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -174,12 +172,13 @@ func StartServer(nodeID string, height int) {
 	//TODO generate block.
 	//bc := NewBlockchain(nodeID)
 
-	if account.MyAccount.Addr != knownNodes[0] {
-		sendVersion(knownNodes[0], myheight)
-	}
+	//if account.MyAccount.Addr != knownNodes[0] {
+	//	sendVersion(knownNodes[0], myheight)
+	//}
 	var command string
 	var request []byte
 	requestChannel := make(chan []byte, bufferSize)
+	IntialReadyCh <- true
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
