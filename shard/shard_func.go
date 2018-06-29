@@ -17,7 +17,7 @@ type sortType struct {
 
 //Instance is the struct for sharding
 type Instance struct {
-	rng rand.Rand
+	rng *rand.Rand
 }
 
 //GetRBData get all the data from reputation block for sharding
@@ -75,7 +75,7 @@ func (c *Instance) GenerateSeed(a *[][32]byte) error {
 		tmp = append(tmp, (*a)[i][:]...)
 	}
 	hash := sha256.Sum256(tmp)
-	c.rng.Seed(int64(binary.BigEndian.Uint64(hash[:])))
+	c.rng = rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(hash[:]))))
 
 	return nil
 }
@@ -91,10 +91,12 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	SortRep(&sortData, 0, len(*a)-1)
 	b = new([][]int)
 	*b = make([][]int, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		(*b)[i] = make([]int, gVar.ShardSize)
+	}
 	//rng.Seed()
 	now := 0
 	for i := uint32(0); i < gVar.ShardSize; i++ {
-		(*b)[i] = make([]int, gVar.ShardSize)
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
 			(*b)[j][i] = -1
 		}
@@ -102,7 +104,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	for i := uint32(len(*a)); i < gVar.ShardSize; i++ {
 		check := make([]int, gVar.ShardCnt)
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
-			x := uint32((c.rng.Int() ^ int((*a)[sortData[now].ID].Rep))) % gVar.ShardCnt
+			x := uint32(c.rng.Int() ^ int((*a)[sortData[now].ID].Rep)) % gVar.ShardCnt
 			if check[x] == 0 {
 				check[x] = 1
 				(*b)[x][i] = int(sortData[now].ID)
