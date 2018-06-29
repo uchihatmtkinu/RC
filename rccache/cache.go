@@ -23,6 +23,9 @@ const ACCBucket = "ACC"
 //TBBucket is the bucket of ACC
 const TBBucket = "TxBlock"
 
+//FBBucket is the bucket of Final Blocks
+const FBBucket = "FBTxBlock"
+
 //byteCompare is the func used for string compare
 func byteCompare(a, b interface{}) int {
 	switch a.(type) {
@@ -56,7 +59,7 @@ type DbRef struct {
 	//TL       *basic.TxList
 	Ready []basic.Transaction
 	TxB   *basic.TxBlock
-	FB    *basic.TxBlock
+	FB    *[gVar.ShardCnt]basic.TxBlock
 	prk   ecdsa.PrivateKey
 
 	//Miner

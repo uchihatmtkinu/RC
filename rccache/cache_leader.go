@@ -83,7 +83,7 @@ func (d *DbRef) NewTxList() error {
 //GenerateTxBlock makes the TxBlock
 func (d *DbRef) GenerateTxBlock() error {
 	height := d.TxB.Height
-	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.lastTB, &d.prk, height+1, 0)
+	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
 	for i := 0; i < len(d.Ready); i++ {
 		d.ClearCache(d.Ready[i].Hash)
 	}
@@ -97,7 +97,7 @@ func (d *DbRef) GenerateTxBlock() error {
 func (d *DbRef) GenerateFinalBlock() error {
 	tmp := d.DB.MakeFinalTx()
 	height := d.TxB.Height
-	d.TxB.MakeTxBlock(d.ID, tmp, d.DB.lastTB, &d.prk, height+1, 1)
+	d.TxB.MakeTxBlock(d.ID, tmp, d.DB.LastFB[d.ShardNum], &d.prk, height+1, 1, &d.FB[d.ShardNum].HashID, d.ShardNum)
 	return nil
 }
 

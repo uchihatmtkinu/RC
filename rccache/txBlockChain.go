@@ -3,6 +3,9 @@ package rccache
 import (
 	"fmt"
 	"log"
+	"strconv"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 
 	"github.com/boltdb/bolt"
 	"github.com/uchihatmtkinu/RC/basic"
@@ -11,7 +14,9 @@ import (
 //TxBlockChain is the blockchain database
 type TxBlockChain struct {
 	data    *bolt.DB
-	lastTB  [32]byte
+	LastTB  [32]byte
+	Height  uint32
+	LastFB  [gVar.ShardCnt][32]byte
 	USet    map[[32]byte]UTXOSet
 	TXCache map[[32]byte]int
 	//AccData  *gtreap.Treap
@@ -35,15 +40,40 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 			genesis := basic.NewGensisTxBlock()
 			b, err := tx.CreateBucket([]byte(TBBucket))
 			var tmp []byte
-			genesis.Encode(&tmp, 0)
+			genesis.Encode(&tmp, 1)
 			if err != nil {
 				return nil
 			}
 			err = b.Put(append([]byte("B"), genesis.HashID[:]...), tmp)
 			err = b.Put([]byte("XB"), genesis.HashID[:])
-			a.lastTB = genesis.HashID
+			a.LastTB = genesis.HashID
+			a.Height = 0
 		} else {
-			copy(a.lastTB[:], b.Get([]byte("XB"))[:32])
+			copy(a.LastTB[:], b.Get([]byte("XB"))[:32])
+			tmpByte := b.Get(append([]byte("B"), a.LastTB[:]...))
+			var tmp basic.TxBlock
+			tmp.Decode(&tmpByte, 1)
+			a.Height = tmp.Height
+		}
+		b = tx.Bucket([]byte(FBBucket))
+		if b == nil {
+			b, err := tx.CreateBucket([]byte(FBBucket))
+			if err != nil {
+				return err
+			}
+			for i := uint32(0); i < gVar.ShardCnt; i++ {
+				genesis := basic.NewGensisFinalTxBlock(i)
+				var tmp []byte
+				genesis.Encode(&tmp, 1)
+				err = b.Put(append([]byte("B"+strconv.Itoa(int(i))), genesis.HashID[:]...), tmp)
+				err = b.Put([]byte("XB"+strconv.Itoa(int(i))), genesis.HashID[:])
+				a.LastFB[i] = genesis.HashID
+			}
+
+		} else {
+			for i := uint32(0); i < gVar.ShardCnt; i++ {
+				copy(a.LastFB[i][:], b.Get([]byte("XB" + strconv.Itoa(int(i))))[:32])
+			}
 		}
 		b = tx.Bucket([]byte(ACCBucket))
 		//a.AccData = gtreap.NewTreap(byteCompare)
@@ -80,21 +110,14 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 //AddBlock is adding a new txblock
 func (a *TxBlockChain) AddBlock(x *basic.TxBlock) error {
 	var err error
+	if x.Kind == 0 {
+		return fmt.Errorf("Error type, should be 0")
+	}
 	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer a.data.Close()
-	var lastHash [32]byte
-	err = a.data.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TBBucket))
-		copy(lastHash[:], b.Get([]byte("XB"))[:32])
-
-		return nil
-	})
-	if lastHash != x.PrevHash {
-		return fmt.Errorf("Failed to add TxBlock: PrevHash not match")
-	}
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TBBucket))
 		err := b.Put(append([]byte("B"), x.HashID[:]...), x.Serial())
@@ -105,7 +128,74 @@ func (a *TxBlockChain) AddBlock(x *basic.TxBlock) error {
 		if err != nil {
 			return err
 		}
-		a.lastTB = x.HashID
+		if x.Height > a.Height {
+			a.LastTB = x.HashID
+			a.Height = x.Height
+		}
+
+		return nil
+	})
+	return nil
+}
+
+//AddFinalBlock is adding a new txblock
+func (a *TxBlockChain) AddFinalBlock(x *basic.TxBlock) error {
+	if x.Kind != 1 {
+		return fmt.Errorf("Error block type, should be 1")
+	}
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(FBBucket))
+		err := b.Put(append([]byte("B"+strconv.Itoa(int(x.ShardID))), x.HashID[:]...), x.Serial())
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte("XB"+strconv.Itoa(int(x.ShardID))), x.HashID[:])
+		if err != nil {
+			return err
+		}
+		a.LastFB[x.ShardID] = x.HashID
+		b = tx.Bucket([]byte(ACCBucket))
+		for i := uint32(0); i < x.TxCnt; i++ {
+			var tmp []byte
+			basic.EncodeInt(&tmp, x.TxArray[i].Out[0].Value)
+			b.Put(x.TxArray[i].Out[0].Address[:], tmp)
+		}
+		return nil
+	})
+	return nil
+}
+
+//AddStartBlock is adding a new txblock
+func (a *TxBlockChain) AddStartBlock(x *basic.TxBlock) error {
+	if x.Kind != 2 {
+		return fmt.Errorf("Error block type, should be 1")
+	}
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TBBucket))
+		err := b.Put(append([]byte("B"), x.HashID[:]...), x.Serial())
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte("XB"), x.HashID[:])
+		if err != nil {
+			return err
+		}
+		if x.Height > a.Height {
+			a.LastTB = x.HashID
+			a.Height = x.Height
+		}
 
 		return nil
 	})
@@ -123,7 +213,7 @@ func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 	var tmpStr []byte
 	err = a.data.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TBBucket))
-		tmpStr = b.Get(append([]byte("B"), a.lastTB[:]...))
+		tmpStr = b.Get(append([]byte("B"), a.LastTB[:]...))
 
 		return nil
 	})
@@ -343,15 +433,6 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	}
 	defer a.data.Close()
 	for i := uint32(0); i < x.TxCnt; i++ {
-		/*tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
-		if tmp != nil {
-			tmp.Value = x.TxArray[i].Out[0].Value
-		} else {
-			tmp = new(basic.AccCache)
-			tmp.ID = x.TxArray[i].Out[0].Address
-			tmp.Value = x.TxArray[i].Out[0].Value
-			a.AccData.Upsert(tmp, rand.Int())
-		}*/
 		a.AccData[x.TxArray[i].Out[0].Address] = x.TxArray[i].Out[0].Value
 	}
 
@@ -368,20 +449,34 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 				b.Put(k[:], tmp)
 			}
 		}
-		/*tmp := a.AccData.Min()
-		a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
-			if i.(*basic.AccCache).Value == 0 {
-				b.Delete(i.(*basic.AccCache).ID[:])
-			} else {
-				var tmp []byte
-				basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
-				b.Put(i.(*basic.AccCache).ID[:], tmp)
-			}
-			return true
-		})*/
 		return nil
 	})
 	return err
+}
+
+//UploadAcc is to upload the account data from database
+func (a *TxBlockChain) UploadAcc(shardID uint32) error {
+	a.AccData = make(map[[32]byte]uint32, 10000)
+	err := a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ACCBucket))
+		c := b.Cursor()
+		var tmp *basic.AccCache
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			tmp = new(basic.AccCache)
+			copy(tmp.ID[:], k[:32])
+			tmpStr := v
+			if basic.ShardIndex(tmp.ID) == shardID {
+				basic.DecodeInt(&tmpStr, &tmp.Value)
+				//a.AccData = a.AccData.Upsert(tmp, rand.Int())
+				a.AccData[tmp.ID] = tmp.Value
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //UpdateAccount save the current account data into database
@@ -403,18 +498,6 @@ func (a *TxBlockChain) UpdateAccount() error {
 				b.Put(k[:], tmp)
 			}
 		}
-		/*
-			tmp := a.AccData.Min()
-			a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
-				if i.(*basic.AccCache).Value == 0 {
-					b.Delete(i.(*basic.AccCache).ID[:])
-				} else {
-					var tmp []byte
-					basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
-					b.Put(i.(*basic.AccCache).ID[:], tmp)
-				}
-				return true
-			})*/
 		return nil
 	})
 	return err
@@ -461,21 +544,24 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 									if tmp.viewer == 0 {
 										delete(a.USet, x.TxArray[i].In[j].PrevTx)
 										b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
+									} else {
+										b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
+										a.USet[x.TxArray[i].In[j].PrevTx] = tmp
 									}
-									a.USet[x.TxArray[i].In[j].PrevTx] = tmp
 								}
 							}
-						}
-						tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
-						err := tmp.Decode(&tmpStr)
-						if err == nil && tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
-							tmp.Stat[x.TxArray[i].In[j].Index] = 1
-							tmp.Remain--
-							if tmp.Remain == 0 {
-								b.Delete(x.TxArray[i].In[j].PrevTx[:])
-							} else {
-								tmpStr = tmp.Encode()
-								b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+						} else {
+							tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
+							err := tmp.Decode(&tmpStr)
+							if err == nil && tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
+								tmp.Stat[x.TxArray[i].In[j].Index] = 1
+								tmp.Remain--
+								if tmp.Remain == 0 {
+									b.Delete(x.TxArray[i].In[j].PrevTx[:])
+								} else {
+									tmpStr = tmp.Encode()
+									b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+								}
 							}
 						}
 					}

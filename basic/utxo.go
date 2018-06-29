@@ -29,6 +29,11 @@ func (a *InType) ShardIndex() uint32 {
 	return uint32(tmp[0]) % gVar.ShardCnt
 }
 
+//ShardIndex returns the shard index
+func ShardIndex(str [32]byte) uint32 {
+	return uint32(str[0]) % gVar.ShardCnt
+}
+
 //ShardIndex returns the target shard of the output address
 func (a *OutType) ShardIndex() uint32 {
 	return uint32(a.Address[0]) % gVar.ShardCnt

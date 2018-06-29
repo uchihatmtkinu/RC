@@ -4,7 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //Hash generates the 32bits hash of one Tx block
@@ -66,8 +69,20 @@ func NewGensisTxBlock() TxBlock {
 	return a
 }
 
+//NewGensisFinalTxBlock is the gensis block
+func NewGensisFinalTxBlock(shardID uint32) TxBlock {
+	var a TxBlock
+	a.ID = 0
+	a.TxCnt = 0
+	a.ShardID = shardID
+	a.Kind = 1
+	a.HashID = sha256.Sum256(append([]byte(GenesisTxBlock), []byte(strconv.Itoa(int(shardID)))...))
+	a.Height = 0
+	return a
+}
+
 //MakeTxBlock creates the transaction blocks given verified transactions
-func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, kind uint32) error {
+func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32, kind uint32, preFH *[32]byte, shardID uint32) error {
 	a.ID = ID
 	a.Kind = kind
 	a.PrevHash = preHash
@@ -77,6 +92,10 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 	a.TxArray = *b
 	GenMerkTree(&a.TxArray, &a.MerkleRoot)
 	a.HashID = a.Hash()
+	if kind == 1 {
+		a.PrevFinalHash = *preFH
+		a.ShardID = shardID
+	}
 	a.Sig.Sign(a.HashID[:], prk)
 	return nil
 }
@@ -107,6 +126,15 @@ func (a *TxBlock) Encode(tmp *[]byte, full int) {
 	Encode(tmp, a.Height)
 	Encode(tmp, a.TxCnt)
 	Encode(tmp, a.Kind)
+	if a.Kind == 1 {
+		Encode(tmp, &a.PrevFinalHash)
+		Encode(tmp, &a.ShardID)
+	}
+	if a.Kind == 2 {
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			Encode(tmp, &a.TxHash[i])
+		}
+	}
 	if full == 1 {
 		for i := uint32(0); i < a.TxCnt; i++ {
 			a.TxArray[i].Encode(tmp)
@@ -116,8 +144,14 @@ func (a *TxBlock) Encode(tmp *[]byte, full int) {
 			Encode(tmp, &a.TxArrayX[i])
 		}
 	}
-	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
-		Encode(tmp, &a.Sig)
+	if a.Kind != 1 {
+		if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
+			Encode(tmp, &a.Sig)
+		}
+	} else {
+		if a.HashID != sha256.Sum256(append([]byte(GenesisTxBlock), []byte(strconv.Itoa(int(a.ShardID)))...)) {
+			Encode(tmp, &a.Sig)
+		}
 	}
 }
 
@@ -155,6 +189,25 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 	if err != nil {
 		return fmt.Errorf("TxBlock Kind failed: %s", err)
 	}
+	if a.Kind == 1 {
+		err = Decode(buf, &a.PrevFinalHash)
+		if err != nil {
+			return fmt.Errorf("TxBlock PrevFinalHash failed: %s", err)
+		}
+		err = Decode(buf, &a.ShardID)
+		if err != nil {
+			return fmt.Errorf("TxBlock ShardID failed: %s", err)
+		}
+	}
+	if a.Kind == 2 {
+		a.TxHash = make([][32]byte, gVar.ShardCnt)
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			err = Decode(buf, &a.TxHash[i])
+			if err != nil {
+				return fmt.Errorf("TxBlock TxHash failed: %s", err)
+			}
+		}
+	}
 	if full == 1 {
 		a.TxArray = make([]Transaction, a.TxCnt)
 		for i := uint32(0); i < a.TxCnt; i++ {
@@ -172,10 +225,19 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 			}
 		}
 	}
-	if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
-		err = Decode(buf, &a.Sig)
-		if err != nil {
-			return fmt.Errorf("TxBlock Signature failed: %s", err)
+	if a.Kind == 0 {
+		if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
+			err = Decode(buf, &a.Sig)
+			if err != nil {
+				return fmt.Errorf("TxBlock Signature failed: %s", err)
+			}
+		}
+	} else {
+		if a.HashID != sha256.Sum256(append([]byte(GenesisTxBlock), []byte(strconv.Itoa(int(a.ShardID)))...)) {
+			err = Decode(buf, &a.Sig)
+			if err != nil {
+				return fmt.Errorf("TxBlock Signature failed: %s", err)
+			}
 		}
 	}
 	if len(*buf) != 0 {

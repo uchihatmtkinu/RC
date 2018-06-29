@@ -82,17 +82,20 @@ type TxDecSet struct {
 
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
-	ID         uint32
-	PrevHash   [32]byte
-	HashID     [32]byte
-	MerkleRoot [32]byte
-	Kind       uint32
-	Timestamp  int64
-	Height     uint32
-	TxCnt      uint32
-	TxArray    []Transaction
-	TxArrayX   [][SHash]byte
-	Sig        RCSign
+	ID            uint32
+	PrevHash      [32]byte
+	PrevFinalHash [32]byte
+	ShardID       uint32
+	HashID        [32]byte
+	MerkleRoot    [32]byte
+	Kind          uint32
+	Timestamp     int64
+	Height        uint32
+	TxCnt         uint32
+	TxArray       []Transaction
+	TxHash        [][32]byte
+	TxArrayX      [][SHash]byte
+	Sig           RCSign
 }
 
 //UserClient is the struct for miner and client
