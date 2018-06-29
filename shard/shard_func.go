@@ -3,7 +3,6 @@ package shard
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"fmt"
 	"math/rand"
 	"strings"
 
@@ -106,10 +105,8 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 		check := make([]int, gVar.ShardCnt)
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
 			x := uint32(c.rng.Int()^int((*a)[sortData[now].ID].Rep)) % gVar.ShardCnt
-			fmt.Println(x)
 			if check[x] == 0 {
 				check[x] = 1
-
 				(*b)[x][i] = int(sortData[now].ID)
 				now++
 			} else {
@@ -117,16 +114,12 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 	}
-	fmt.Println(len(*a))
-	for i := 0; i < 2; i++ {
-		for j := 0; j < 2; j++ {
-			fmt.Println(i, " ", j, ": ", (*b)[i][j])
-		}
-	}
+
 	//select leader, index of 0 is the leader
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		c.LeaderSort(a, b, i)
 	}
+
 	//set shardid, shard, role for all the members
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
@@ -148,7 +141,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
-		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].Rep)
+		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].Rep+1)
 	}
 	for i := 0; i < len(tmp); i++ {
 		for j := i + 1; j < len(tmp); j++ {
