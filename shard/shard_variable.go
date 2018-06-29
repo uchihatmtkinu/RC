@@ -10,7 +10,7 @@ var GlobalGroupMems []MemShard
 var NumMems int
 
 //MyMenShard my
-var MyMenShard MemShard
+var MyMenShard *MemShard
 
 //MyGlobalID my global ID
 var MyGlobalID int

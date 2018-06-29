@@ -19,9 +19,9 @@ type MemShard struct {
 	RealAccount *account.RcAcc
 }
 
-//newMemShard new a mem shard
-func (ms *MemShard) NewMemShard(acc *account.RcAcc) {
-	ms.Address = acc.Addr
+//newMemShard new a mem shard, addr - ip + port
+func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string) {
+	ms.Address = addr
 	ms.RealAccount = acc
 	ms.CosiPub = acc.CosiPuk
 	ms.Legal = 0

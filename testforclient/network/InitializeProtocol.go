@@ -11,14 +11,24 @@ import (
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 
 func intilizeProcess(ID int) {
+
+	// IP + port
+	var IPAddr string
+	//current epoch = 0
 	currentEpoch = 0
-	shard.MyGlobalID = ID
+
+
 	numCnt := gVar.ShardCnt * gVar.ShardSize
+
 	acc := make([]account.RcAcc, numCnt)
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
+
+	shard.MyGlobalID = ID
+	port := int64(19000)
 	file, _ := os.Open("PriKeys.txt")
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
@@ -37,9 +47,18 @@ func intilizeProcess(ID int) {
 		accWallet[i].ID = acc[i].AddrReal
 		accWallet[i].Value = 100
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
-		shard.GlobalGroupMems[i].NewMemShard(&acc[i])
+		//TODO need modify
+		port++
+		IPAddr =  "143.89.147.72:"+strconv.FormatInt(port,10)
+		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
+		//map ip+port -> global ID
+		GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
-	shard.MyMenShard = shard.GlobalGroupMems[ID]
+
+	account.MyAccount = acc[ID]
+	shard.MyMenShard = &shard.GlobalGroupMems[ID]
+	shard.NumMems = int(gVar.ShardSize)
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
+	Reputation.CreateRepBlockchain(acc[ID].Addr)
 }

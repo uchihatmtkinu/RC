@@ -180,8 +180,8 @@ func NewRepBlockchain(nodeID string) *RepBlockchain {
 
 
 // CreateRepBlockchain creates a new blockchain DB
-func CreateRepBlockchain(nodeID string) *RepBlockchain {
-	dbFile := fmt.Sprintf(dbFile, nodeID)
+func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
+	dbFile := fmt.Sprintf(dbFile, nodeAdd)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
