@@ -12,7 +12,7 @@ var (
 	maxNonce = math.MaxInt32
 )
 
-const difficulty = 4
+const difficulty = 16
 
 
 // ProofOfWork represents a proof-of-work

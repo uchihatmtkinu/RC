@@ -27,9 +27,11 @@ func RepProcess(ms *[]shard.MemShard) {
 		select {
 		case item := <-Reputation.RepPowTxCh:
 			{
-				for i := uint32(0); i < gVar.ShardSize; i++ {
-					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-					SendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
+				for i := 0; i < int(gVar.ShardSize); i++ {
+					if i != shard.MyMenShard.Shard {
+						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+						SendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
+					}
 				}
 				flag = false
 			}

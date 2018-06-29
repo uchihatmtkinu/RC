@@ -10,10 +10,7 @@ func main() {
 	fmt.Println("test begin")
 	network.IntilizeProcess(1)
 	fmt.Println(network.MyGlobalID)
-	for i, it := range shard.GlobalGroupMems {
-		fmt.Println()
-		it.AddRep(int64(i))
-		it.Print()
-	}
+
 	network.ShardProcess()
+	network.RepProcess(&shard.GlobalGroupMems)
 }

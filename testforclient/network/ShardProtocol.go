@@ -11,8 +11,18 @@ func ShardProcess(){
 	CurrentEpoch++
 	shard.StartFlag = true
 	fmt.Println(shard.PreviousSyncBlockHash)
+	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		shard.ShardToGlobal[i] = make([]int, gVar.ShardSize)
+	}
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
+	for i, it := range shard.GlobalGroupMems {
+		fmt.Println()
+		it.AddRep(int64(i))
+		it.Print()
+	}
+	fmt.Println(shard.ShardToGlobal)
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
 	myShard := shard.GlobalGroupMems[MyGlobalID].Shard
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[myShard][0]].Address
@@ -29,7 +39,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 	//var readaddr string
 	readyCount := 0
 
-	for readyCount <= int(gVar.ShardSize/2*3) {
+	for readyCount <= int(gVar.ShardSize*2/3) {
 		<-readyCh
 		readyCount++
 		//setMaskBit((*ms)[GlobalAddrMapToInd[readaddr]].InShardId, cosi.Enabled, &readymask)
@@ -38,7 +48,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 }
 func MinerReadyProcess(){
 
-	SendShardReadyMessage(LeaderAddr, "shardReady", nil)
+	SendShardReadyMessage(LeaderAddr, "shardReady", "shardReady")
 }
 
 

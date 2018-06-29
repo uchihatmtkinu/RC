@@ -126,7 +126,7 @@ func HandleRequestSync(addr string, request []byte) {
 		log.Panic(err)
 	}
 	if payload > CurrentEpoch {
-		go SendSyncMessage(addr, "syncNReady", nil)
+		go SendSyncMessage(addr, "syncNReady", "syncNReady")
 	} else {
 		go sendTxMessage(addr, "syncTB", CacheDbRef.FB[CacheDbRef.ShardNum].Serial())
 		go SendSyncMessage(addr, "syncSB", Reputation.CurrentSyncBlock)

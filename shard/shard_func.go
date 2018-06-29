@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/uchihatmtkinu/RC/gVar"
+	"fmt"
 )
 
 type sortType struct {
@@ -89,12 +90,6 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 		sortData[i].Rep = (*a)[i].Rep
 	}
 	SortRep(&sortData, 0, len(*a)-1)
-	b = new([][]int)
-	*b = make([][]int, gVar.ShardCnt)
-	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		(*b)[i] = make([]int, gVar.ShardSize)
-	}
-	//rng.Seed()
 	now := 0
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
@@ -135,6 +130,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			}
 		}
 	}
+	fmt.Println(b)
 }
 
 //LeaderSort give the priority of being leader in this round

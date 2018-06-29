@@ -10,6 +10,7 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 
+	"fmt"
 )
 
 // RepBlock reputation block
@@ -53,7 +54,7 @@ func NewGenesisRepBlock() *RepBlock {
 	var tmp [][32]byte
 	tmp = append(tmp, [32]byte{0})
 	block := &RepBlock{time.Now().Unix(), nil, true, tmp, [32]byte{0}, [32]byte{}, 0}
-	block.Hash = [32]byte{0}
+	block.Hash = [32]byte{66}
 	return block
 }
 
@@ -91,6 +92,20 @@ func (b *RepBlock) Serialize() []byte {
 
 	return result.Bytes()
 }
+
+func (b *RepBlock) Print() {
+	fmt.Println("RepTransactions:")
+	for _,item := range b.RepTransactions{
+		fmt.Print("	GlobalID:", item.GlobalID)
+		fmt.Println("		Rep",item.Rep)
+	}
+	fmt.Println("StartBlock:", b.StartBlock)
+	fmt.Println("PrevTxBlockHashes:", b.PrevTxBlockHashes)
+	fmt.Println("PrevRepBlockHash:", b.PrevRepBlockHash)
+	fmt.Println("Hash:", b.Hash)
+
+}
+
 
 // DeserializeRepBlock decode Repblock
 func DeserializeRepBlock(d []byte) *RepBlock {
