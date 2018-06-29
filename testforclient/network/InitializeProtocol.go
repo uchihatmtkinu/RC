@@ -5,15 +5,16 @@ import (
 	"os"
 	"strconv"
 
+	"fmt"
+
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation"
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
-	"fmt"
 )
 
 func IntilizeProcess(ID int) {
@@ -22,7 +23,6 @@ func IntilizeProcess(ID int) {
 	var IPAddr string
 	//current epoch = 0
 	CurrentEpoch = 0
-
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
 
@@ -43,6 +43,7 @@ func IntilizeProcess(ID int) {
 		tmp1 := make([]byte, 121)
 		tmp2 := make([]byte, 64)
 		file.Read(tmp1)
+		file.Read(tmp2)
 		xxx, _ := x509.ParseECPrivateKey(tmp1)
 		acc[i].Pri = *xxx
 		acc[i].Puk = acc[i].Pri.PublicKey
@@ -55,7 +56,7 @@ func IntilizeProcess(ID int) {
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
 		port++
-		IPAddr =  "143.89.147.72:"+strconv.FormatInt(port,10)
+		IPAddr = "143.89.147.72:" + strconv.FormatInt(port, 10)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//map ip+port -> global ID
@@ -68,7 +69,7 @@ func IntilizeProcess(ID int) {
 	shard.NumMems = int(gVar.ShardSize)
 	shard.PreviousSyncBlockHash = [][32]byte{{123}}
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
-	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID),10))
+	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
 	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
 	cosiAnnounceCh = make(chan []byte)
 	cosiChallengeCh = make(chan challengeMessage)

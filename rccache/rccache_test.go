@@ -20,15 +20,19 @@ import (
 
 func TestGeneratePriKey(t *testing.T) {
 	file, _ := os.Create("PriKeys.txt")
-	for i := 0; i < 1800; i++ {
+	for i := 0; i < 5; i++ {
 		var tmp account.RcAcc
 		tmp.New(strconv.Itoa(i))
+		tmp.NewCosi()
 		fmt.Println(tmp.Pri)
+
 		tmpHash, _ := x509.MarshalECPrivateKey(&tmp.Pri)
+		//fmt.Println(len(tmpHash))
 		file.Write(tmpHash)
 		file.Write(tmp.CosiPri)
 	}
 	file.Close()
+	//t.Error("No file")
 }
 
 func GenerateTx(x int, y int, z uint32) *basic.Transaction {
@@ -64,11 +68,13 @@ func TestOutToData(t *testing.T) {
 		tmp1 := make([]byte, 121)
 		tmp2 := make([]byte, 64)
 		file.Read(tmp1)
+		file.Read(tmp2)
 		xxx, _ := x509.ParseECPrivateKey(tmp1)
 		acc[i].Pri = *xxx
 		acc[i].Puk = acc[i].Pri.PublicKey
 		acc[i].CosiPri = tmp2
 		acc[i].CosiPuk = tmp2[32:]
+
 		acc[i].AddrReal = cryptonew.AddressGenerate(&acc[i].Pri)
 		acc[i].Addr = base58.Encode(acc[i].AddrReal[:])
 		accWallet[i].ID = acc[i].AddrReal
