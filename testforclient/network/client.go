@@ -238,9 +238,8 @@ func StartServer(ID int) {
 			go HandleRepPowRx(request)
 		//cosi protocol
 		case "cosiAnnoun":
-			if CoSiFlag {
-				go HandleCoSiAnnounce(request)
-			}
+			go HandleCoSiAnnounce(request)
+
 		case "cosiChallen":
 			if CoSiFlag {
 				go HandleCoSiChallenge(request)

@@ -19,16 +19,17 @@ func main() {
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
 
 	network.ShardProcess()
-	/*
-	for i:=0 ; i < totalNum; i++ {
-		fmt.Println()
-		shard.GlobalGroupMems[i].AddRep(int64(i))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i+1))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i+2))
+
+	//for i:=0 ; i < totalNum; i++ {
+	//	fmt.Println()
+		//shard.GlobalGroupMems[i].AddRep(int64(i))
+		//shard.GlobalGroupMems[i].SetTotalRep(int64(i))
+		//shard.GlobalGroupMems[i].SetTotalRep(int64(i+1))
+		//shard.GlobalGroupMems[i].SetTotalRep(int64(i+2))
 		//shard.GlobalGroupMems[i].Print()
 		//fmt.Println(shard.GlobalGroupMems[i].CalTotalRep())
-	}*/
-	network.RepProcess(&shard.GlobalGroupMems)
+	//}
+	cosig :=network.LeaderCosiProcess(&shard.GlobalGroupMems,[32]byte{123})
+	fmt.Println("CoSignature:", cosig)
 }
 

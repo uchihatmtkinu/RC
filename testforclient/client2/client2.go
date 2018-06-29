@@ -30,5 +30,7 @@ func main() {
 		fmt.Println(shard.GlobalGroupMems[i].CalTotalRep())
 	}*/
 	time.Sleep(5*time.Second)
-	network.RepProcess(&shard.GlobalGroupMems)
+	cosig,f :=network.MemberCosiProcess(&shard.GlobalGroupMems,[32]byte{123})
+	fmt.Println("CoSignature:", cosig)
+	fmt.Println("Validate:", f)
 }

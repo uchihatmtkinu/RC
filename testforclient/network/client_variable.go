@@ -37,27 +37,22 @@ var CacheDbRef rccache.DbRef
 
 //used in commitCh
 type commitInfoCh struct {
-	addr    string
-	commit []byte
+	Addr    string
+	Commit  cosi.Commitment
 }
 
 // challenge info
 type challengeMessage struct {
-	aggregatePublicKey ed25519.PublicKey
-	aggregateCommit    cosi.Commitment
+	AggregatePublicKey ed25519.PublicKey
+	AggregateCommit    cosi.Commitment
 }
 
 //response info
 type responseInfoCh struct {
-	addr    string
-	sig cosi.SignaturePart
+	Addr    string
+	Sig cosi.SignaturePart
 }
 
-//cosisig info
-type cosiSigMessage struct {
-	pubKeys []ed25519.PublicKey
-	cosiSig cosi.SignaturePart
-}
 
 //channel used in cosi
 //cosiAnnounceCh cosi announcement channel
@@ -70,17 +65,6 @@ var cosiSigCh  		chan cosi.SignaturePart
 
 
 
-//sbInfoCh
-type sbInfoCh struct {
-	id		int
-	block 	Reputation.SyncBlock
-}
-
-//tbInfoCh
-type tbInfoCh struct {
-	id		int
-	block 	basic.TxBlock
-}
 
 //channel used in sync
 //syncCh

@@ -56,7 +56,7 @@ func IntilizeProcess(ID int) {
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
 		port++
-		IPAddr = "143.89.147.72:" + strconv.FormatInt(port, 10)
+		IPAddr = "192.168.0.108:" + strconv.FormatInt(port, 10)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//map ip+port -> global ID

@@ -34,7 +34,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 	readyCount := 1
 	//fmt.Println("wait for ready")
 	//TODO modify the number of shardsize
-	for readyCount < int(gVar.ShardSize) {
+	for readyCount < int(gVar.ShardSize/2) {
 		<-readyCh
 		readyCount++
 		//fmt.Println("ReadyGet")

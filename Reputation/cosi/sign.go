@@ -158,6 +158,7 @@ func (cos *Cosigners) AggregateCommit(commits []Commitment) []byte {
 		if l := len(commits[i]); l != ed25519.PublicKeySize {
 			return nil
 		}
+		//fmt.Println("commits",commits[i])
 		copy(commitBytes[:], commits[i])
 		if !indivR.FromBytes(&commitBytes) {
 			return nil

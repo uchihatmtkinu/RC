@@ -21,8 +21,8 @@ func intilizeMaskBit(mask *[]byte, len int, value cosi.MaskBit){
 // setMaskBit enable = 0 = false, disable = 1= true
 func setMaskBit(signer int, value cosi.MaskBit, mask *[]byte) {
 	byt := signer >> 3
-
 	bit := byte(1) << uint(signer&7)
+
 	if value == cosi.Disabled { // disable
 		if (*mask)[byt]&bit == 0 { // was enabled
 			(*mask)[byt] |= bit // disable it
@@ -30,6 +30,7 @@ func setMaskBit(signer int, value cosi.MaskBit, mask *[]byte) {
 	} else { // enable
 		if (*mask)[byt]&bit != 0 { // was disabled
 			(*mask)[byt] &^= bit
+
 		}
 	}
 }
