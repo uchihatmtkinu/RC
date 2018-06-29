@@ -76,7 +76,6 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
 	d.TLNow.Single = 0
-	d.TLNow.Sig = make([]basic.RCSign, 0, gVar.ShardCnt)
 	var tmpHash [gVar.ShardCnt][]byte
 	var tmpDecision [gVar.ShardCnt]basic.TxDecision
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
@@ -105,7 +104,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		tmpDecision[i].HashID = sha256.Sum256(tmpHash[i])
 		tmpDecision[i].Sign(&d.prk, 0)
-		d.TLNow.Sig[i] = tmpDecision[i].Sig[0]
+		d.TLNow.Sig[i].New(&tmpDecision[i].Sig[0])
 	}
 	d.TLSent = d.TLNow
 	return nil
@@ -162,8 +161,12 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 
 //GetTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
-	if a.Kind != 1 {
+	if a.Kind != 0 {
 		return fmt.Errorf("Not valid txblock type")
+	}
+	ok, _ := a.Verify(&shard.GlobalGroupMems[d.Leader].RealAccount.Puk)
+	if !ok {
+		return fmt.Errorf("Signature not valid")
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i].Hash]
@@ -182,6 +185,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		}
 		d.ClearCache(a.TxArray[i].Hash)
 	}
+	*(d.TBCache) = append(*(d.TBCache), a.HashID)
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
 	return nil
@@ -189,10 +193,32 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 
 //GetFinalTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
-	if a.ShardID == d.ShardNum {
-
-	} else {
-
+	if a.Kind != 1 {
+		return fmt.Errorf("Not valid txblock type")
 	}
+	ok, _ := a.Verify(&shard.GlobalGroupMems[shard.ShardToGlobal[a.ShardID][0]].RealAccount.Puk)
+	if !ok {
+		return fmt.Errorf("Signature not valid")
+	}
+	d.DB.AddFinalBlock(a)
+	return nil
+}
+
+//GetStartTxBlock handle the txblock sent by the leader
+func (d *DbRef) GetStartTxBlock(a *basic.TxBlock) error {
+	if a.Kind != 2 {
+		return fmt.Errorf("Not valid txblock type")
+	}
+	ok, _ := a.Verify(&shard.GlobalGroupMems[d.Leader].RealAccount.Puk)
+	if !ok {
+		return fmt.Errorf("Signature not valid")
+	}
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		if a.TxHash[i] != d.FB[i].HashID {
+			return fmt.Errorf("final block hash not valid %d", i)
+		}
+	}
+	d.DB.AddStartBlock(a)
+	d.DB.UploadAcc(d.ShardNum)
 	return nil
 }

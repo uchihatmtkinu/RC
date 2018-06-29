@@ -156,3 +156,9 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 	}
 	return nil
 }
+
+//Print is
+func (a *TxDecSet) Print() {
+	fmt.Println("TxDecision: ID: ", a.ID, " TxCnt: ", a.TxCnt, " MemCnt: ", a.MemCnt)
+	fmt.Println()
+}

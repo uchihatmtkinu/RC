@@ -15,12 +15,14 @@ func (t *CrossShardDec) New(a *basic.Transaction) {
 	t.InCheckSum = 0
 	for i := uint32(0); i < a.TxoutCnt; i++ {
 		xx := a.Out[i].ShardIndex()
+		//fmt.Println("Out ", i, " ", xx)
 		tmp[xx] = true
 		t.Value += a.Out[i].Value
 		t.InCheck[xx] = -1
 	}
 	for i := uint32(0); i < a.TxinCnt; i++ {
 		xx := a.In[i].ShardIndex()
+		//fmt.Println("In ", i, " ", xx)
 		tmp[xx] = true
 		t.InCheck[xx] = 3
 	}

@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
+
+	"github.com/uchihatmtkinu/RC/base58"
 )
 
 //Hash returns the ID of the TxList
@@ -83,4 +85,13 @@ func (a *TxList) Decode(buf *[]byte) error {
 		return fmt.Errorf("TxList decode failed: With extra bits")
 	}
 	return nil
+}
+
+//Print is
+func (a *TxList) Print() {
+	fmt.Println("TxList: ID: ", a.ID, " TxCnt: ", a.TxCnt)
+	fmt.Println("Hash: ", base58.Encode(a.HashID[:]))
+	for i := uint32(0); i < a.TxCnt; i++ {
+		fmt.Println(i, ": ", a.TxArray[i])
+	}
 }

@@ -15,7 +15,13 @@ func (a *TxBlock) Hash() [32]byte {
 	tmp1 := make([]byte, 0, 136)
 	tmp1 = append(byteSlice(a.ID), a.PrevHash[:]...)
 	tmp1 = append(tmp1, a.HashID[:]...)
-	tmp1 = append(tmp1, a.MerkleRoot[:]...)
+	if a.Kind == 0 || a.Kind == 1 {
+		tmp1 = append(tmp1, a.MerkleRoot[:]...)
+	} else {
+		for i := 0; i < len(a.TxHash); i++ {
+			tmp1 = append(tmp1, a.TxHash[i][:]...)
+		}
+	}
 	EncodeInt(&tmp1, a.Timestamp)
 	var b [32]byte
 	DoubleHash256(&tmp1, &b)
@@ -96,6 +102,20 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 		a.PrevFinalHash = *preFH
 		a.ShardID = shardID
 	}
+	a.Sig.Sign(a.HashID[:], prk)
+	return nil
+}
+
+//MakeStartBlock creates the transaction blocks given verified transactions
+func (a *TxBlock) MakeStartBlock(ID uint32, b *[][32]byte, preHash [32]byte, prk *ecdsa.PrivateKey, h uint32) error {
+	a.ID = ID
+	a.Kind = 2
+	a.PrevHash = preHash
+	a.Timestamp = time.Now().Unix()
+	a.TxCnt = 0
+	a.Height = h
+	a.TxHash = *b
+	a.HashID = a.Hash()
 	a.Sig.Sign(a.HashID[:], prk)
 	return nil
 }

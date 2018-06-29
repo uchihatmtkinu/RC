@@ -12,6 +12,7 @@ import (
 func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	tmp, ok := d.TXCache[b.Hash]
 	if !ok {
+		tmp = new(CrossShardDec)
 		tmp.New(b)
 	} else {
 		tmp = new(CrossShardDec)
@@ -42,6 +43,11 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
 	d.TLS[d.ShardNum].Sign(&d.prk)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		if d.ShardNum != i {
+			d.TLS[i].HashID = d.TLS[i].Hash()
+		}
+	}
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if i == d.ShardNum {
@@ -101,6 +107,17 @@ func (d *DbRef) GenerateFinalBlock() error {
 	return nil
 }
 
+//GenerateStartBlock generate Start block
+func (d *DbRef) GenerateStartBlock() error {
+	height := d.FB[d.ShardNum].Height
+	tmp := make([][32]byte, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		tmp[i] = d.FB[i].HashID
+	}
+	d.TxB.MakeStartBlock(d.ID, &tmp, d.DB.LastFB[d.ShardNum], &d.prk, height+1)
+	return nil
+}
+
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
 func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if a.Single == 1 {
@@ -141,7 +158,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if !tmpTD[i].Verify(&shard.GlobalGroupMems[a.ID].RealAccount.Puk, 0) {
-			return fmt.Errorf("Signature not match")
+			return fmt.Errorf("Signature not match %d", i)
 		}
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
@@ -152,12 +169,17 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 
 //ProcessTDS deal with the TDS
 func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
-	if b.ShardIndex != d.ShardNum {
-
+	if b.ShardIndex == d.ShardNum {
+		tmp, _ := d.TLIndex[b.HashID]
+		tmpIndex := tmp - uint32(d.startIndex)
+		tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
+		b.TxCnt = tmpTL.TxCnt
+		b.TxArray = tmpTL.TxArray
 	}
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
+		//fmt.Println(tmp.InCheck, " ", tmp.InCheckSum)
 		if !ok {
 			tmp = new(CrossShardDec)
 			tmp.NewFromOther(b.ShardIndex, b.Result(i))

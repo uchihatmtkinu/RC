@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 )
 
@@ -29,7 +30,7 @@ func (a *TxDecision) Add(x byte) error {
 	if tmpNum == 0 {
 		a.Decision = append(a.Decision, byte(0))
 	}
-	tmp := len(a.Decision)
+	tmp := len(a.Decision) - 1
 
 	a.Decision[tmp] += x << tmpNum
 
@@ -114,4 +115,15 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 		}
 	}
 	return nil
+}
+
+//Print is
+func (a *TxDecision) Print() {
+	fmt.Println("TxDecision: ID: ", a.ID, " TxCnt: ", a.TxCnt, " Target: ", a.Target)
+	fmt.Println("Single : ", a.Single, " Hash: ", base58.Encode(a.HashID[:]))
+	fmt.Print("Result: ")
+	for i := uint32(0); i < a.TxCnt; i++ {
+		fmt.Print((a.Decision[i/8] >> (i % 8)) & 1)
+	}
+	fmt.Println()
 }

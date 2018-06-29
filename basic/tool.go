@@ -142,6 +142,13 @@ func DecodeInt(d *[]byte, out interface{}) error {
 		}
 		tmpBit := binary.LittleEndian.Uint32((*d)[:bitlen])
 		*out = tmpBit
+	case *int64:
+		bitlen = 8
+		if bitlen > uint32(len(*d)) {
+			return fmt.Errorf("Basic.DecodeInt length not enough")
+		}
+		tmpBit := binary.LittleEndian.Uint64((*d)[:bitlen])
+		*out = int64(tmpBit)
 	case *uint64:
 		bitlen = 8
 		if bitlen > uint32(len(*d)) {

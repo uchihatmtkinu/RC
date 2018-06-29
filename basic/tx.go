@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/base58"
 )
 
 //HashTx is come out the hash
@@ -152,4 +154,19 @@ func (a *Transaction) AddIn(b InType) {
 func (a *Transaction) AddOut(b OutType) {
 	a.TxoutCnt++
 	a.Out = append(a.Out, b)
+}
+
+//Print is
+func (a *Transaction) Print() {
+	fmt.Println("Transaction: Time: ", a.Timestamp, " InCnt: ", a.TxinCnt, " OutCnt: ", a.TxoutCnt)
+	fmt.Println("Kind: ", a.Kind)
+	fmt.Println("Hash: ", base58.Encode(a.Hash[:]))
+	for i := uint32(0); i < a.TxinCnt; i++ {
+		fmt.Print(i, " ")
+		a.In[i].Print()
+	}
+	for i := uint32(0); i < a.TxoutCnt; i++ {
+		fmt.Print(i, " ")
+		a.Out[i].Print()
+	}
 }

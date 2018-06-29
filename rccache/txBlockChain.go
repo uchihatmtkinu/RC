@@ -33,7 +33,7 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 		return err
 	}
 	defer a.data.Close()
-
+	a.TXCache = make(map[[32]byte]int, 10000)
 	err = a.data.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TBBucket))
 		if b == nil {
@@ -215,6 +215,29 @@ func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 		b := tx.Bucket([]byte(TBBucket))
 		tmpStr = b.Get(append([]byte("B"), a.LastTB[:]...))
 
+		return nil
+	})
+	var tmp basic.TxBlock
+	err = tmp.Decode(&tmpStr, 1)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return &tmp
+}
+
+//LatestFinalTxBlock return the highest txblock
+func (a *TxBlockChain) LatestFinalTxBlock(x uint32) *basic.TxBlock {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	var tmpStr []byte
+	err = a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(FBBucket))
+		tmpStr = b.Get(append([]byte("B"+strconv.Itoa(int(x))), a.LastFB[x][:]...))
 		return nil
 	})
 	var tmp basic.TxBlock
@@ -442,8 +465,14 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 
 //UploadAcc is to upload the account data from database
 func (a *TxBlockChain) UploadAcc(shardID uint32) error {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
 	a.AccData = make(map[[32]byte]uint32, 10000)
-	err := a.data.View(func(tx *bolt.Tx) error {
+	err = a.data.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ACCBucket))
 		c := b.Cursor()
 		var tmp *basic.AccCache
@@ -493,6 +522,7 @@ func (a *TxBlockChain) UpdateAccount() error {
 func (a *TxBlockChain) ShowAccount() error {
 	for k, v := range a.AccData {
 		fmt.Println(k, ": ", v)
+		fmt.Println(basic.ShardIndex(k))
 	}
 	return nil
 }

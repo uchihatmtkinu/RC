@@ -59,7 +59,7 @@ type DbRef struct {
 	//TL       *basic.TxList
 	Ready []basic.Transaction
 	TxB   *basic.TxBlock
-	FB    *[gVar.ShardCnt]basic.TxBlock
+	FB    [gVar.ShardCnt]*basic.TxBlock
 	prk   ecdsa.PrivateKey
 
 	//Miner
@@ -78,15 +78,21 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
 	d.prk = prk
 	d.DB.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
-	d.TXCache = make(map[[32]byte]*CrossShardDec)
+	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000)
 	d.TxB = d.DB.LatestTxBlock()
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		d.FB[i] = d.DB.LatestFinalTxBlock(i)
+	}
 	//d.TL = nil
 	//d.TLCache = nil
-	d.TLS = nil
+	d.TLS = new([gVar.ShardCnt]basic.TxList)
+	d.TLIndex = make(map[[32]byte]uint32, 100)
+	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	d.TLSCache = nil
 	d.TDSCache = nil
 	d.startIndex = 0
 	d.lastIndex = -1
+	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
 }
 
 //CrossShardDec  is the database of cache

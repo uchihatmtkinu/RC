@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 )
@@ -129,4 +130,14 @@ func (a *InType) DataToIn(data *[]byte) error {
 		return fmt.Errorf("Input Publick Key read failed: %s", err)
 	}
 	return err
+}
+
+//Print is
+func (a *InType) Print() {
+	fmt.Println("InType: ", base58.Encode(a.PrevTx[:]), ", index: ", a.Index)
+}
+
+//Print is
+func (a *OutType) Print() {
+	fmt.Println("OutType: ", base58.Encode(a.Address[:]), ", index: ", a.Value)
 }
