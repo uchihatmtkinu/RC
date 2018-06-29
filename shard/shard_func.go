@@ -3,6 +3,7 @@ package shard
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 	"math/rand"
 	"strings"
 
@@ -101,17 +102,25 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 			(*b)[j][i] = -1
 		}
 	}
-	for i := uint32(len(*a)); i < gVar.ShardSize; i++ {
+	for i := uint32(0); i < gVar.ShardSize; i++ {
 		check := make([]int, gVar.ShardCnt)
 		for j := uint32(0); j < gVar.ShardCnt; j++ {
-			x := uint32(c.rng.Int() ^ int((*a)[sortData[now].ID].Rep)) % gVar.ShardCnt
+			x := uint32(c.rng.Int()^int((*a)[sortData[now].ID].Rep)) % gVar.ShardCnt
+			fmt.Println(x)
 			if check[x] == 0 {
 				check[x] = 1
+
 				(*b)[x][i] = int(sortData[now].ID)
 				now++
 			} else {
 				j--
 			}
+		}
+	}
+	fmt.Println(len(*a))
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 2; j++ {
+			fmt.Println(i, " ", j, ": ", (*b)[i][j])
 		}
 	}
 	//select leader, index of 0 is the leader

@@ -348,20 +348,6 @@ func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
 	return nil
 }
 
-/*
-//ConfirmUTXO is to make the value used
-func (a *TxBlockChain) ConfirmUTXO(x *basic.InType) error {
-	if !x.Acc() {
-		tmp, ok := a.USet[x.PrevTx]
-		if !ok || x.Index >= tmp.Cnt || tmp.Stat[x.Index] != 2 {
-			return fmt.Errorf("Confirming utxo failed")
-		}
-		tmp.Stat[x.Index] = 1
-	}
-	return nil
-}
-*/
-
 //MakeFinalTx generates the final blocks transactions
 func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	var err error

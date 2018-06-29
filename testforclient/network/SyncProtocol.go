@@ -115,7 +115,7 @@ func SendSyncMessage(addr string, command string, message interface{}) {
 func HandleSyncNotReady(addr string) {
 	syncNotReadyCh[GlobalAddrMapToInd[addr]] <- true
 }
-func HandleRequestSync(addr string, request []byte){
+func HandleRequestSync(addr string, request []byte) {
 	var buff bytes.Buffer
 	var payload int
 
@@ -125,14 +125,15 @@ func HandleRequestSync(addr string, request []byte){
 	if err != nil {
 		log.Panic(err)
 	}
-	if payload > CurrentEpoch{
+	if payload > CurrentEpoch {
 		go SendSyncMessage(addr, "syncNReady", nil)
-	}	else{
-		go sendTxMessage(addr, "syncTB", CacheDbRef.FB.Serial())
+	} else {
+		go sendTxMessage(addr, "syncTB", CacheDbRef.FB[CacheDbRef.ShardNum].Serial())
 		go SendSyncMessage(addr, "syncSB", Reputation.CurrentSyncBlock)
 	}
 
 }
+
 // HandleChallenge rx challenge
 func HandleSyncSBMessage(addr string, request []byte) {
 	var buff bytes.Buffer
