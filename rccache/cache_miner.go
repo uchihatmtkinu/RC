@@ -189,6 +189,10 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 
 //GetFinalTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
+	if a.ShardID == d.ShardNum {
 
+	} else {
+
+	}
 	return nil
 }

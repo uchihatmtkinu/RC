@@ -57,16 +57,18 @@ func TestOutToData(t *testing.T) {
 		accWallet[i].ID = acc[i].AddrReal
 		accWallet[i].Value = 100
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
-		shard.GlobalGroupMems[i].NewMemShard(&acc[i])
+		shard.GlobalGroupMems[i].NewMemShard(&acc[i], "123")
 		dbs[i].New(uint32(i), acc[i].Pri)
 	}
 	t.Error("Check1")
 	for i := 0; i < numCnt; i++ {
 		for j := 0; j < numCnt; j++ {
-			dbs[i].DB.AddAccount(&accWallet[j])
+			//dbs[i].DB.AddAccount(&accWallet[j])
 		}
-
-		dbs[i].DB.ShowAccount()
+		for j := 0; j < int(gVar.ShardCnt); j++ {
+			fmt.Println(i+'-', j, ": ", dbs[i].DB.LastFB[j])
+		}
+		//dbs[i].DB.ShowAccount()
 	}
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
