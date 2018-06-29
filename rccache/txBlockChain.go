@@ -171,6 +171,37 @@ func (a *TxBlockChain) AddFinalBlock(x *basic.TxBlock) error {
 	return nil
 }
 
+//AddStartBlock is adding a new txblock
+func (a *TxBlockChain) AddStartBlock(x *basic.TxBlock) error {
+	if x.Kind != 2 {
+		return fmt.Errorf("Error block type, should be 1")
+	}
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TBBucket))
+		err := b.Put(append([]byte("B"), x.HashID[:]...), x.Serial())
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte("XB"), x.HashID[:])
+		if err != nil {
+			return err
+		}
+		if x.Height > a.Height {
+			a.LastTB = x.HashID
+			a.Height = x.Height
+		}
+
+		return nil
+	})
+	return nil
+}
+
 //LatestTxBlock return the highest txblock
 func (a *TxBlockChain) LatestTxBlock() *basic.TxBlock {
 	var err error
@@ -402,15 +433,6 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	}
 	defer a.data.Close()
 	for i := uint32(0); i < x.TxCnt; i++ {
-		/*tmp := a.FindAcc(x.TxArray[i].Out[0].Address)
-		if tmp != nil {
-			tmp.Value = x.TxArray[i].Out[0].Value
-		} else {
-			tmp = new(basic.AccCache)
-			tmp.ID = x.TxArray[i].Out[0].Address
-			tmp.Value = x.TxArray[i].Out[0].Value
-			a.AccData.Upsert(tmp, rand.Int())
-		}*/
 		a.AccData[x.TxArray[i].Out[0].Address] = x.TxArray[i].Out[0].Value
 	}
 
@@ -427,20 +449,34 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 				b.Put(k[:], tmp)
 			}
 		}
-		/*tmp := a.AccData.Min()
-		a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
-			if i.(*basic.AccCache).Value == 0 {
-				b.Delete(i.(*basic.AccCache).ID[:])
-			} else {
-				var tmp []byte
-				basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
-				b.Put(i.(*basic.AccCache).ID[:], tmp)
-			}
-			return true
-		})*/
 		return nil
 	})
 	return err
+}
+
+//UploadAcc is to upload the account data from database
+func (a *TxBlockChain) UploadAcc(shardID uint32) error {
+	a.AccData = make(map[[32]byte]uint32, 10000)
+	err := a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ACCBucket))
+		c := b.Cursor()
+		var tmp *basic.AccCache
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			tmp = new(basic.AccCache)
+			copy(tmp.ID[:], k[:32])
+			tmpStr := v
+			if basic.ShardIndex(tmp.ID) == shardID {
+				basic.DecodeInt(&tmpStr, &tmp.Value)
+				//a.AccData = a.AccData.Upsert(tmp, rand.Int())
+				a.AccData[tmp.ID] = tmp.Value
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //UpdateAccount save the current account data into database
@@ -462,18 +498,6 @@ func (a *TxBlockChain) UpdateAccount() error {
 				b.Put(k[:], tmp)
 			}
 		}
-		/*
-			tmp := a.AccData.Min()
-			a.AccData.VisitAscend(tmp, func(i gtreap.Item) bool {
-				if i.(*basic.AccCache).Value == 0 {
-					b.Delete(i.(*basic.AccCache).ID[:])
-				} else {
-					var tmp []byte
-					basic.EncodeInt(&tmp, i.(*basic.AccCache).Value)
-					b.Put(i.(*basic.AccCache).ID[:], tmp)
-				}
-				return true
-			})*/
 		return nil
 	})
 	return err

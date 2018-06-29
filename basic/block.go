@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //Hash generates the 32bits hash of one Tx block
@@ -128,6 +130,11 @@ func (a *TxBlock) Encode(tmp *[]byte, full int) {
 		Encode(tmp, &a.PrevFinalHash)
 		Encode(tmp, &a.ShardID)
 	}
+	if a.Kind == 2 {
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			Encode(tmp, &a.TxHash[i])
+		}
+	}
 	if full == 1 {
 		for i := uint32(0); i < a.TxCnt; i++ {
 			a.TxArray[i].Encode(tmp)
@@ -137,7 +144,7 @@ func (a *TxBlock) Encode(tmp *[]byte, full int) {
 			Encode(tmp, &a.TxArrayX[i])
 		}
 	}
-	if a.Kind == 0 {
+	if a.Kind != 1 {
 		if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
 			Encode(tmp, &a.Sig)
 		}
@@ -190,6 +197,15 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 		err = Decode(buf, &a.ShardID)
 		if err != nil {
 			return fmt.Errorf("TxBlock ShardID failed: %s", err)
+		}
+	}
+	if a.Kind == 2 {
+		a.TxHash = make([][32]byte, gVar.ShardCnt)
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			err = Decode(buf, &a.TxHash[i])
+			if err != nil {
+				return fmt.Errorf("TxBlock TxHash failed: %s", err)
+			}
 		}
 	}
 	if full == 1 {

@@ -93,6 +93,7 @@ type TxBlock struct {
 	Height        uint32
 	TxCnt         uint32
 	TxArray       []Transaction
+	TxHash        [][32]byte
 	TxArrayX      [][SHash]byte
 	Sig           RCSign
 }
