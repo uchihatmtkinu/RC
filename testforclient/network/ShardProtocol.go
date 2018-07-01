@@ -8,7 +8,7 @@ import (
 var readymask	[]byte
 func ShardProcess(){
 	var beginShard	shard.Instance
-	CurrentEpoch++
+
 	shard.StartFlag = true
 	readyCh = make(chan string)
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
@@ -40,12 +40,14 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 		//fmt.Println("ReadyGet")
 		//setMaskBit((*ms)[GlobalAddrMapToInd[readaddr]].InShardId, cosi.Enabled, &readymask)
 	}
+	fmt.Println("Recived ", readyCount, " readys.")
 
 
 }
 func MinerReadyProcess(){
 
 	SendShardReadyMessage(LeaderAddr, "shardReady", "shardReady")
+	fmt.Println("Sent Redady")
 }
 
 

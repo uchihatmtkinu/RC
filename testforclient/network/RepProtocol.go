@@ -20,7 +20,6 @@ func RepProcess(ms *[]shard.MemShard) {
 	var validateFlag bool
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepBlock)
-
 	Reputation.RepPowRxValidate = make(chan bool)
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
 

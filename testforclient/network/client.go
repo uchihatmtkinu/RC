@@ -2,14 +2,14 @@ package network
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 
 	"github.com/uchihatmtkinu/RC/shard"
+	"encoding/gob"
+	"io/ioutil"
 )
 
 var nodeAddress string
@@ -54,20 +54,10 @@ func bytesToCommand(bytees []byte) string {
 }
 
 //send data to addr
-func sendData(addr string, data []byte) {
+func sendData(addr string , data []byte) {
 	conn, err := net.Dial(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
-		var updatedNodes []string
-
-		for _, node := range knownNodes {
-			if node != addr {
-				updatedNodes = append(updatedNodes, node)
-			}
-		}
-
-		knownNodes = updatedNodes
-
 		return
 	}
 	defer conn.Close()
@@ -78,10 +68,7 @@ func sendData(addr string, data []byte) {
 	}
 }
 
-//TODO handle data in block
-//func handleGetData(request []byte, bc *Blockchain)
-
-//TODO sync
+/*
 func sendVersion(addr string, height int) {
 	bestHeight := height
 	payload := gobEncode(verzion{nodeVersion, bestHeight, nodeAddress})
@@ -91,7 +78,6 @@ func sendVersion(addr string, height int) {
 	sendData(addr, request)
 }
 
-//TODO sync
 func handleVersion(request []byte, height int) {
 	var buff bytes.Buffer
 	var payload verzion
@@ -127,7 +113,7 @@ func sendAddr(address string) {
 	request := append(commandToBytes("addr"), payload...)
 
 	sendData(address, request)
-}
+}*/
 
 // handle received address
 func handleAddr(request []byte) {
@@ -160,7 +146,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 //StartServer start a server
 func StartServer(ID int) {
 
-	IntilizeProcess(ID)
+
 
 	ln, err := net.Listen(protocol, shard.MyMenShard.Address)
 	fmt.Println("My IP+Port: ",shard.MyMenShard.Address)
@@ -178,7 +164,9 @@ func StartServer(ID int) {
 	var command string
 	var request []byte
 	requestChannel := make(chan []byte, bufferSize)
-	IntialReadyCh <- true
+	flag := true
+	IntialReadyCh <- flag
+	fmt.Println("intial ready")
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -197,10 +185,6 @@ func StartServer(ID int) {
 		fmt.Printf("Received %s command\n", command)
 		// TODO instead of switch, we can use select to concurrently solve different commands
 		switch command {
-		case "add":
-			handleAddr(request)
-		case "version":
-			handleVersion(request, myheight)
 
 		case "Tx":
 			go HandleAndSendTx(request)

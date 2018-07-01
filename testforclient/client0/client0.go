@@ -9,7 +9,7 @@ import (
 
 
 func main() {
-	ID := 1
+	ID := 0
 	network.IntilizeProcess(ID)
 	//totalNum := int(gVar.ShardSize*gVar.ShardCnt)
 	fmt.Println("test begin")

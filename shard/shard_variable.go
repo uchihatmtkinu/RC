@@ -1,5 +1,10 @@
 package shard
 
+//RoleLeader  role is leader
+const RoleLeader = 0
+//RoleMember  role is member
+const RoleMember = 1
+
 //ShardToGlobal shard ind+in shard ind -> global index
 var ShardToGlobal [][]int
 

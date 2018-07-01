@@ -10,6 +10,7 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
+	"fmt"
 )
 
 //SyncBlock syncblock
@@ -132,6 +133,20 @@ func (b *SyncBlock) UpdateTotalRepInMS(ms *[]shard.MemShard) {
 		item = &(*ms)[id]
 		item.CopyTotalRepFromSB(b.TotalRep[i])
 	}
+}
+
+//Print print sync block
+func (b *SyncBlock) Print() {
+	fmt.Println("PrevSyncBlockHash:", b.PrevSyncBlockHash)
+	fmt.Println("RepTransactions:")
+	for i,item := range b.IDlist{
+		fmt.Print("	GlobalID:", item)
+		fmt.Println("		TotalRep",b.TotalRep[i])
+	}
+
+	fmt.Println("CoSignature:", b.CoSignature)
+	fmt.Println("PrevRepBlockHash:", b.PrevRepBlockHash)
+	fmt.Println("Hash:", b.Hash)
 }
 
 

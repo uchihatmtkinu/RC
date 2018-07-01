@@ -91,3 +91,6 @@ var CoSiFlag	bool
 
 
 var IntialReadyCh chan bool
+var ShardReadyCh chan bool
+var CoSiReadyCh chan bool
+var SyncReadyCh chan bool

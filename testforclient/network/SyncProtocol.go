@@ -13,6 +13,7 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"fmt"
 )
 
 //sbrxCounter count for the block receive
@@ -23,15 +24,15 @@ var aski []int
 
 //SyncProcess processing sync after one epoch
 func SyncProcess(ms *[]shard.MemShard) {
+	CurrentEpoch++
+	fmt.Println("Sync Began")
 	//clear ready channel
 	readyCh = make(chan string, bufferSize)
-	//Add sync block
-	Reputation.MyRepBlockChain.AddSyncBlock(ms, Reputation.CurrentCoSignature)
+
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
 	rand.Seed(int64(shard.MyMenShard.Shard*3000+shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
-	shard.PreviousSyncBlockHash = nil
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	//intilizeMaskBit(&syncmask, int((gVar.ShardCnt+7)>>3),false)
 	for i := 0; i < int(gVar.ShardCnt); i++ {
@@ -42,9 +43,11 @@ func SyncProcess(ms *[]shard.MemShard) {
 	}
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
-		wg.Add(1)
-		go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", CurrentEpoch)
-		go receiveSync(i, &wg, ms)
+		if i!=shard.MyMenShard.Shard {
+			wg.Add(1)
+			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", CurrentEpoch)
+			go receiveSync(i, &wg, ms)
+		}
 		//}
 	}
 	wg.Wait()
@@ -59,14 +62,15 @@ func SyncProcess(ms *[]shard.MemShard) {
 
 //receiveSync listen to the block from shard k
 func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
+	fmt.Println("wait for shard", k, " from user", aski)
 	defer wg.Done()
 	//syncblock flag
 	sbrxflag := true
 	//txblock flag
-	tbrxflag := true
+	tbrxflag := false
 	timeoutflag := false
 	//txBlock Transaction block
-	var txBlock basic.TxBlock
+	//var txBlock basic.TxBlock
 	//syncBlock SyncBlock
 	var syncBlock Reputation.SyncBlock
 	for (sbrxflag || tbrxflag) && !timeoutflag {
@@ -81,21 +85,22 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
 				}
 			}
-		case txBlock = <-syncTBCh[k]:
-			tbrxflag = false
+		//case txBlock = <-syncTBCh[k]:
+		//	tbrxflag = false
 		case <-syncNotReadyCh[k]:
 			time.Sleep(timeSyncNotReadySleep)
 		case <-time.After(timeoutSync):
 			{
-				aski[k]++
+				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 				timeoutflag = true
 				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
+				return
 			}
 		}
 	}
 	if !sbrxflag && !tbrxflag {
 		//add transaction block
-		CacheDbRef.GetFinalTxBlock(&txBlock)
+		//CacheDbRef.GetFinalTxBlock(&txBlock)
 		//update reputation of members
 		syncBlock.UpdateTotalRepInMS(ms)
 		//add sync Block
@@ -104,6 +109,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		wg.Add(1)
 		go receiveSync(k, wg, ms)
 	}
+	fmt.Println("received from ",k)
 }
 
 // sendCosiMessage send cosi message
@@ -130,7 +136,7 @@ func HandleRequestSync(addr string, request []byte) {
 	if payload > CurrentEpoch {
 		go SendSyncMessage(addr, "syncNReady", "syncNReady")
 	} else {
-		go sendTxMessage(addr, "syncTB", CacheDbRef.FB[CacheDbRef.ShardNum].Serial())
+		//go sendTxMessage(addr, "syncTB", CacheDbRef.FB[CacheDbRef.ShardNum].Serial())
 		go SendSyncMessage(addr, "syncSB", Reputation.CurrentSyncBlock)
 	}
 
