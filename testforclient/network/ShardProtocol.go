@@ -7,11 +7,15 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"github.com/uchihatmtkinu/RC/Reputation"
 )
 var readymask	[]byte
 func ShardProcess(){
 	var beginShard	shard.Instance
 
+	Reputation.CurrentRepBlock.Mu.Lock()
+	Reputation.CurrentRepBlock.Round = -1
+	Reputation.CurrentRepBlock.Mu.Unlock()
 
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {

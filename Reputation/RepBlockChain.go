@@ -29,6 +29,7 @@ type RepBlockchainIterator struct {
 // MineRepBlock mines a new repblock with the provided transactions
 func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef) {
 	var lastHash [32]byte
+	var fromOtherFlag bool
 
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -44,23 +45,31 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	//TODO need modify
 	tmp := [][32]byte{{0}}
 	cache.TBCache = &tmp
-	newRepBlock := NewRepBlock(ms, shard.StartFlag,  *(cache.TBCache) ,lastHash)
+
+	CurrentRepBlock.Mu.Lock()
+	CurrentRepBlock.Round ++
+	defer CurrentRepBlock.Mu.Unlock()
+	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag,  *(cache.TBCache) ,lastHash)
+	if fromOtherFlag {
+		RepPowTxCh <- CurrentRepBlock.Block
+	}
 	shard.StartFlag = false
-	newRepBlock.Print()
+
+	CurrentRepBlock.Block.Print()
 	cache.TBCache = nil
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(newRepBlock.Hash[:], newRepBlock.Serialize())
+		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lb"), newRepBlock.Hash[:])
+		err = b.Put([]byte("lb"), CurrentRepBlock.Block.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
 
-		bc.Tip = newRepBlock.Hash
+		bc.Tip = CurrentRepBlock.Block.Hash
 
 		return nil
 	})
@@ -79,22 +88,23 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	if err != nil {
 		log.Panic(err)
 	}
-
-	CurrentSyncBlock = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
-
+	CurrentSyncBlock.Mu.Lock()
+	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
+	CurrentSyncBlock.Epoch ++
+	defer CurrentSyncBlock.Mu.Unlock()
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(CurrentSyncBlock.Hash[:], CurrentSyncBlock.Serialize())
+		err := b.Put(CurrentSyncBlock.Block.Hash[:], CurrentSyncBlock.Block.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(shard.MyMenShard.Shard), 10)), CurrentSyncBlock.Hash[:])
+		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(shard.MyMenShard.Shard), 10)), CurrentSyncBlock.Block.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
 
-		bc.Tip = CurrentSyncBlock.Hash
+		bc.Tip = CurrentSyncBlock.Block.Hash
 
 		return nil
 	})

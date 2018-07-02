@@ -28,7 +28,7 @@ type RepBlock struct {
 }
 
 // NewBlock creates and returns Block
-func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) *RepBlock {
+func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	for i := uint32(0); i < gVar.ShardSize; i++ {
@@ -38,15 +38,12 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes [][32]
 
 	//generate new block
 	block := &RepBlock{time.Now().Unix(), repTransactions, startBlock, prevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
-
 	pow := NewProofOfWork(block)
 	nonce, hash, flag := pow.Run()
 	block.Hash = hash
 	block.Nonce = nonce
-	if flag {
-		RepPowTxCh <- *block
-	}
-	return block
+
+	return block, flag
 }
 
 // NewGenesisBlock creates and returns genesis Block

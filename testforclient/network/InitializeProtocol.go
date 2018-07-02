@@ -12,7 +12,6 @@ import (
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 func IntilizeProcess(ID int) {
@@ -26,7 +25,7 @@ func IntilizeProcess(ID int) {
 
 	acc := make([]account.RcAcc, numCnt)
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
-	GlobalAddrMapToInd = make(map[string]int)
+	//GlobalAddrMapToInd = make(map[string]int)
 	MyGlobalID = ID
 	port := int64(2999)
 	file, err := os.Open("PriKeys.txt")
@@ -58,27 +57,33 @@ func IntilizeProcess(ID int) {
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//map ip+port -> global ID
-		GlobalAddrMapToInd[IPAddr] = i
+		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
 
 	account.MyAccount = acc[ID]
+
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
 	shard.PreviousSyncBlockHash = [][32]byte{{66}}
+
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
+
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
-	Reputation.RepPowRxCh = make(chan *Reputation.RepBlock, bufferSize)
+	Reputation.RepPowRxCh = make(chan Reputation.RepPowRxInfo, bufferSize)
+	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block:nil, Epoch:-1}
+	Reputation.CurrentRepBlock = Reputation.SafeRepBlock{Block:nil, Round:-1}
 
 	//make channel
 	IntialReadyCh = make(chan bool)
 	ShardReadyCh = make(chan bool)
 	CoSiReadyCh = make(chan bool)
 	SyncReadyCh = make(chan bool)
+
 	//channel used in shard
 	readyCh = make(chan readyInfo, bufferSize)
+
 	//channel used in CoSi
 	cosiAnnounceCh = make(chan []byte)
-	cosiChallengeCh = make(chan challengeInfo)
-	cosiSigCh = make(chan cosi.SignaturePart)
+
 }

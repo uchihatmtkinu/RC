@@ -55,8 +55,7 @@ func bytesToCommand(bytees []byte) string {
 
 //send data to addr
 func sendData(addr string , data []byte) {
-	sendTcpAddr, _ := net.ResolveTCPAddr("tcp4", addr)
-	conn, err := net.DialTCP(protocol, addr)
+	conn, err := net.Dial(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
 		return
@@ -242,13 +241,19 @@ func StartServer(ID int) {
 			}
 		//sync
 		case "requestSync":
-			go HandleRequestSync(conn.RemoteAddr().String(), request)
+			go HandleRequestSync(request)
 		case "syncNReady":
-			go HandleSyncNotReady(conn.RemoteAddr().String())
+			if SyncFlag {
+				go HandleSyncNotReady(request)
+			}
 		case "syncSB":
-			go HandleSyncSBMessage(conn.RemoteAddr().String(), request)
+			if SyncFlag {
+				go HandleSyncSBMessage(request)
+			}
 		case "syncTB":
-			go HandleSyncTBMessage(conn.RemoteAddr().String(), request)
+			if SyncFlag {
+				go HandleSyncTBMessage(request)
+			}
 		default:
 			fmt.Println("Unknown command!")
 		}

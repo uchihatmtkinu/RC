@@ -7,6 +7,7 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"time"
+	"github.com/uchihatmtkinu/RC/basic"
 )
 
 const protocol = "tcp"
@@ -27,7 +28,7 @@ var MyGlobalID int
 //var AddrMapToInd map[string]int //ip+port
 //var GroupMems []shard.MemShard
 //GlobalAddrMapToInd
-var GlobalAddrMapToInd map[string]int
+//var GlobalAddrMapToInd map[string]int
 
 var CacheDbRef rccache.DbRef
 
@@ -45,8 +46,9 @@ var readyCh	chan readyInfo
 //powInfo used in pow
 type powInfo struct{
 	ID		int
-	Epoch	int
-	Block   []byte
+	Round	int
+	Hash    [32]byte
+	Nonce   int
 }
 
 
@@ -91,7 +93,7 @@ type syncSBInfo struct {
 //syncTBInfo tx block info
 type syncTBInfo struct {
 	ID				int
-	Block			[]byte
+	Block			basic.TxBlock
 }
 
 //syncRequestInfo request sync
@@ -112,9 +114,10 @@ var syncTBCh [gVar.ShardCnt]	 	chan syncTBInfo
 var syncNotReadyCh [gVar.ShardCnt]	chan bool
 
 
-//CoSiFlag flag determine the process has began
+//CoSiFlag flag determine the CoSi process has began
 var CoSiFlag	bool
-
+//CoSiFlag flag determine the Sync process has began
+var SyncFlag	bool
 
 //channel used to indicate the process start
 var IntialReadyCh chan bool

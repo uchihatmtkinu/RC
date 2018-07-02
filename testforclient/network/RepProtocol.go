@@ -9,6 +9,7 @@ import (
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 	"fmt"
+	"sync"
 )
 
 //var currentTxList *[]basic.TxList
@@ -18,22 +19,28 @@ import (
 func RepProcess(ms *[]shard.MemShard) {
 	var it *shard.MemShard
 	var validateFlag bool
+	var item *Reputation.RepBlock
+	var wg sync.WaitGroup
 	flag := true
-	Reputation.RepPowTxCh = make(chan Reputation.RepBlock)
+	Reputation.RepPowTxCh = make(chan *Reputation.RepBlock)
 	Reputation.RepPowRxValidate = make(chan bool)
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
 
 	for flag {
 		select {
-		case item := <-Reputation.RepPowTxCh:
+		case item = <-Reputation.RepPowTxCh:
 			{
+				Reputation.CurrentRepBlock.Mu.Lock()
 				for i := 0; i < int(gVar.ShardSize); i++ {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 						fmt.Println("have sent"+it.Address)
-						SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, CurrentEpoch, item.Serialize()})
+						wg.Add(1)
+						go SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, Reputation.CurrentRepBlock.Round, Reputation.CurrentRepBlock.Block.Hash, Reputation.CurrentRepBlock.Block.Nonce}, &wg)
 					}
 				}
+				wg.Wait()
+				Reputation.CurrentRepBlock.Mu.Unlock()
 				flag = false
 			}
 		case validateFlag = <-Reputation.RepPowRxValidate:
@@ -51,7 +58,8 @@ func RepProcess(ms *[]shard.MemShard) {
 
 
 // SendRepPowMessage send reputation block
-func SendRepPowMessage(addr string, command string, message powInfo) {
+func SendRepPowMessage(addr string, command string, message powInfo, wg *sync.WaitGroup) {
+	defer wg.Done()
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
@@ -68,8 +76,10 @@ func HandleRepPowRx(request []byte)  {
 	if err != nil {
 		log.Panic(err)
 	}
-	if payload.Epoch == CurrentEpoch{
-		Reputation.RepPowRxCh  <- Reputation.DeserializeRepBlock(payload.Block)
+	Reputation.CurrentRepBlock.Mu.Lock()
+	defer Reputation.CurrentRepBlock.Mu.Unlock()
+	if payload.Round >= Reputation.CurrentRepBlock.Round{
+		Reputation.RepPowRxCh  <- Reputation.RepPowRxInfo{payload.Nonce, payload.Hash}
 	}
 
 }
