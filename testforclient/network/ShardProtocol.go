@@ -13,10 +13,12 @@ var readymask	[]byte
 func ShardProcess(){
 	var beginShard	shard.Instance
 
+
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round = -1
 	Reputation.CurrentRepBlock.Mu.Unlock()
 
+	shard.StartFlag = true
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		shard.ShardToGlobal[i] = make([]int, gVar.ShardSize)
@@ -54,7 +56,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 func MinerReadyProcess(){
 
 	SendShardReadyMessage(LeaderAddr, "shardReady", readyInfo{MyGlobalID, CurrentEpoch})
-	fmt.Println("Sent Redady")
+	fmt.Println("Sent Ready")
 }
 
 

@@ -18,8 +18,7 @@ func IntilizeProcess(ID int) {
 
 	// IP + port
 	var IPAddr string
-	//current epoch = 0
-	CurrentEpoch = 0
+
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
 
@@ -70,9 +69,12 @@ func IntilizeProcess(ID int) {
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
-	Reputation.RepPowRxCh = make(chan Reputation.RepPowRxInfo, bufferSize)
+	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block:nil, Epoch:-1}
 	Reputation.CurrentRepBlock = Reputation.SafeRepBlock{Block:nil, Round:-1}
+	//current epoch = -1
+	CurrentEpoch = -1
+
 
 	//make channel
 	IntialReadyCh = make(chan bool)

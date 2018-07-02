@@ -54,22 +54,25 @@ func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 	var hashInt big.Int
 	var hash [32]byte
 	var flag bool
+	var candidateRepBlock RepPowInfo
 	flag = true
 	nonce := 0
 	fmt.Println("Mining the RepBlock containing")
 	for nonce < maxNonce && flag {
 		select {
-		case candidateRepBlock:=<-RepPowRxCh:{
-			if pow.Validate(candidateRepBlock.Nonce){
-				nonce = candidateRepBlock.Nonce
-				hash = candidateRepBlock.Hash
-				flag = false
-				RepPowRxValidate <- true
-				fmt.Println("validate PoW from others - true")
-				return nonce, hash, flag
-			} else {
-				RepPowRxValidate <- false
-				fmt.Println("validate PoW from others - false")
+		case candidateRepBlock =<-RepPowRxCh:{
+			if candidateRepBlock.Round > CurrentRepBlock.Round {
+				if pow.Validate(candidateRepBlock.Nonce) {
+					nonce = candidateRepBlock.Nonce
+					hash = candidateRepBlock.Hash
+					flag = false
+					RepPowRxValidate <- true
+					fmt.Println("validate PoW from others - true")
+					return nonce, hash, flag
+				} else {
+					RepPowRxValidate <- false
+					fmt.Println("validate PoW from others - false")
+				}
 			}
 		}
 		default:

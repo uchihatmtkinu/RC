@@ -58,21 +58,22 @@ func SyncProcess(ms *[]shard.MemShard) {
 		close(syncNotReadyCh[i])
 	}
 
-	ShardProcess()
+	//ShardProcess()
 }
 
-//receiveSync listen to the block from shard k
+//ReceiveSyncProcess listen to the block from shard k
 func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
-	fmt.Println("wait for shard", k, " from user", aski)
+	fmt.Println("wait for shard", k, " from user", aski[k])
 	defer wg.Done()
 
 	//syncblock flag
 	sbrxflag := true
 	//txblock flag
-	tbrxflag := false
+	tbrxflag := true
 	timeoutflag := false
 	//txBlock Transaction block
-	var txBlockMessage syncTBInfo
+	//TODO test
+	//var txBlockMessage syncTBInfo
 	//syncBlock SyncBlock
 	var syncBlockMessage syncSBInfo
 	for (sbrxflag || tbrxflag) && !timeoutflag {
@@ -87,8 +88,8 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 				}
 			}
-		case txBlockMessage = <-syncTBCh[k]:
-			tbrxflag = false
+		//case txBlockMessage = <-syncTBCh[k]:
+		//	tbrxflag = false
 		case <-syncNotReadyCh[k]:
 			time.Sleep(timeSyncNotReadySleep)
 		case <-time.After(timeoutSync):
@@ -102,7 +103,8 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	}
 	if !sbrxflag && !tbrxflag {
 		//add transaction block
-		CacheDbRef.GetFinalTxBlock(&txBlockMessage.Block)
+		//TODO test
+		//CacheDbRef.GetFinalTxBlock(&txBlockMessage.Block)
 		//update reputation of members
 		syncBlockMessage.Block.UpdateTotalRepInMS(ms)
 		//add sync Block
@@ -144,18 +146,19 @@ func HandleRequestSync(request []byte) {
 		log.Panic(err)
 	}
 	addr := shard.GlobalGroupMems[payload.ID].Address
-	if payload.Epoch > CurrentEpoch {
-		SendSyncMessage(addr, "syncNReady", "syncNReady")
+	Reputation.CurrentSyncBlock.Mu.RLock()
+	if payload.Epoch > Reputation.CurrentSyncBlock.Epoch {
+		SendSyncMessage(addr, "syncNReady", syncNotReadyInfo{MyGlobalID, Reputation.CurrentSyncBlock.Epoch})
 		return
 	}
-	Reputation.CurrentSyncBlock.Mu.Lock()
 	if payload.Epoch == Reputation.CurrentSyncBlock.Epoch {
-		tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
-		sendTxMessage(addr, "syncTB", tmp.Encode())
+		//TODO test
+		//tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
+		//sendTxMessage(addr, "syncTB", tmp.Encode())
 		SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock.Block})
 
 	}
-	Reputation.CurrentSyncBlock.Mu.Unlock()
+	Reputation.CurrentSyncBlock.Mu.RUnlock()
 
 }
 

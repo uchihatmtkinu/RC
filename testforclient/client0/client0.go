@@ -34,7 +34,7 @@ func main() {
 	if shard.MyMenShard.Role == shard.RoleLeader {
 		network.LeaderCosiProcess(&shard.GlobalGroupMems, [32]byte{1})
 	}	else {
-		network.MemberCosiProcess()
+		network.MemberCosiProcess(&shard.GlobalGroupMems, [32]byte{1})
 	}
 	network.SyncProcess(&shard.GlobalGroupMems)
 	//<- network.SyncReadyCh

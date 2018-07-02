@@ -47,11 +47,11 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	cache.TBCache = &tmp
 
 	CurrentRepBlock.Mu.Lock()
-	CurrentRepBlock.Round ++
 	defer CurrentRepBlock.Mu.Unlock()
 	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag,  *(cache.TBCache) ,lastHash)
+	CurrentRepBlock.Round ++
 	if fromOtherFlag {
-		RepPowTxCh <- CurrentRepBlock.Block
+		RepPowTxCh <- RepPowInfo{CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
 	}
 	shard.StartFlag = false
 

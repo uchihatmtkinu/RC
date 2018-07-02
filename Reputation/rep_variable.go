@@ -5,15 +5,16 @@ import (
 	"sync"
 )
 //RepPowRxInfo receive pow info
-type RepPowRxInfo struct {
+type RepPowInfo struct {
+	Round	int
 	Nonce	int
 	Hash 	[32]byte
 }
 //channel used in rep pow
 //RepPowRxCh rx pow repblock from others
-var RepPowRxCh chan RepPowRxInfo
+var RepPowRxCh chan RepPowInfo
 //RepPowTxCh tx a pow repblock
-var RepPowTxCh chan *RepBlock
+var RepPowTxCh chan RepPowInfo
 //RepPowRxValidate flag - validate the received repblock
 var RepPowRxValidate chan bool
 //MyRepBlockChain my reputation blockchain
@@ -24,13 +25,13 @@ var RepBlockChainIter	*RepBlockchainIterator
 type SafeSyncBlock struct {
 	Block		*SyncBlock
 	Epoch		int
-	Mu			sync.Mutex
+	Mu			sync.RWMutex
 }
 //SafeSyncBlock used in sync block
 type SafeRepBlock struct {
 	Block		*RepBlock
 	Round 		int
-	Mu			sync.Mutex
+	Mu			sync.RWMutex
 }
 //CurrentSyncBlock current sync block
 var CurrentSyncBlock	SafeSyncBlock

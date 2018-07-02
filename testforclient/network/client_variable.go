@@ -15,7 +15,7 @@ const nodeVersion = 1
 const commandLength = 16
 const bufferSize = 1000
 const timeoutCosi = 10 * time.Second //10seconds for timeout
-const timeoutSync = 20 * time.Second
+const timeoutSync = 120 * time.Second
 const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
 
