@@ -4,13 +4,15 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"fmt"
+	"bytes"
+	"encoding/gob"
+	"log"
 )
 var readymask	[]byte
 func ShardProcess(){
 	var beginShard	shard.Instance
 
-	shard.StartFlag = true
-	readyCh = make(chan string)
+
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		shard.ShardToGlobal[i] = make([]int, gVar.ShardSize)
@@ -30,23 +32,24 @@ func ShardProcess(){
 	fmt.Println("shard finished")
 }
 func LeaderReadyProcess(ms *[]shard.MemShard){
-	//var readaddr string
+	var readyMessage readyInfo
 	readyCount := 1
 	//fmt.Println("wait for ready")
 	//TODO modify the number of shardsize
-	for readyCount < int(gVar.ShardSize/2) {
-		<-readyCh
-		readyCount++
-		//fmt.Println("ReadyGet")
+	for readyCount < int(gVar.ShardSize) {
+		readyMessage = <- readyCh
+		if readyMessage.Epoch == CurrentEpoch {
+			readyCount++
+			fmt.Println("ReadyCount: ", readyCount)
+		}
 		//setMaskBit((*ms)[GlobalAddrMapToInd[readaddr]].InShardId, cosi.Enabled, &readymask)
 	}
-	fmt.Println("Recived ", readyCount, " readys.")
 
 
 }
 func MinerReadyProcess(){
 
-	SendShardReadyMessage(LeaderAddr, "shardReady", "shardReady")
+	SendShardReadyMessage(LeaderAddr, "shardReady", readyInfo{MyGlobalID, CurrentEpoch})
 	fmt.Println("Sent Redady")
 }
 
@@ -58,7 +61,15 @@ func SendShardReadyMessage(addr string, command string, message interface{}) {
 }
 
 
-func HandleShardReady(addr string) {
-	readyCh <- addr
+func HandleShardReady(request []byte) {
+	var buff bytes.Buffer
+	var payload readyInfo
+	buff.Write(request)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	readyCh <- payload
 
 }

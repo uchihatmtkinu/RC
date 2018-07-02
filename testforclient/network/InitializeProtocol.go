@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"fmt"
 	"github.com/uchihatmtkinu/RC/Reputation"
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 func IntilizeProcess(ID int) {
@@ -68,13 +68,17 @@ func IntilizeProcess(ID int) {
 	shard.PreviousSyncBlockHash = [][32]byte{{66}}
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
-	Reputation.RepPowRxCh = make(chan Reputation.RepBlock, bufferSize)
-	cosiAnnounceCh = make(chan []byte)
-	cosiChallengeCh = make(chan challengeMessage)
-	cosiSigCh = make(chan cosi.SignaturePart)
+	Reputation.RepPowRxCh = make(chan *Reputation.RepBlock, bufferSize)
+
 	//make channel
 	IntialReadyCh = make(chan bool)
 	ShardReadyCh = make(chan bool)
 	CoSiReadyCh = make(chan bool)
 	SyncReadyCh = make(chan bool)
+	//channel used in shard
+	readyCh = make(chan readyInfo, bufferSize)
+	//channel used in CoSi
+	cosiAnnounceCh = make(chan []byte)
+	cosiChallengeCh = make(chan challengeInfo)
+	cosiSigCh = make(chan cosi.SignaturePart)
 }

@@ -31,7 +31,7 @@ func RepProcess(ms *[]shard.MemShard) {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 						fmt.Println("have sent"+it.Address)
-						SendRepPowMessage(it.Address, "RepPowAnnou", item.Serialize())
+						SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, CurrentEpoch, item.Serialize()})
 					}
 				}
 				flag = false
@@ -51,15 +51,16 @@ func RepProcess(ms *[]shard.MemShard) {
 
 
 // SendRepPowMessage send reputation block
-func SendRepPowMessage(addr string, command string, message []byte) {
-	request := append(commandToBytes(command), message...)
+func SendRepPowMessage(addr string, command string, message powInfo) {
+	payload := gobEncode(message)
+	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
 
 // HandleRepPowRx receive reputation block
 func HandleRepPowRx(request []byte)  {
 	var buff bytes.Buffer
-	var payload Reputation.RepBlock
+	var payload powInfo
 
 	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
@@ -67,5 +68,8 @@ func HandleRepPowRx(request []byte)  {
 	if err != nil {
 		log.Panic(err)
 	}
-	Reputation.RepPowRxCh  <- payload
+	if payload.Epoch == CurrentEpoch{
+		Reputation.RepPowRxCh  <- Reputation.DeserializeRepBlock(payload.Block)
+	}
+
 }

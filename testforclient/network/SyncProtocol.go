@@ -26,8 +26,7 @@ var aski []int
 func SyncProcess(ms *[]shard.MemShard) {
 	CurrentEpoch++
 	fmt.Println("Sync Began")
-	//clear ready channel
-	readyCh = make(chan string, bufferSize)
+
 
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
@@ -36,8 +35,8 @@ func SyncProcess(ms *[]shard.MemShard) {
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	//intilizeMaskBit(&syncmask, int((gVar.ShardCnt+7)>>3),false)
 	for i := 0; i < int(gVar.ShardCnt); i++ {
-		syncSBCh[i] = make(chan Reputation.SyncBlock, 10)
-		syncTBCh[i] = make(chan basic.TxBlock, 10)
+		syncSBCh[i] = make(chan syncSBInfo, 10)
+		syncTBCh[i] = make(chan syncTBInfo, 10)
 		syncNotReadyCh[i] = make(chan bool, 10)
 		aski[i] = rand.Intn(int(gVar.ShardSize))
 	}
@@ -45,7 +44,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 		//if !maskBit(i, &syncmask) {
 		if i!=shard.MyMenShard.Shard {
 			wg.Add(1)
-			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", CurrentEpoch)
+			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 			go receiveSync(i, &wg, ms)
 		}
 		//}
@@ -72,17 +71,17 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	//txBlock Transaction block
 	//var txBlock basic.TxBlock
 	//syncBlock SyncBlock
-	var syncBlock Reputation.SyncBlock
+	var syncBlock syncSBInfo
 	for (sbrxflag || tbrxflag) && !timeoutflag {
 		select {
 		case syncBlock = <-syncSBCh[k]:
 			{
-				if syncBlock.VerifyCoSignature(ms, k) {
+				if syncBlock.Block.VerifyCoSignature(ms, k) {
 					sbrxflag = false
 				} else {
 					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					timeoutflag = true
-					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
+					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 				}
 			}
 		//case txBlock = <-syncTBCh[k]:
@@ -93,7 +92,7 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 				timeoutflag = true
-				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", CurrentEpoch)
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch} )
 				return
 			}
 		}
@@ -102,9 +101,9 @@ func receiveSync(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		//add transaction block
 		//CacheDbRef.GetFinalTxBlock(&txBlock)
 		//update reputation of members
-		syncBlock.UpdateTotalRepInMS(ms)
+		syncBlock.Block.UpdateTotalRepInMS(ms)
 		//add sync Block
-		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock, k)
+		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlock.Block, k)
 	} else {
 		wg.Add(1)
 		go receiveSync(k, wg, ms)
@@ -120,12 +119,20 @@ func SendSyncMessage(addr string, command string, message interface{}) {
 }
 
 // HandleChallenge rx challenge
-func HandleSyncNotReady(addr string) {
-	syncNotReadyCh[GlobalAddrMapToInd[addr]] <- true
-}
-func HandleRequestSync(addr string, request []byte) {
+func HandleSyncNotReady(request []byte) {
 	var buff bytes.Buffer
-	var payload int
+	var payload syncNotReadyInfo
+	buff.Write(request)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	syncNotReadyCh[shard.GlobalGroupMems[payload.ID].Shard] <- true
+}
+func HandleRequestSync(request []byte) {
+	var buff bytes.Buffer
+	var payload syncRequestInfo
 
 	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
@@ -133,19 +140,20 @@ func HandleRequestSync(addr string, request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	if payload > CurrentEpoch {
+	addr := shard.GlobalGroupMems[payload.ID].Address
+	if payload.Epoch > CurrentEpoch {
 		go SendSyncMessage(addr, "syncNReady", "syncNReady")
 	} else {
-		//go sendTxMessage(addr, "syncTB", CacheDbRef.FB[CacheDbRef.ShardNum].Serial())
-		go SendSyncMessage(addr, "syncSB", Reputation.CurrentSyncBlock)
+		go sendTxMessage(addr, "syncTB", syncTBInfo{MyGlobalID, CacheDbRef.FB[CacheDbRef.ShardNum].Serial()})
+		go SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock})
 	}
 
 }
 
 // HandleChallenge rx challenge
-func HandleSyncSBMessage(addr string, request []byte) {
+func HandleSyncSBMessage(request []byte) {
 	var buff bytes.Buffer
-	var payload Reputation.SyncBlock
+	var payload syncSBInfo
 
 	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
@@ -153,17 +161,17 @@ func HandleSyncSBMessage(addr string, request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	syncSBCh[GlobalAddrMapToInd[addr]] <- payload
+	syncSBCh[shard.GlobalGroupMems[payload.ID].Shard] <- payload
 }
 
 //HandleSyncTBMessage decodes the txblock
-func HandleSyncTBMessage(addr string, request []byte) {
-	var payload basic.TxBlock
+func HandleSyncTBMessage(request []byte) {
+	var payload syncTBInfo
 
 	err := payload.Decode(&request, 1)
 	if err != nil {
 		log.Panic(err)
 	}
-	syncTBCh[GlobalAddrMapToInd[addr]] <- payload
+	syncTBCh[shard.GlobalGroupMems[payload.ID].Shard] <- payload
 
 }

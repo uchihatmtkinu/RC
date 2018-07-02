@@ -5,9 +5,7 @@ import (
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/rccache"
 	"github.com/uchihatmtkinu/RC/gVar"
-	"sync"
 	"github.com/uchihatmtkinu/RC/Reputation"
-	"github.com/uchihatmtkinu/RC/basic"
 	"time"
 )
 
@@ -34,23 +32,42 @@ var GlobalAddrMapToInd map[string]int
 var CacheDbRef rccache.DbRef
 
 
+//------------------- shard process ----------------------
+//readyInfo
+type readyInfo struct{
+	ID 		int
+	Epoch	int
+}
+//readyCh channel used in shard process, indicates the ready for a new epoch
+var readyCh	chan readyInfo
 
-//used in commitCh
-type commitInfoCh struct {
-	Addr    string
+//------------------- rep pow process -------------------------
+//powInfo used in pow
+type powInfo struct{
+	ID		int
+	Epoch	int
+	Block   []byte
+}
+
+
+
+//------------------- cosi process -------------------------
+//commitInfo used in commitCh
+type commitInfo struct {
+	ID 		int
 	Commit  cosi.Commitment
 }
 
-// challenge info
-type challengeMessage struct {
-	AggregatePublicKey ed25519.PublicKey
-	AggregateCommit    cosi.Commitment
+// challengeInfo challenge info
+type challengeInfo struct {
+	AggregatePublicKey  ed25519.PublicKey
+	AggregateCommit     cosi.Commitment
 }
 
-//response info
-type responseInfoCh struct {
-	Addr    string
-	Sig cosi.SignaturePart
+//responseInfo response info
+type responseInfo struct {
+	ID			int
+	Sig 		cosi.SignaturePart
 }
 
 
@@ -58,38 +75,48 @@ type responseInfoCh struct {
 //cosiAnnounceCh cosi announcement channel
 var cosiAnnounceCh 	chan []byte
 //cosiCommitCh		cosi commitment channel
-var cosiCommitCh 	chan commitInfoCh
-var cosiChallengeCh chan challengeMessage
-var cosiResponseCh 	chan responseInfoCh
+var cosiCommitCh 	chan commitInfo
+var cosiChallengeCh chan challengeInfo
+var cosiResponseCh 	chan responseInfo
 var cosiSigCh  		chan cosi.SignaturePart
 
 
+//---------------------- sync process -------------
+//syncSBInfo sync block info
+type syncSBInfo struct {
+	ID				int
+	Block			Reputation.SyncBlock
+}
 
+//syncTBInfo tx block info
+type syncTBInfo struct {
+	ID				int
+	Block			[]byte
+}
+
+//syncRequestInfo request sync
+type syncRequestInfo struct {
+	ID 				int
+	Epoch			int
+}
+
+type syncNotReadyInfo struct {
+	ID 				int
+	Epoch			int
+}
 
 //channel used in sync
 //syncCh
-var syncSBCh [gVar.ShardCnt] 		chan Reputation.SyncBlock
-var syncTBCh [gVar.ShardCnt]	 	chan basic.TxBlock
+var syncSBCh [gVar.ShardCnt] 		chan syncSBInfo
+var syncTBCh [gVar.ShardCnt]	 	chan syncTBInfo
 var syncNotReadyCh [gVar.ShardCnt]	chan bool
-
-
-
-//safeCounter used in
-type safeCounter struct {
-	cnt	int
-	mux sync.Mutex
-}
-
-
-
-//readyCh channel for ready a new epoch
-var readyCh	chan string
 
 
 //CoSiFlag flag determine the process has began
 var CoSiFlag	bool
 
 
+//channel used to indicate the process start
 var IntialReadyCh chan bool
 var ShardReadyCh chan bool
 var CoSiReadyCh chan bool

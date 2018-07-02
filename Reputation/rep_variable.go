@@ -4,7 +4,7 @@ import "github.com/uchihatmtkinu/RC/Reputation/cosi"
 
 //channel used in rep pow
 //RepPowRxCh rx pow repblock from others
-var RepPowRxCh chan RepBlock
+var RepPowRxCh chan *RepBlock
 //RepPowTxCh tx a pow repblock
 var RepPowTxCh chan RepBlock
 //RepPowRxValidate flag - validate the received repblock

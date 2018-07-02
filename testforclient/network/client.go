@@ -55,7 +55,8 @@ func bytesToCommand(bytees []byte) string {
 
 //send data to addr
 func sendData(addr string , data []byte) {
-	conn, err := net.Dial(protocol, addr)
+	sendTcpAddr, _ := net.ResolveTCPAddr("tcp4", addr)
+	conn, err := net.DialTCP(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
 		return
@@ -214,12 +215,11 @@ func StartServer(ID int) {
 			go HandleFinalTxBlock(request)
 		//shard
 		case "shardReady":
-			if shard.StartFlag {
-				go HandleShardReady(conn.RemoteAddr().String())
-			}
+			go HandleShardReady(request)
 		//rep pow
 		case "RepPowAnnou":
 			go HandleRepPowRx(request)
+
 		//cosi protocol
 		case "cosiAnnoun":
 			go HandleCoSiAnnounce(request)
@@ -234,11 +234,11 @@ func StartServer(ID int) {
 			}
 		case "cosiCommit":
 			if CoSiFlag {
-				go HandleCoSiCommit(conn.RemoteAddr().String(), request)
+				go HandleCoSiCommit(request)
 			}
 		case "cosiRespon":
 			if CoSiFlag {
-				go HandleCoSiResponse(conn.RemoteAddr().String(), request)
+				go HandleCoSiResponse(request)
 			}
 		//sync
 		case "requestSync":
