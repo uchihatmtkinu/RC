@@ -9,10 +9,12 @@ import (
 
 	"math/rand"
 
+	"fmt"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"fmt"
 )
 
 //sbrxCounter count for the block receive
@@ -25,7 +27,6 @@ var aski []int
 func SyncProcess(ms *[]shard.MemShard) {
 	CurrentEpoch++
 	fmt.Println("Sync Began")
-
 
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
@@ -42,7 +43,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 	SyncFlag = true
 	for i := 0; i < shard.NumMems; i++ {
 		//if !maskBit(i, &syncmask) {
-		if i!=shard.MyMenShard.Shard {
+		if i != shard.MyMenShard.Shard {
 			wg.Add(1)
 			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 			go ReceiveSyncProcess(i, &wg, ms)
@@ -94,7 +95,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 				timeoutflag = true
-				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch} )
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 				return
 			}
 		}
@@ -110,7 +111,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		wg.Add(1)
 		go ReceiveSyncProcess(k, wg, ms)
 	}
-	fmt.Println("received from ",k)
+	fmt.Println("received from ", k)
 }
 
 // sendCosiMessage send cosi message
@@ -149,7 +150,8 @@ func HandleRequestSync(request []byte) {
 	}
 	Reputation.CurrentSyncBlock.Mu.Lock()
 	if payload.Epoch == Reputation.CurrentSyncBlock.Epoch {
-		sendTxMessage(addr, "syncTB", syncTBInfo{MyGlobalID, CacheDbRef.FB[CacheDbRef.ShardNum].Serial()})
+		tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
+		sendTxMessage(addr, "syncTB", tmp.Encode())
 		SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock.Block})
 
 	}
@@ -175,10 +177,27 @@ func HandleSyncSBMessage(request []byte) {
 func HandleSyncTBMessage(request []byte) {
 	var payload syncTBInfo
 
-	err := payload.Decode(&request, 1)
+	err := payload.Decode(&request)
 	if err != nil {
 		log.Panic(err)
 	}
 	syncTBCh[shard.GlobalGroupMems[payload.ID].Shard] <- payload
 
+}
+
+//Encode is the encode
+func (s *syncTBInfo) Encode() []byte {
+	var tmp []byte
+	basic.Encode(&tmp, uint32(s.ID))
+	s.Block.Encode(&tmp, 1)
+	return tmp
+}
+
+//Decode is the decode
+func (s *syncTBInfo) Decode(buf *[]byte) error {
+	var tmp int
+	basic.Decode(buf, &tmp)
+	s.ID = int(tmp)
+	err := s.Block.Decode(buf, 1)
+	return err
 }
