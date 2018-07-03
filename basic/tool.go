@@ -119,6 +119,13 @@ func byteSlice(x uint32) []byte {
 	return tmp
 }
 
+//ByteSlice returns a slice of a integer
+func ByteSlice(x uint32) []byte {
+	var tmp []byte
+	EncodeInt(&tmp, x)
+	return tmp
+}
+
 //EncodeInt Encode the data
 func EncodeInt(current *[]byte, d interface{}) error {
 	buf := new(bytes.Buffer)
