@@ -230,10 +230,10 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte){
 // verifySBMessage compare whether the message from leader is the same as itself
 func verifySBMessage(a,b []byte) bool{
 	if a == nil && b == nil {
-		return true;
+		return true
 	}
 	if a == nil || b == nil {
-		return false;
+		return false
 	}
 	if len(a) != len(b) {
 		return false

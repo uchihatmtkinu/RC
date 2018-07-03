@@ -29,6 +29,11 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 	var item *shard.MemShard
 	var repList [][]int64
 	var idList	[]int
+	tmpprevSyncBlockHash:=make([][32]byte,len(prevSyncBlockHash))
+	copy(tmpprevSyncBlockHash,prevSyncBlockHash)
+	tmpcoSignature:=make([]byte,len(coSignature))
+	copy(tmpcoSignature,coSignature)
+
 	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
 
@@ -41,7 +46,7 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 		repList = append(repList, item.TotalRep)
 	}
 
-	block := &SyncBlock{time.Now().Unix(), prevRepBlockHash,prevSyncBlockHash, idList, repList,coSignature, [32]byte{}}
+	block := &SyncBlock{time.Now().Unix(), prevRepBlockHash,tmpprevSyncBlockHash, idList, repList,tmpcoSignature, [32]byte{}}
 	block.Hash = sha256.Sum256(block.prepareData())
 	return block
 }

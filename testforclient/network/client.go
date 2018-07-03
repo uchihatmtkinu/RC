@@ -160,9 +160,7 @@ func StartServer(ID int) {
 
 	//if account.MyAccount.Addr != knownNodes[0] {
 	//	sendVersion(knownNodes[0], myheight)
-	//}
-	var command string
-	var request []byte
+
 	requestChannel := make(chan []byte, bufferSize)
 	flag := true
 	IntialReadyCh <- flag
@@ -174,11 +172,11 @@ func StartServer(ID int) {
 		}
 		go handleConnection(conn, requestChannel)
 
-		request = <-requestChannel
+		request := <-requestChannel
 		if len(request) < commandLength {
 			continue
 		}
-		command = bytesToCommand(request[:commandLength])
+		command := bytesToCommand(request[:commandLength])
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}

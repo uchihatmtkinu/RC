@@ -72,6 +72,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
+	tmpCoSignature := make([]byte, len(CoSignature))
+	copy(tmpCoSignature, CoSignature)
 	//var prevSyncBlockHash [][32]byte
 	CurrentRepBlock.Mu.RLock()
 	lastRepBlockHash = CurrentRepBlock.Block.Hash
@@ -79,7 +81,7 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 
 
 	CurrentSyncBlock.Mu.Lock()
-	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
+	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  tmpCoSignature)
 	CurrentSyncBlock.Epoch ++
 	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
 	defer CurrentSyncBlock.Mu.Unlock()

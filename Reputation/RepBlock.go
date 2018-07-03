@@ -29,6 +29,12 @@ type RepBlock struct {
 func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
+	tmpprevSyncRepBlockHash:=make([][32]byte,len(prevSyncRepBlockHash))
+	copy(tmpprevSyncRepBlockHash,prevSyncRepBlockHash)
+
+	tmpprevTxBlockHashes:=make([][32]byte,len(prevTxBlockHashes))
+	copy(tmpprevTxBlockHashes,prevTxBlockHashes)
+
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
@@ -36,9 +42,9 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][
 	var block *RepBlock
 	//generate new block
 	if startBlock {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, prevSyncRepBlockHash, prevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
 	} else {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, [][32]byte{{gVar.MagicNumber}}, prevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, [][32]byte{{gVar.MagicNumber}}, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
 	}
 	pow := NewProofOfWork(block)
 	nonce, hash, flag := pow.Run()
