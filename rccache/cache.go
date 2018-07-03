@@ -65,8 +65,8 @@ type DbRef struct {
 	//Miner
 	TLNow      *basic.TxDecision
 	TLSent     *basic.TxDecision
-	startIndex int
-	lastIndex  int
+	StartIndex int
+	LastIndex  int
 
 	TBCache *[][32]byte
 
@@ -90,9 +90,10 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	d.TLSCache = nil
 	d.TDSCache = nil
-	d.startIndex = 0
-	d.lastIndex = -1
+	d.StartIndex = 0
+	d.LastIndex = -1
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
+	d.TBCache = new([][32]byte)
 }
 
 //CrossShardDec  is the database of cache

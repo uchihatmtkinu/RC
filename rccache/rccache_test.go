@@ -88,10 +88,12 @@ func TestOutToData(t *testing.T) {
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		shard.ShardToGlobal[i] = make([]int, gVar.ShardSize)
+		shard.GlobalGroupMems[i*2].Role = 0
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			shard.ShardToGlobal[i][j] = int(i*2 + j)
 			dbs[i*2+j].ShardNum = i
 			shard.GlobalGroupMems[i*2+j].Shard = int(i)
+			dbs[i*2+j].Leader = i * 2
 		}
 	}
 	for i := 0; i < numCnt; i++ {
@@ -108,7 +110,8 @@ func TestOutToData(t *testing.T) {
 	dbs[3].GetTx(tmp)
 	dbs[2].TLS[0].Print()
 	dbs[3].ProcessTL(&dbs[2].TLS[0])
-	dbs[1].GetTx(tmp)
+	errx := dbs[1].GetTx(tmp)
+	fmt.Println(errx)
 	dbs[0].GetTx(tmp)
 	dbs[2].NewTxList()
 	dbs[3].TLNow.Print()
@@ -118,7 +121,17 @@ func TestOutToData(t *testing.T) {
 	dbs[0].ProcessTDS(&dbs[2].TDSCache[0][0])
 	fmt.Println(len(dbs[2].Ready))
 	dbs[1].GetTDS(&dbs[2].TDSCache[0][0])
-	fmt.Println(len(dbs[0].Ready))
+	dbs[3].GetTDS(&dbs[2].TDSCache[0][1])
+	dbs[0].GenerateTxBlock()
+	dbs[2].GenerateTxBlock()
+	err := dbs[1].GetTxBlock(dbs[0].TxB)
+	fmt.Println(err)
+	err = dbs[3].GetTxBlock(dbs[2].TxB)
+	fmt.Println(err)
+	for i := 0; i < 4; i++ {
+		fmt.Print("Account ", i, ": ")
+		dbs[i].DB.ShowAccount()
+	}
 	file.Close()
 	t.Error("Check")
 }

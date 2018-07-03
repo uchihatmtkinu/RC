@@ -73,8 +73,8 @@ func (d *DbRef) NewTxList() error {
 		//d.TLCache = append(d.TLCache, *d.TL)
 		d.TLSCache = append(d.TLSCache, *d.TLS)
 		d.TDSCache = append(d.TDSCache, *d.TDS)
-		d.lastIndex++
-		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.lastIndex)
+		d.LastIndex++
+		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.LastIndex)
 	}
 
 	d.TLS = new([gVar.ShardCnt]basic.TxList)
@@ -131,7 +131,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if !ok {
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
-	tmpIndex := tmp - uint32(d.startIndex)
+	tmpIndex := tmp - uint32(d.StartIndex)
 	tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 
 	var x, y uint32 = 0, 0
@@ -171,7 +171,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 	if b.ShardIndex == d.ShardNum {
 		tmp, _ := d.TLIndex[b.HashID]
-		tmpIndex := tmp - uint32(d.startIndex)
+		tmpIndex := tmp - uint32(d.StartIndex)
 		tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 		b.TxCnt = tmpTL.TxCnt
 		b.TxArray = tmpTL.TxArray
@@ -204,5 +204,5 @@ func (d *DbRef) Release() {
 	//d.TLCache = d.TLCache[1:]
 	d.TDSCache = d.TDSCache[1:]
 	d.TLSCache = d.TLSCache[1:]
-	d.startIndex++
+	d.StartIndex++
 }

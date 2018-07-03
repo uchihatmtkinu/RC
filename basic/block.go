@@ -14,7 +14,6 @@ import (
 func (a *TxBlock) Hash() [32]byte {
 	tmp1 := make([]byte, 0, 136)
 	tmp1 = append(byteSlice(a.ID), a.PrevHash[:]...)
-	tmp1 = append(tmp1, a.HashID[:]...)
 	if a.Kind == 0 || a.Kind == 1 {
 		tmp1 = append(tmp1, a.MerkleRoot[:]...)
 	} else {
@@ -30,6 +29,9 @@ func (a *TxBlock) Hash() [32]byte {
 
 //GenMerkTree generates the merkleroot tree given the transactions
 func GenMerkTree(d *[]Transaction, out *[32]byte) error {
+	if len(*d) == 0 {
+		return nil
+	}
 	if len(*d) == 1 {
 		tmp := (*d)[0].Hash[:]
 		DoubleHash256(&tmp, out)
@@ -54,15 +56,10 @@ func (a *TxBlock) Verify(puk *ecdsa.PublicKey) (bool, error) {
 	if tmp != a.HashID {
 		return false, fmt.Errorf("VerifyTxBlock Invalid parameter")
 	}
-	var tmpHash [32]byte
-	GenMerkTree(&a.TxArray, &tmpHash)
-	if tmpHash != a.MerkleRoot {
-		return false, fmt.Errorf("VerifyTxBlock MerkleRoot Invalid")
-	}
 	if !a.Sig.Verify(a.HashID[:], puk) {
 		return false, fmt.Errorf("VerifyTxBlock Invalid signature")
 	}
-	return false, fmt.Errorf("VerifyTx.Invalid transaction type")
+	return true, nil
 }
 
 //NewGensisTxBlock is the gensis block
@@ -97,11 +94,11 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 	a.Height = h
 	a.TxArray = *b
 	GenMerkTree(&a.TxArray, &a.MerkleRoot)
-	a.HashID = a.Hash()
 	if kind == 1 {
 		a.PrevFinalHash = *preFH
 		a.ShardID = shardID
 	}
+	a.HashID = a.Hash()
 	a.Sig.Sign(a.HashID[:], prk)
 	return nil
 }
