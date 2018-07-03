@@ -72,7 +72,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 			commits[(*ms)[commitMessage.ID].InShardId] = commitMessage.Commit
 			setMaskBit((*ms)[commitMessage.ID].InShardId, cosi.Enabled, &cosimask)
 			signCount++
-			fmt.Println("Received commit from Global ID: ",commitMessage.ID,", commits count:",signCount)
+			fmt.Println("Received commit from Global ID: ",commitMessage.ID,", commits count:",signCount,"/",int(gVar.ShardSize))
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i:=uint32(1); i <gVar.ShardSize; i++ {
@@ -117,7 +117,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 			sigParts[it.InShardId] = reponseMessage.Sig
 			setMaskBit(it.InShardId, cosi.Disabled, &responsemask)
 			responseCount++
-			fmt.Println("Received response from Global ID: ",reponseMessage.ID,", reponses count:",responseCount)
+			fmt.Println("Received response from Global ID: ",reponseMessage.ID,", reponses count:",responseCount,"/",signCount)
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i:=uint32(1); i <gVar.ShardSize; i++ {
@@ -130,7 +130,6 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 		//	timeoutflag = false
 		}
 	}
-	fmt.Println("Received CoSi Response")
 	mySigPart := cosi.Cosign(shard.MyMenShard.RealAccount.CosiPri, mySecret, sbMessage, aggregatePublicKey, aggregateCommit)
 	sigParts[shard.MyMenShard.InShardId] = mySigPart
 
@@ -147,13 +146,14 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 
 	//Add sync block
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, cosiSig)
+	fmt.Println("Add a new sync block.")
 	//close CoSi
 	CoSiFlag =false
 	close(cosiCommitCh)
 	close(cosiResponseCh)
 
-	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSig)
-	fmt.Println("valid:", valid)
+	//valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSig)
+
 	return cosiSig
 }
 

@@ -91,6 +91,7 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	CurrentSyncBlock.Mu.Lock()
 	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
 	CurrentSyncBlock.Epoch ++
+	CurrentSyncBlock.Block.Print()
 	defer CurrentSyncBlock.Mu.Unlock()
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))

@@ -55,6 +55,7 @@ func IntilizeProcess(ID int) {
 		IPAddr = "143.89.147.72:" + strconv.FormatInt(port, 10)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
+		shard.GlobalGroupMems[i].AddRep(int64(i))
 		//map ip+port -> global ID
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)

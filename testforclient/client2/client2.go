@@ -4,6 +4,7 @@ import (
 "github.com/uchihatmtkinu/RC/testforclient/network"
 "fmt"
 	"github.com/uchihatmtkinu/RC/shard"
+	"time"
 )
 
 
@@ -39,4 +40,6 @@ func main() {
 	network.SyncProcess(&shard.GlobalGroupMems)
 	//<- network.SyncReadyCh
 	//close(network.SyncReadyCh)
+	time.Sleep(600*time.Second)
+	fmt.Println("All finished")
 }

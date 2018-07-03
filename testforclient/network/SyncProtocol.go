@@ -57,7 +57,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 		close(syncTBCh[i])
 		close(syncNotReadyCh[i])
 	}
-
+	fmt.Println("Sync Finished")
 	//ShardProcess()
 }
 
@@ -69,7 +69,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	//syncblock flag
 	sbrxflag := true
 	//txblock flag
-	tbrxflag := true
+	tbrxflag := false
 	timeoutflag := false
 	//txBlock Transaction block
 	//TODO test
@@ -91,12 +91,15 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		//case txBlockMessage = <-syncTBCh[k]:
 		//	tbrxflag = false
 		case <-syncNotReadyCh[k]:
+			fmt.Println("sleep for not ready")
 			time.Sleep(timeSyncNotReadySleep)
 		case <-time.After(timeoutSync):
 			{
+				wg.Add(1)
 				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 				timeoutflag = true
 				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
+				go ReceiveSyncProcess(k, wg, ms)
 				return
 			}
 		}
@@ -109,11 +112,8 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		syncBlockMessage.Block.UpdateTotalRepInMS(ms)
 		//add sync Block
 		Reputation.MyRepBlockChain.AddSyncBlockFromOtherShards(&syncBlockMessage.Block, k)
-	} else {
-		wg.Add(1)
-		go ReceiveSyncProcess(k, wg, ms)
 	}
-	fmt.Println("received from ", k)
+	fmt.Println("received sync from shard:", k)
 }
 
 // sendCosiMessage send cosi message
@@ -147,6 +147,7 @@ func HandleRequestSync(request []byte) {
 	}
 	addr := shard.GlobalGroupMems[payload.ID].Address
 	Reputation.CurrentSyncBlock.Mu.RLock()
+	defer Reputation.CurrentSyncBlock.Mu.RUnlock()
 	if payload.Epoch > Reputation.CurrentSyncBlock.Epoch {
 		SendSyncMessage(addr, "syncNReady", syncNotReadyInfo{MyGlobalID, Reputation.CurrentSyncBlock.Epoch})
 		return
@@ -156,9 +157,9 @@ func HandleRequestSync(request []byte) {
 		//tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
 		//sendTxMessage(addr, "syncTB", tmp.Encode())
 		SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock.Block})
-
+		return
 	}
-	Reputation.CurrentSyncBlock.Mu.RUnlock()
+
 
 }
 
