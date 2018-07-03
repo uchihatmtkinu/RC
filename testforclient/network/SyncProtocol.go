@@ -69,6 +69,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	//syncblock flag
 	sbrxflag := true
 	//txblock flag
+	//TODO test
 	tbrxflag := false
 	timeoutflag := false
 	//txBlock Transaction block
