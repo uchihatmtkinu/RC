@@ -91,6 +91,7 @@ func TestOutToData(t *testing.T) {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			shard.ShardToGlobal[i][j] = int(i*2 + j)
 			dbs[i*2+j].ShardNum = i
+			shard.GlobalGroupMems[i*2+j].Shard = int(i)
 		}
 	}
 	for i := 0; i < numCnt; i++ {
@@ -102,20 +103,21 @@ func TestOutToData(t *testing.T) {
 	}
 	tmp := GenerateTx(0, 1, 10)
 	tmp.Print()
-	dbs[0].MakeTXList(tmp)
-	dbs[0].BuildTDS()
-	dbs[1].GetTx(tmp)
-	dbs[1].ProcessTL(&dbs[0].TLS[0])
-	dbs[2].GetTx(tmp)
+	dbs[2].MakeTXList(tmp)
+	dbs[2].BuildTDS()
 	dbs[3].GetTx(tmp)
-	dbs[0].NewTxList()
-	dbs[1].TLNow.Print()
-	dbs[0].UpdateTXCache(dbs[1].TLNow)
-	dbs[0].TDSCache[0][0].Print()
-	dbs[0].ProcessTDS(&dbs[0].TDSCache[0][0])
-	dbs[2].ProcessTDS(&dbs[0].TDSCache[0][1])
+	dbs[2].TLS[0].Print()
+	dbs[3].ProcessTL(&dbs[2].TLS[0])
+	dbs[1].GetTx(tmp)
+	dbs[0].GetTx(tmp)
+	dbs[2].NewTxList()
+	dbs[3].TLNow.Print()
+	dbs[2].UpdateTXCache(dbs[3].TLNow)
+	dbs[2].TDSCache[0][0].Print()
+	dbs[2].ProcessTDS(&dbs[2].TDSCache[0][1])
+	dbs[0].ProcessTDS(&dbs[2].TDSCache[0][0])
 	fmt.Println(len(dbs[2].Ready))
-	dbs[3].GetTDS(&dbs[0].TDSCache[0][1])
+	dbs[1].GetTDS(&dbs[2].TDSCache[0][0])
 	fmt.Println(len(dbs[0].Ready))
 	file.Close()
 	t.Error("Check")

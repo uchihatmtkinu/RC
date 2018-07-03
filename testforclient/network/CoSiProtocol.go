@@ -37,8 +37,8 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	commits = make([]cosi.Commitment, int(gVar.ShardSize))
 	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
 	//priKeys := make([]ed25519.PrivateKey, int(gVar.ShardSize))
-	s1 := [64]byte{1}
-	myCommit, mySecret, _ = cosi.Commit(bytes.NewReader(s1[:]))
+
+	myCommit, mySecret, _ = cosi.Commit(nil)
 
 	//byte mask 0-7 bit in one byte represent user 0-7, 8-15...
 	//cosimask used in cosi announce, indicate the number of users sign the block.
@@ -191,8 +191,7 @@ func MemberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, [
 	fmt.Println("received cosi announce")
 
 	//send commit
-	s1 := [64]byte{2}
-	myCommit, mySecret, _ = cosi.Commit(bytes.NewReader(s1[:]))
+	myCommit, mySecret, _ = cosi.Commit(nil)
 	SendCosiMessage(LeaderAddr, "cosiCommit", commitInfo{MyGlobalID,myCommit})
 	fmt.Println("sent cosi commit")
 	//receive challenge

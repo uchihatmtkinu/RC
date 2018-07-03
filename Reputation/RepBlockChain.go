@@ -42,7 +42,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	if err != nil {
 		log.Panic(err)
 	}
-	//TODO need modify
+	//TODO test
 	tmp := [][32]byte{{0}}
 	cache.TBCache = &tmp
 

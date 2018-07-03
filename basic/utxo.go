@@ -21,7 +21,9 @@ func (a *InType) Init() {
 
 //Acc returns whether the input address is an account or utxo
 func (a *InType) Acc() bool {
-	return cryptonew.Verify(a.Puk(), a.PrevTx)
+	//Mark-UTXO
+	//return cryptonew.Verify(a.Puk(), a.PrevTx)
+	return true
 }
 
 //ShardIndex returns the target shard of the input address
