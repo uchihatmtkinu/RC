@@ -27,37 +27,39 @@ func TxGeneralLoop() {
 		time.Sleep(time.Second * 10)
 
 		CacheDbRef.Mu.Lock()
-		CacheDbRef.SignTDS(0)
-		CacheDbRef.Mu.Unlock()
-		CacheDbRef.Mu.RLock()
+		if CacheDbRef.StartIndex <= CacheDbRef.LastIndex && CacheDbRef.TDSCache[0][0].MemCnt > (gVar.ShardSize-1)/2 {
+			CacheDbRef.SignTDS(0)
 
-		data1 := new([]byte)
-		CacheDbRef.TLS[CacheDbRef.ShardNum].Encode(data1)
-		go SendTxList(data1)
-		if flag {
-			data2 := make([][]byte, gVar.ShardCnt)
-			for i := uint32(0); i < gVar.ShardCnt; i++ {
-				CacheDbRef.TDSCache[0][i].Encode(&data2[i])
+			if flag {
+				data2 := make([][]byte, gVar.ShardCnt)
+				for i := uint32(0); i < gVar.ShardCnt; i++ {
+					CacheDbRef.TDSCache[0][i].Encode(&data2[i])
+				}
+				go SendTxDecSet(data2)
 			}
-			go SendTxDecSet(data2)
+			CacheDbRef.Release()
+			if tmp == 3 {
+				flag = true
+				tmp = 0
+				if len(CacheDbRef.Ready) > 1 {
+					CacheDbRef.GenerateTxBlock()
+					data3 := new([]byte)
+					CacheDbRef.TxB.Encode(data3, 0)
+					go SendTxBlock(data3)
+				}
+			}
 		}
-		if tmp == 3 {
-			flag = true
-			tmp = 0
-			CacheDbRef.GenerateTxBlock()
-			data3 := new([]byte)
-			CacheDbRef.TxB.Encode(data3, 0)
-			go SendTxBlock(data3)
-		}
-
-		CacheDbRef.Mu.RUnlock()
+		CacheDbRef.Mu.Unlock()
 
 		CacheDbRef.Mu.Lock()
-
-		CacheDbRef.BuildTDS()
-		CacheDbRef.NewTxList()
-		CacheDbRef.Release()
-		CacheDbRef.Mu.RUnlock()
+		if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= 1 {
+			CacheDbRef.BuildTDS()
+			data1 := new([]byte)
+			CacheDbRef.TLS[CacheDbRef.ShardNum].Encode(data1)
+			go SendTxList(data1)
+			CacheDbRef.NewTxList()
+		}
+		CacheDbRef.Mu.Unlock()
 	}
 }
 

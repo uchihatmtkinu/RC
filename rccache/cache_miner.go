@@ -126,12 +126,13 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 		} else {
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
-			if tmp.Total == 0 { //Review
+			/*if tmp.Total == 0 { //Review
 				d.UnlockTx(tmp.Data)
 				delete(d.TXCache, tmpHash)
 			} else {
 				d.TXCache[tmpHash] = tmp
-			}
+			}*/
+			d.TXCache[tmpHash] = tmp
 		}
 
 		if b.ShardIndex == d.ShardNum {
@@ -164,8 +165,9 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	if a.Kind != 0 {
 		return fmt.Errorf("Not valid txblock type")
 	}
-	ok, _ := a.Verify(&shard.GlobalGroupMems[d.Leader].RealAccount.Puk)
+	ok, xx := a.Verify(&shard.GlobalGroupMems[d.Leader].RealAccount.Puk)
 	if !ok {
+		fmt.Println(xx)
 		return fmt.Errorf("Signature not valid")
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
