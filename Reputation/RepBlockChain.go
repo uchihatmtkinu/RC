@@ -31,33 +31,24 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	var lastHash [32]byte
 	var fromOtherFlag bool
 
-	err := bc.Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
-		copy(lastHash[:], b.Get([]byte("lb")))
-		//lastHash = b.Get([]byte("lb"))
+	CurrentRepBlock.Mu.RLock()
+	lastHash = CurrentRepBlock.Block.Hash
+	CurrentRepBlock.Mu.RUnlock()
 
-		return nil
-	})
-
-	if err != nil {
-		log.Panic(err)
-	}
-	//TODO test
 	tmp := [][32]byte{{0}}
 	cache.TBCache = &tmp
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag,  *(cache.TBCache) ,lastHash)
+	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag,  shard.PreviousSyncBlockHash, *(cache.TBCache) ,lastHash)
 	CurrentRepBlock.Round ++
 	if fromOtherFlag {
 		RepPowTxCh <- RepPowInfo{CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
 	}
 	shard.StartFlag = false
 
-	CurrentRepBlock.Block.Print()
 	cache.TBCache = nil
-	err = bc.Db.Update(func(tx *bolt.Tx) error {
+	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
 		if err != nil {
@@ -73,27 +64,26 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 
 		return nil
 	})
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
 	//var prevSyncBlockHash [][32]byte
-	err := bc.Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
-		copy(lastRepBlockHash[:], b.Get([]byte("lb")))
+	CurrentRepBlock.Mu.RLock()
+	lastRepBlockHash = CurrentRepBlock.Block.Hash
+	CurrentRepBlock.Mu.RUnlock()
 
-		return nil
-	})
-	if err != nil {
-		log.Panic(err)
-	}
+
 	CurrentSyncBlock.Mu.Lock()
 	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  CoSignature)
 	CurrentSyncBlock.Epoch ++
-	CurrentSyncBlock.Block.Print()
+	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
 	defer CurrentSyncBlock.Mu.Unlock()
-	err = bc.Db.Update(func(tx *bolt.Tx) error {
+	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentSyncBlock.Block.Hash[:], CurrentSyncBlock.Block.Serialize())
 		if err != nil {
@@ -123,7 +113,15 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 		if err != nil {
 			log.Panic(err)
 		}
+		fmt.Println("Add from other")
+		CurrentSyncBlock.Mu.RLock()
+		CurrentSyncBlock.Block.Print()
+		CurrentSyncBlock.Mu.RUnlock()
 		shard.PreviousSyncBlockHash[k] = syncBlock.Hash
+		fmt.Println("Add from other after")
+		CurrentSyncBlock.Mu.RLock()
+		CurrentSyncBlock.Block.Print()
+		CurrentSyncBlock.Mu.RUnlock()
 		/*
 		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
 		if err != nil {
@@ -203,23 +201,26 @@ func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		genesis := NewGenesisRepBlock()
+		CurrentRepBlock.Mu.Lock()
+		CurrentRepBlock.Block = NewGenesisRepBlock()
+		CurrentRepBlock.Round++
+		CurrentRepBlock.Mu.Unlock()
 
 		b, err := tx.CreateBucket([]byte(blocksBucket))
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put(genesis.Hash[:], genesis.Serialize())
+		err = b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("lb"), genesis.Hash[:])
+		err = b.Put([]byte("lb"), CurrentRepBlock.Block.Hash[:])
 		if err != nil {
 			log.Panic(err)
 		}
-		tip = genesis.Hash
+		tip = CurrentRepBlock.Block.Hash
 
 		return nil
 	})

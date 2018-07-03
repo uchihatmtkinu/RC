@@ -3,7 +3,16 @@ package Reputation
 import (
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"sync"
+	"math"
 )
+
+//maxNonce used in pow
+var (
+	maxNonce = math.MaxInt32
+)
+//difficulty difficulty in pow
+const difficulty = 16
+
 //RepPowRxInfo receive pow info
 type RepPowInfo struct {
 	Round	int
@@ -39,3 +48,4 @@ var CurrentSyncBlock	SafeSyncBlock
 var CurrentRepBlock		SafeRepBlock
 //CurrentCoSignature current cosinature
 var CurrentCoSignature	cosi.SignaturePart
+

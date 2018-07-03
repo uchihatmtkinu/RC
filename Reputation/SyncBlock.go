@@ -31,11 +31,13 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 	var idList	[]int
 	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
+
+	fmt.Println("NewSyncBlock",prevSyncBlockHash)
 	for i := 0; i < int(gVar.ShardSize); i++{
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		//need to consider if a node fail to sign the syncBlock but it is a good node indeed
 		item.SetTotalRep(item.Rep)
-		idList = append(idList,shard.ShardToGlobal[shard.MyMenShard.Shard][i])
+		idList = append(idList, shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 		repList = append(repList, item.TotalRep)
 	}
 
@@ -101,24 +103,24 @@ func (b *SyncBlock) HashPrevSyncBlock() []byte {
 
 
 // VerifyCosign verify CoSignature, k-th shard
-func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard, k int) bool {
+func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
 	// count whether half of the user sign the block
-	count := uint32(0)
+	count := 0
 	mask := b.CoSignature[64:]
 	for i := 0; i < int(gVar.ShardSize); i++ {
 		if maskBit(i, &mask) == cosi.Enabled{
 			count++
 		}
 	}
-	if count < gVar.ShardSize/2 {
+	if count < int(gVar.ShardSize/2) {
 		return false
 	}
 	//verify signature
 	var	pubKeys		[]ed25519.PublicKey
 	var it *shard.MemShard
 	sbMessage := b.PrevRepBlockHash[:]
-	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
-	for i:=0; i < shard.NumMems; i++ {
+	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
+	for i:=0; i < int(gVar.ShardSize); i++ {
 		it = &(*ms)[b.IDlist[i]]
 		pubKeys[i] = it.CosiPub
 	}
@@ -137,6 +139,7 @@ func (b *SyncBlock) UpdateTotalRepInMS(ms *[]shard.MemShard) {
 
 //Print print sync block
 func (b *SyncBlock) Print() {
+	fmt.Println("SyncBlock:")
 	fmt.Println("PrevSyncBlockHash:", b.PrevSyncBlockHash)
 	fmt.Println("RepTransactions:")
 	for i,item := range b.IDlist{

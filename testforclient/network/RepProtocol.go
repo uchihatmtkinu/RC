@@ -31,7 +31,7 @@ func RepProcess(ms *[]shard.MemShard) {
 				for i := 0; i < int(gVar.ShardSize); i++ {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-						fmt.Println("have sent"+it.Address)
+						fmt.Println("have sent "+it.Address)
 						go SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, item.Round, item.Hash, item.Nonce})
 					}
 				}
@@ -40,11 +40,15 @@ func RepProcess(ms *[]shard.MemShard) {
 		case validateFlag = <-Reputation.RepPowRxValidate:
 			{
 				if validateFlag {
+					fmt.Println("add pow rep block from others")
 					flag = false
 				}
 			}
 		}
 	}
+	Reputation.CurrentRepBlock.Mu.RLock()
+	fmt.Println("PoW ",Reputation.CurrentRepBlock.Round," round finished.")
+	Reputation.CurrentRepBlock.Mu.RUnlock()
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
 	//close(Reputation.RepPowRxCh)
@@ -72,6 +76,7 @@ func HandleRepPowRx(request []byte)  {
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Round > Reputation.CurrentRepBlock.Round{
 		Reputation.RepPowRxCh  <- Reputation.RepPowInfo{payload.Round, payload.Nonce, payload.Hash}
+		fmt.Println("Received PoW from others")
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 

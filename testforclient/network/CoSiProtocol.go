@@ -16,7 +16,7 @@ import (
 
 
 // leaderCosiProcess leader use this
-func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.SignaturePart{
+func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart{
 	//initialize
 	// myCommit my cosi commitment
 	var myCommit 	cosi.Commitment
@@ -33,7 +33,10 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	fmt.Println("Leader CoSi")
 	CoSiFlag = true
 	//To simplify the problem, we just validate the previous repblock hash
-	sbMessage = prevRepBlockHash[:]
+	Reputation.CurrentRepBlock.Mu.RLock()
+	sbMessage = Reputation.CurrentRepBlock.Block.Hash[:]
+	Reputation.CurrentRepBlock.Mu.RUnlock()
+
 	commits = make([]cosi.Commitment, int(gVar.ShardSize))
 	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
 	//priKeys := make([]ed25519.PrivateKey, int(gVar.ShardSize))
@@ -145,20 +148,19 @@ func LeaderCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) cosi.Sig
 	}
 
 	//Add sync block
+	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, cosiSig)
 	fmt.Println("Add a new sync block.")
 	//close CoSi
 	CoSiFlag =false
 	close(cosiCommitCh)
 	close(cosiResponseCh)
-
-	//valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSig)
-
+	Reputation.CurrentSyncBlock.Block.VerifyCoSignature(ms)
 	return cosiSig
 }
 
 // MemberCosiProcess member use this
-func MemberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, []byte){
+func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte){
 	var sbMessage []byte
 	// myCommit my cosi commitment
 	var myCommit 	cosi.Commitment
@@ -180,8 +182,10 @@ func MemberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, [
 	}
 
 	//receive announce and verify message
+	Reputation.CurrentRepBlock.Mu.RLock()
+	sbMessage = Reputation.CurrentRepBlock.Block.Hash[:]
+	Reputation.CurrentRepBlock.Mu.RUnlock()
 
-	sbMessage = prevRepBlockHash[:]
 	leaderSBMessage := <-cosiAnnounceCh
 	//close(cosiAnnounceCh)
 	if !verifySBMessage(sbMessage, leaderSBMessage) {
@@ -208,6 +212,7 @@ func MemberCosiProcess(ms *[]shard.MemShard, prevRepBlockHash [32]byte) (bool, [
 
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
+	shard.PreviousSyncBlockHash = make([][32]byte,gVar.ShardCnt)
 	if valid {
 		Reputation.MyRepBlockChain.AddSyncBlock(ms, cosiSigMessage)
 	}

@@ -1,5 +1,7 @@
 package gVar
 
+//MagicNumber magic
+const MagicNumber byte = 66
 //ShardSize is the number of miners in one shard
 const ShardSize uint32 = 2
 

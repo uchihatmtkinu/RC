@@ -1,44 +1,77 @@
 package main
 
+
 import (
-"github.com/uchihatmtkinu/RC/testforclient/network"
-"fmt"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
+	"fmt"
 	"github.com/uchihatmtkinu/RC/shard"
 	"time"
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 
 func main() {
 	ID := 3
+	totalepoch := 2
 	network.IntilizeProcess(ID)
-	//totalNum := int(gVar.ShardSize*gVar.ShardCnt)
 	fmt.Println("test begin")
 	go network.StartServer(ID)
 	<- network.IntialReadyCh
 	close(network.IntialReadyCh)
 
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
+	for k:= 1; k<=totalepoch; k++ {
+		//test shard
+		network.ShardProcess()
 
-	network.ShardProcess()
-	//<- network.ShardReadyCh
-	//close(network.ShardReadyCh)
-	//for i:=0 ; i < totalNum; i++ {
-	//	fmt.Println()
-	//shard.GlobalGroupMems[i].AddRep(int64(i))
-	//shard.GlobalGroupMems[i].SetTotalRep(int64(i))
-	//shard.GlobalGroupMems[i].SetTotalRep(int64(i+1))
-	//shard.GlobalGroupMems[i].SetTotalRep(int64(i+2))
-	//shard.GlobalGroupMems[i].Print()
-	//fmt.Println(shard.GlobalGroupMems[i].CalTotalRep())
-	//}
-	if shard.MyMenShard.Role == shard.RoleLeader {
-		network.LeaderCosiProcess(&shard.GlobalGroupMems, [32]byte{1})
-	}	else {
-		network.MemberCosiProcess(&shard.GlobalGroupMems,[32]byte{1})
+		//test rep
+		network.RepProcess(&shard.GlobalGroupMems)
+		Reputation.CurrentRepBlock.Mu.RLock()
+		Reputation.CurrentRepBlock.Block.Print()
+		Reputation.CurrentRepBlock.Mu.RUnlock()
+		for i := 0; i < int(gVar.ShardSize); i++ {
+			shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][i]].AddRep(int64(shard.ShardToGlobal[shard.MyMenShard.Shard][i]))
+		}
+		network.RepProcess(&shard.GlobalGroupMems)
+		Reputation.CurrentRepBlock.Mu.RLock()
+		Reputation.CurrentRepBlock.Block.Print()
+		Reputation.CurrentRepBlock.Mu.RUnlock()
+
+		//test cosi
+		if shard.MyMenShard.Role == shard.RoleLeader {
+			network.LeaderCosiProcess(&shard.GlobalGroupMems)
+		} else {
+			network.MemberCosiProcess(&shard.GlobalGroupMems)
+		}
+
+		//test sync
+		network.SyncProcess(&shard.GlobalGroupMems)
+		time.Sleep(10*time.Second)
+
+
+		Reputation.CurrentSyncBlock.Mu.RLock()
+		Reputation.CurrentSyncBlock.Block.Print()
+		Reputation.CurrentSyncBlock.Mu.RUnlock()
+
+		for i:=0 ; i < int(gVar.ShardSize*gVar.ShardCnt); i++ {
+			shard.GlobalGroupMems[i].Print()
+		}
+
+		Reputation.CurrentSyncBlock.Mu.RLock()
+		Reputation.CurrentSyncBlock.Block.Print()
+		Reputation.CurrentSyncBlock.Mu.RUnlock()
+
+		for i:=0 ; i < int(gVar.ShardSize*gVar.ShardCnt); i++ {
+			shard.GlobalGroupMems[i].Print()
+			fmt.Println()
+		}
 	}
-	network.SyncProcess(&shard.GlobalGroupMems)
-	//<- network.SyncReadyCh
-	//close(network.SyncReadyCh)
+
 	fmt.Println("All finished")
+
+
+
 	time.Sleep(600*time.Second)
 }
+

@@ -4,15 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"math"
 	"math/big"
 )
 
-var (
-	maxNonce = math.MaxInt32
-)
 
-const difficulty = 16
 
 
 // ProofOfWork represents a proof-of-work

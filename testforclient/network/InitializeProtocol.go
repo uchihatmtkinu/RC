@@ -65,14 +65,15 @@ func IntilizeProcess(ID int) {
 
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
-	shard.PreviousSyncBlockHash = [][32]byte{{66}}
+	shard.PreviousSyncBlockHash = [][32]byte{{gVar.MagicNumber}}
 
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 
-	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block:nil, Epoch:-1}
 	Reputation.CurrentRepBlock = Reputation.SafeRepBlock{Block:nil, Round:-1}
+	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
+
 	//current epoch = -1
 	CurrentEpoch = -1
 

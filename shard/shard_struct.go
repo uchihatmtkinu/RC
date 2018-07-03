@@ -51,8 +51,8 @@ func (ms *MemShard) SetTotalRep(value int64) {
 
 
 //AddRep add a reputation value
-func (ms *MemShard) AddRep(addRep int64) {
-	ms.Rep += addRep
+func (ms *MemShard) AddRep(value int64) {
+	ms.Rep += value
 }
 
 //CalTotalRep cal total rep over epoches
@@ -70,6 +70,7 @@ func (ms *MemShard) ClearRep() {
 }
 
 func (ms*MemShard) Print(){
+	fmt.Println("Member data:")
 	fmt.Println("Addres:", ms.Address)
 	fmt.Println("Rep:", ms.Rep)
 	fmt.Println("TotalRep:", ms.TotalRep)

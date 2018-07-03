@@ -18,9 +18,7 @@ type RepBlock struct {
 	Timestamp       int64
 	RepTransactions []*RepTransaction
 	StartBlock		bool
-	/*
-	PrevSyncRepBlockHash [][]byte
-	 */
+	PrevSyncBlockHash [][32]byte
 	PrevTxBlockHashes [][32]byte
 	PrevRepBlockHash  [32]byte
 	Hash              [32]byte
@@ -28,16 +26,20 @@ type RepBlock struct {
 }
 
 // NewBlock creates and returns Block
-func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
+func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
 	var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
 	}
-
+	var block *RepBlock
 	//generate new block
-	block := &RepBlock{time.Now().Unix(), repTransactions, startBlock, prevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+	if startBlock {
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, prevSyncRepBlockHash, prevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
+	} else {
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, [][32]byte{{gVar.MagicNumber}}, prevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+	}
 	pow := NewProofOfWork(block)
 	nonce, hash, flag := pow.Run()
 	block.Hash = hash
@@ -48,10 +50,7 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevTxBlockHashes [][32]
 
 // NewGenesisBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	var tmp [][32]byte
-	tmp = append(tmp, [32]byte{0})
-	block := &RepBlock{time.Now().Unix(), nil, true, tmp, [32]byte{0}, [32]byte{}, 0}
-	block.Hash = [32]byte{66}
+	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber},[32]byte{gVar.MagicNumber}, int(gVar.MagicNumber)}
 	return block
 }
 
@@ -91,6 +90,7 @@ func (b *RepBlock) Serialize() []byte {
 }
 
 func (b *RepBlock) Print() {
+	fmt.Println("RepBlock:")
 	fmt.Println("RepTransactions:")
 	for _,item := range b.RepTransactions{
 		fmt.Print("	GlobalID:", item.GlobalID)
@@ -98,6 +98,7 @@ func (b *RepBlock) Print() {
 	}
 	fmt.Println("StartBlock:", b.StartBlock)
 	fmt.Println("PrevTxBlockHashes:", b.PrevTxBlockHashes)
+	fmt.Println("PrevSyncRepBlockHash",b.PrevSyncBlockHash)
 	fmt.Println("PrevRepBlockHash:", b.PrevRepBlockHash)
 	fmt.Println("Hash:", b.Hash)
 
