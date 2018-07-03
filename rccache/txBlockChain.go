@@ -95,13 +95,14 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 				a.AccData[tmp.ID] = tmp.Value
 			}
 		}
-		b = tx.Bucket([]byte(UTXOBucket))
+		//Mark-UTXO
+		/*b = tx.Bucket([]byte(UTXOBucket))
 		if b == nil {
 			_, err := tx.CreateBucket([]byte(UTXOBucket))
 			if err != nil {
 				log.Panic(err)
 			}
-		}
+		}*/
 		return nil
 	})
 	return err
@@ -393,43 +394,44 @@ func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 		res = append(res, tmpTx)
 		tmpMap[tmpOut.Address] = uint32(len(res) - 1)
 	}
-
-	err = a.data.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(UTXOBucket))
-		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			tmp := new(UTXOSet)
-			tmpStr := v
-			var tmpHash [32]byte
-			copy(tmpHash[:], k[:32])
-			err := tmp.Decode(&tmpStr)
-			if err != nil {
-				continue
-			}
-			for i := uint32(0); i < tmp.Cnt; i++ {
-				if tmp.Stat[i] == 0 {
-					tmpID, ok := tmpMap[tmp.Data[i].Address]
-					if ok {
-						tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
-						res[tmpID].AddIn(tmpIn)
-						res[tmpID].Out[0].Value += tmp.Data[i].Value
-					} else {
-						var tmpTx basic.Transaction
-						tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
-						var tmpOut basic.OutType
-						tmpOut.Value = tmp.Data[i].Value
-						tmpOut.Address = tmp.Data[i].Address
-						tmpTx.New(1)
-						tmpTx.AddIn(tmpIn)
-						tmpTx.AddOut(tmpOut)
-						res = append(res, tmpTx)
-						tmpMap[tmp.Data[i].Address] = uint32(len(res) - 1)
+	//Mark-UTXO
+	/*
+		err = a.data.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(UTXOBucket))
+			c := b.Cursor()
+			for k, v := c.First(); k != nil; k, v = c.Next() {
+				tmp := new(UTXOSet)
+				tmpStr := v
+				var tmpHash [32]byte
+				copy(tmpHash[:], k[:32])
+				err := tmp.Decode(&tmpStr)
+				if err != nil {
+					continue
+				}
+				for i := uint32(0); i < tmp.Cnt; i++ {
+					if tmp.Stat[i] == 0 {
+						tmpID, ok := tmpMap[tmp.Data[i].Address]
+						if ok {
+							tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
+							res[tmpID].AddIn(tmpIn)
+							res[tmpID].Out[0].Value += tmp.Data[i].Value
+						} else {
+							var tmpTx basic.Transaction
+							tmpIn := basic.InType{PrevTx: tmpHash, Index: i}
+							var tmpOut basic.OutType
+							tmpOut.Value = tmp.Data[i].Value
+							tmpOut.Address = tmp.Data[i].Address
+							tmpTx.New(1)
+							tmpTx.AddIn(tmpIn)
+							tmpTx.AddOut(tmpOut)
+							res = append(res, tmpTx)
+							tmpMap[tmp.Data[i].Address] = uint32(len(res) - 1)
+						}
 					}
 				}
 			}
-		}
-		return nil
-	})
+			return nil
+		})*/
 	return &res
 }
 
@@ -446,8 +448,9 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	}
 
 	err = a.data.Update(func(tx *bolt.Tx) error {
-		tx.DeleteBucket([]byte(UTXOBucket))
-		tx.CreateBucket([]byte(UTXOBucket))
+		//Mark-UTXO
+		//tx.DeleteBucket([]byte(UTXOBucket))
+		//tx.CreateBucket([]byte(UTXOBucket))
 		b := tx.Bucket([]byte(ACCBucket))
 		for k, v := range a.AccData {
 			if v == 0 {
@@ -535,73 +538,100 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 		log.Panic(err)
 	}
 	defer a.data.Close()
-	err = a.data.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(UTXOBucket))
-		for i := uint32(0); i < x.TxCnt; i++ {
-			_, oktx := a.TXCache[x.TxArray[i].Hash]
-			for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
-				if x.TxArray[i].In[j].ShardIndex() == shardindex {
-					if x.TxArray[i].In[j].Acc() {
-						_, ok := a.AccData[x.TxArray[i].In[j].PrevTx]
-						if ok && !oktx {
-							a.AccData[x.TxArray[i].In[j].PrevTx] -= x.TxArray[i].In[j].Index
-						}
-					} else {
-						tmp, ok := a.USet[x.TxArray[i].In[j].PrevTx]
-						if ok {
-							if tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
-								tmp.Stat[x.TxArray[i].In[j].Index] = 1
-								tmp.Remain--
-								tmp.viewer--
-								if tmp.Remain == 0 {
-									delete(a.USet, x.TxArray[i].In[j].PrevTx)
-									b.Delete(x.TxArray[i].In[j].PrevTx[:])
-								} else {
-									if tmp.viewer == 0 {
-										delete(a.USet, x.TxArray[i].In[j].PrevTx)
-										b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
-									} else {
-										b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
-										a.USet[x.TxArray[i].In[j].PrevTx] = tmp
-									}
+	for i := uint32(0); i < x.TxCnt; i++ {
+		_, oktx := a.TXCache[x.TxArray[i].Hash]
+		for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
+			if x.TxArray[i].In[j].ShardIndex() == shardindex {
+				if x.TxArray[i].In[j].Acc() {
+					_, ok := a.AccData[x.TxArray[i].In[j].PrevTx]
+					if ok && !oktx {
+						a.AccData[x.TxArray[i].In[j].PrevTx] -= x.TxArray[i].In[j].Index
+					}
+				}
+			}
+		}
+		for j := uint32(0); j < x.TxArray[i].TxoutCnt; j++ {
+			if x.TxArray[i].Out[j].ShardIndex() == shardindex {
+				tmp, ok := a.AccData[x.TxArray[i].Out[j].Address]
+				if !ok {
+					a.AccData[x.TxArray[i].Out[j].Address] = x.TxArray[i].Out[j].Value
+				} else {
+					a.AccData[x.TxArray[i].Out[j].Address] = tmp + x.TxArray[i].Out[j].Value
+				}
+			}
+		}
+	}
+	//Mark-UTXO
+	/*
+			err = a.data.Update(func(tx *bolt.Tx) error {
+				b := tx.Bucket([]byte(UTXOBucket))
+				for i := uint32(0); i < x.TxCnt; i++ {
+					_, oktx := a.TXCache[x.TxArray[i].Hash]
+					for j := uint32(0); j < x.TxArray[i].TxinCnt; j++ {
+						if x.TxArray[i].In[j].ShardIndex() == shardindex {
+							if x.TxArray[i].In[j].Acc() {
+								_, ok := a.AccData[x.TxArray[i].In[j].PrevTx]
+								if ok && !oktx {
+									a.AccData[x.TxArray[i].In[j].PrevTx] -= x.TxArray[i].In[j].Index
 								}
-							}
-						} else {
-							tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
-							err := tmp.Decode(&tmpStr)
-							if err == nil && tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
-								tmp.Stat[x.TxArray[i].In[j].Index] = 1
-								tmp.Remain--
-								if tmp.Remain == 0 {
-									b.Delete(x.TxArray[i].In[j].PrevTx[:])
+							} else {
+								tmp, ok := a.USet[x.TxArray[i].In[j].PrevTx]
+								if ok {
+									if tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
+										tmp.Stat[x.TxArray[i].In[j].Index] = 1
+										tmp.Remain--
+										tmp.viewer--
+										if tmp.Remain == 0 {
+											delete(a.USet, x.TxArray[i].In[j].PrevTx)
+											b.Delete(x.TxArray[i].In[j].PrevTx[:])
+										} else {
+											if tmp.viewer == 0 {
+												delete(a.USet, x.TxArray[i].In[j].PrevTx)
+												b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
+											} else {
+												b.Put(x.TxArray[i].In[j].PrevTx[:], tmp.Encode())
+												a.USet[x.TxArray[i].In[j].PrevTx] = tmp
+											}
+										}
+									}
 								} else {
-									tmpStr = tmp.Encode()
-									b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+									tmpStr := b.Get(x.TxArray[i].In[j].PrevTx[:])
+									err := tmp.Decode(&tmpStr)
+									if err == nil && tmp.Stat[x.TxArray[i].In[j].Index] != 1 {
+										tmp.Stat[x.TxArray[i].In[j].Index] = 1
+										tmp.Remain--
+										if tmp.Remain == 0 {
+											b.Delete(x.TxArray[i].In[j].PrevTx[:])
+										} else {
+											tmpStr = tmp.Encode()
+											b.Put(x.TxArray[i].In[j].PrevTx[:], tmpStr)
+										}
+									}
 								}
 							}
 						}
 					}
+					tmp := UTXOSet{Cnt: x.TxArray[i].TxoutCnt}
+					copy(tmp.Data, x.TxArray[i].Out)
+					tmp.Remain = tmp.Cnt
+					tmp.Stat = make([]uint32, tmp.Cnt)
+					for i := uint32(0); i < tmp.Cnt; i++ {
+						if tmp.Data[i].ShardIndex() != shardindex {
+							tmp.Stat[i] = 1
+							tmp.Remain--
+						}
+					}
+					if tmp.Remain > 0 {
+						b.Put(x.TxArray[i].Hash[:], tmp.Encode())
+					}
+					if oktx {
+						delete(a.TXCache, x.TxArray[i].Hash)
+					}
 				}
-			}
-			tmp := UTXOSet{Cnt: x.TxArray[i].TxoutCnt}
-			copy(tmp.Data, x.TxArray[i].Out)
-			tmp.Remain = tmp.Cnt
-			tmp.Stat = make([]uint32, tmp.Cnt)
-			for i := uint32(0); i < tmp.Cnt; i++ {
-				if tmp.Data[i].ShardIndex() != shardindex {
-					tmp.Stat[i] = 1
-					tmp.Remain--
-				}
-			}
-			if tmp.Remain > 0 {
-				b.Put(x.TxArray[i].Hash[:], tmp.Encode())
-			}
-			if oktx {
-				delete(a.TXCache, x.TxArray[i].Hash)
-			}
-		}
-		return nil
-	})
-	return err
+				return nil
+			})
 
+		return err
+	*/
+	return nil
 }
