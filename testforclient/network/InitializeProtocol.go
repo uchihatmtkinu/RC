@@ -2,9 +2,10 @@ package network
 
 import (
 	"crypto/x509"
+	"fmt"
 	"os"
 	"strconv"
-	"fmt"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/base58"
@@ -18,7 +19,6 @@ func IntilizeProcess(ID int) {
 
 	// IP + port
 	var IPAddr string
-
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
 
@@ -52,7 +52,7 @@ func IntilizeProcess(ID int) {
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
 		port++
-		IPAddr = "143.89.147.72:" + strconv.FormatInt(port, 10)
+		IPAddr = "127.0.0.1:" + strconv.FormatInt(port, 10)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		shard.GlobalGroupMems[i].AddRep(int64(i))
@@ -70,13 +70,12 @@ func IntilizeProcess(ID int) {
 	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
-	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block:nil, Epoch:-1}
-	Reputation.CurrentRepBlock = Reputation.SafeRepBlock{Block:nil, Round:-1}
+	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block: nil, Epoch: -1}
+	Reputation.CurrentRepBlock = Reputation.SafeRepBlock{Block: nil, Round: -1}
 	Reputation.MyRepBlockChain = Reputation.CreateRepBlockchain(strconv.FormatInt(int64(MyGlobalID), 10))
 
 	//current epoch = -1
 	CurrentEpoch = -1
-
 
 	//make channel
 	IntialReadyCh = make(chan bool)

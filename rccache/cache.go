@@ -47,8 +47,8 @@ type DbRef struct {
 	TXCache       map[[32]byte]*CrossShardDec
 	HashCache     map[[basic.SHash]byte][][32]byte
 	WaitHashCache map[[basic.SHash]byte]WaitProcess
-	LastShard     uint32
-	ShardNum      uint32
+
+	ShardNum uint32
 
 	//Leader
 	//TLCache  []basic.TxList
@@ -57,11 +57,10 @@ type DbRef struct {
 	TLIndex  map[[32]byte]uint32
 	TLS      *[gVar.ShardCnt]basic.TxList
 	TDS      *[gVar.ShardCnt]basic.TxDecSet
-	//TL       *basic.TxList
-	Ready []basic.Transaction
-	TxB   *basic.TxBlock
-	FB    [gVar.ShardCnt]*basic.TxBlock
-	prk   ecdsa.PrivateKey
+	Ready    []basic.Transaction
+	TxB      *basic.TxBlock
+	FB       [gVar.ShardCnt]*basic.TxBlock
+	prk      ecdsa.PrivateKey
 
 	//Miner
 	TLNow      *basic.TxDecision
