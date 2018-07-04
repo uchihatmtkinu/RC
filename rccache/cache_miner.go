@@ -52,6 +52,25 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
+	tmpPre, okw := d.WaitHashCache[basic.HashCut(a.Hash)]
+	if okw {
+		for i := 0; i < len(tmpPre.DataTB); i++ {
+			tmpPre.StatTB[i].Valid[tmpPre.IDTB[i]] = 1
+			tmpPre.StatTB[i].Stat--
+			tmpPre.DataTB[i].TxArray[tmpPre.IDTB[i]] = *a
+		}
+		for i := 0; i < len(tmpPre.DataTDS); i++ {
+			tmpPre.StatTDS[i].Valid[tmpPre.IDTDS[i]] = 1
+			tmpPre.StatTDS[i].Stat--
+			tmpPre.DataTDS[i].TxArray[tmpPre.IDTDS[i]] = a.Hash
+		}
+		for i := 0; i < len(tmpPre.DataTL); i++ {
+			tmpPre.StatTL[i].Valid[tmpPre.IDTL[i]] = 1
+			tmpPre.StatTL[i].Stat--
+			tmpPre.DataTL[i].TxArray[tmpPre.IDTL[i]] = a.Hash
+		}
+	}
+	delete(d.WaitHashCache, basic.HashCut(a.Hash))
 	tmp, ok := d.TXCache[a.Hash]
 	if ok {
 		tmp.Update(a)

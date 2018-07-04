@@ -41,13 +41,14 @@ func byteCompare(a, b interface{}) int {
 
 //DbRef is the structure stores the cache of a miner for the database
 type DbRef struct {
-	Mu        sync.RWMutex
-	ID        uint32
-	DB        TxBlockChain
-	TXCache   map[[32]byte]*CrossShardDec
-	HashCache map[[basic.SHash]byte][][32]byte
-	LastShard uint32
-	ShardNum  uint32
+	Mu            sync.RWMutex
+	ID            uint32
+	DB            TxBlockChain
+	TXCache       map[[32]byte]*CrossShardDec
+	HashCache     map[[basic.SHash]byte][][32]byte
+	WaitHashCache map[[basic.SHash]byte]WaitProcess
+	LastShard     uint32
+	ShardNum      uint32
 
 	//Leader
 	//TLCache  []basic.TxList
@@ -73,6 +74,25 @@ type DbRef struct {
 	Leader uint32
 }
 
+//PreStat is used in pre-defined request
+type PreStat struct {
+	Stat  int
+	Valid []int
+}
+
+//WaitProcess is the current wait process
+type WaitProcess struct {
+	DataTB  []*basic.TxBlock
+	StatTB  []*PreStat
+	IDTB    []int
+	DataTL  []*basic.TxList
+	StatTL  []*PreStat
+	IDTL    []int
+	DataTDS []*basic.TxDecSet
+	StatTDS []*PreStat
+	IDTDS   []int
+}
+
 //New is the initilization of DbRef
 func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
@@ -87,6 +107,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	//d.TLCache = nil
 	d.TLS = new([gVar.ShardCnt]basic.TxList)
 	d.TLIndex = make(map[[32]byte]uint32, 100)
+	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 1000)
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	d.TLSCache = nil
 	d.TDSCache = nil
