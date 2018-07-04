@@ -300,8 +300,6 @@ func HandleCoSiAnnounce(request []byte)  {
 		log.Panic(err)
 	}
 
-	//TODO modify the sign message
-	//go MemberCosiProcess(&shard.GlobalGroupMems,Reputation)
 	cosiAnnounceCh <- payload
 }
 

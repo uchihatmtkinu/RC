@@ -12,17 +12,8 @@ import (
 	"io/ioutil"
 )
 
-var nodeAddress string
-var knownNodes = []string{"localhost:3000"}
-var knownGroupNodes = []string{}
-var myheight int
 
-//version
-type verzion struct {
-	Version    int
-	BestHeight int
-	AddrFrom   string
-}
+
 
 //address
 type addr struct {
@@ -68,69 +59,6 @@ func sendData(addr string , data []byte) {
 	}
 }
 
-/*
-func sendVersion(addr string, height int) {
-	bestHeight := height
-	payload := gobEncode(verzion{nodeVersion, bestHeight, nodeAddress})
-
-	request := append(commandToBytes("version"), payload...)
-
-	sendData(addr, request)
-}
-
-func handleVersion(request []byte, height int) {
-	var buff bytes.Buffer
-	var payload verzion
-
-	buff.Write(request[commandLength:])
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	myBestHeight := height
-	foreignerBestHeight := payload.BestHeight
-
-	if myBestHeight < foreignerBestHeight {
-		myBestHeight = foreignerBestHeight
-		fmt.Print("update bestheigh to", myBestHeight)
-		//sendGetBlocks(payload.AddrFrom)
-	} else if myBestHeight > foreignerBestHeight {
-		sendVersion(payload.AddrFrom, myheight)
-	}
-
-	if !nodeIsKnown(payload.AddrFrom) {
-		knownNodes = append(knownNodes, payload.AddrFrom)
-	}
-}
-
-//sen my addr to addr
-func sendAddr(address string) {
-	nodes := addr{knownNodes}
-	nodes.AddrList = append(nodes.AddrList, nodeAddress)
-	payload := gobEncode(nodes)
-	request := append(commandToBytes("addr"), payload...)
-
-	sendData(address, request)
-}*/
-
-// handle received address
-func handleAddr(request []byte) {
-	var buff bytes.Buffer
-	var payload addr
-
-	buff.Write(request[commandLength:])
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	knownNodes = append(knownNodes, payload.AddrList...)
-	fmt.Printf("There are %d known nodes now!\n", len(knownNodes))
-	//requestBlocks()
-}
 
 // handle connection
 func handleConnection(conn net.Conn, requestChannel chan []byte) {
@@ -155,11 +83,6 @@ func StartServer(ID int) {
 	}
 	defer ln.Close()
 
-	//TODO generate block.
-	//bc := NewBlockchain(nodeID)
-
-	//if account.MyAccount.Addr != knownNodes[0] {
-	//	sendVersion(knownNodes[0], myheight)
 
 	requestChannel := make(chan []byte, bufferSize)
 	flag := true
@@ -181,7 +104,6 @@ func StartServer(ID int) {
 			request = request[commandLength:]
 		}
 		fmt.Printf("Received %s command\n", command)
-		// TODO instead of switch, we can use select to concurrently solve different commands
 		switch command {
 
 		case "Tx":
@@ -272,13 +194,3 @@ func gobEncode(data interface{}) []byte {
 	return buff.Bytes()
 }
 
-//whether it is a new node
-func nodeIsKnown(addr string) bool {
-	for _, node := range knownNodes {
-		if node == addr {
-			return true
-		}
-	}
-
-	return false
-}
