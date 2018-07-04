@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/uchihatmtkinu/RC/rccache"
+
 	"github.com/uchihatmtkinu/RC/gVar"
 
 	"github.com/uchihatmtkinu/RC/shard"
@@ -31,11 +33,12 @@ func TxGeneralLoop() {
 			CacheDbRef.SignTDS(0)
 
 			if flag {
-				data2 := make([][]byte, gVar.ShardCnt)
+				data2 := new([][]byte)
+				*data2 = make([][]byte, gVar.ShardCnt)
 				for i := uint32(0); i < gVar.ShardCnt; i++ {
-					CacheDbRef.TDSCache[0][i].Encode(&data2[i])
+					CacheDbRef.TDSCache[0][i].Encode(&(*data2)[i])
 				}
-				go SendTxDecSet(data2)
+				go SendTxDecSet(*data2)
 			}
 			CacheDbRef.Release()
 			if tmp == 3 {
@@ -103,8 +106,10 @@ func SendTxBlock(data *[]byte) {
 
 //HandleTx when receives a tx
 func HandleTx(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.Transaction)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
@@ -116,14 +121,7 @@ func HandleTx(data []byte) error {
 
 //HandleAndSendTx when receives a tx
 func HandleAndSendTx(data []byte) error {
-	tmp := new(basic.Transaction)
-	err := tmp.Decode(&data)
-	if err != nil {
-		return err
-	}
-	CacheDbRef.Mu.Lock()
-	CacheDbRef.GetTx(tmp)
-	CacheDbRef.Mu.Unlock()
+	HandleTx(data)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
@@ -135,14 +133,26 @@ func HandleAndSendTx(data []byte) error {
 
 //HandleTxList when receives a txlist
 func HandleTxList(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxList)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
-	CacheDbRef.Mu.RLock()
-	CacheDbRef.PreTxList(tmp)
-	CacheDbRef.Mu.RUnlock()
+	s := rccache.PreStat{Stat: -2, Valid: nil}
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.PreTxList(tmp, &s)
+	CacheDbRef.Mu.Unlock()
+	for true {
+		time.Sleep(time.Second)
+		CacheDbRef.Mu.RLock()
+		if s.Stat == 0 {
+			CacheDbRef.Mu.RUnlock()
+			break
+		}
+		CacheDbRef.Mu.RUnlock()
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.ProcessTL(tmp)
 	var sent []byte
@@ -154,14 +164,29 @@ func HandleTxList(data []byte) error {
 
 //HandleTxDecSet when receives a txdecset
 func HandleTxDecSet(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxDecSet)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
-	CacheDbRef.Mu.RLock()
-	CacheDbRef.PreTxDecSet(tmp)
-	CacheDbRef.Mu.RUnlock()
+	s := rccache.PreStat{Stat: -2, Valid: nil}
+	flag := true
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.PreTxDecSet(tmp, &s)
+	if s.Stat == 0 {
+		flag = false
+	}
+	CacheDbRef.Mu.Unlock()
+	for flag {
+		time.Sleep(time.Second)
+		CacheDbRef.Mu.RLock()
+		if s.Stat == 0 {
+			flag = false
+		}
+		CacheDbRef.Mu.RUnlock()
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GetTDS(tmp)
 	CacheDbRef.Mu.Unlock()
@@ -170,17 +195,7 @@ func HandleTxDecSet(data []byte) error {
 
 //HandleAndSentTxDecSet when receives a txdecset
 func HandleAndSentTxDecSet(data []byte) error {
-	tmp := new(basic.TxDecSet)
-	err := tmp.Decode(&data)
-	if err != nil {
-		return err
-	}
-	CacheDbRef.Mu.RLock()
-	CacheDbRef.PreTxDecSet(tmp)
-	CacheDbRef.Mu.RUnlock()
-	CacheDbRef.Mu.Lock()
-	CacheDbRef.GetTDS(tmp)
-	CacheDbRef.Mu.Unlock()
+	HandleTxDecSet(data)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
@@ -193,14 +208,29 @@ func HandleAndSentTxDecSet(data []byte) error {
 
 //HandleTxBlock when receives a txblock
 func HandleTxBlock(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxBlock)
-	err := tmp.Decode(&data, 0)
+	err := tmp.Decode(&data1, 0)
 	if err != nil {
 		return err
 	}
-	CacheDbRef.Mu.RLock()
-	CacheDbRef.PreTxBlock(tmp)
-	CacheDbRef.Mu.RUnlock()
+	s := rccache.PreStat{Stat: -2, Valid: nil}
+	flag := true
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.PreTxBlock(tmp, &s)
+	if s.Stat == 0 {
+		flag = false
+	}
+	CacheDbRef.Mu.Unlock()
+	for flag {
+		time.Sleep(time.Second)
+		CacheDbRef.Mu.RLock()
+		if s.Stat == 0 {
+			flag = false
+		}
+		CacheDbRef.Mu.RUnlock()
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GetTxBlock(tmp)
 	CacheDbRef.Mu.Unlock()
@@ -209,8 +239,10 @@ func HandleTxBlock(data []byte) error {
 
 //HandleFinalTxBlock when receives a txblock
 func HandleFinalTxBlock(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxBlock)
-	err := tmp.Decode(&data, 1)
+	err := tmp.Decode(&data1, 1)
 	if err != nil {
 		return err
 	}
@@ -222,14 +254,7 @@ func HandleFinalTxBlock(data []byte) error {
 
 //HandleAndSentFinalTxBlock when receives a txblock
 func HandleAndSentFinalTxBlock(data []byte) error {
-	tmp := new(basic.TxBlock)
-	err := tmp.Decode(&data, 1)
-	if err != nil {
-		return err
-	}
-	CacheDbRef.Mu.Lock()
-	CacheDbRef.GetFinalTxBlock(tmp)
-	CacheDbRef.Mu.Unlock()
+	HandleFinalTxBlock(data)
 	xx := shard.MyMenShard.InShardId
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if i != CacheDbRef.ShardNum {
@@ -243,8 +268,10 @@ func HandleAndSentFinalTxBlock(data []byte) error {
 
 //HandleTxLeader when receives a tx
 func HandleTxLeader(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.Transaction)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
@@ -256,11 +283,14 @@ func HandleTxLeader(data []byte) error {
 
 //HandleTxDecLeader when receives a txdec
 func HandleTxDecLeader(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxDecision)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
+
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecision(tmp, tmp.HashID)
 	CacheDbRef.UpdateTXCache(tmp)
@@ -270,14 +300,29 @@ func HandleTxDecLeader(data []byte) error {
 
 //HandleTxDecSetLeader when receives a txdecset
 func HandleTxDecSetLeader(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	tmp := new(basic.TxDecSet)
-	err := tmp.Decode(&data)
+	err := tmp.Decode(&data1)
 	if err != nil {
 		return err
 	}
-	CacheDbRef.Mu.RLock()
-	CacheDbRef.PreTxDecSet(tmp)
-	CacheDbRef.Mu.RUnlock()
+	s := rccache.PreStat{Stat: -2, Valid: nil}
+	flag := true
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.PreTxDecSet(tmp, &s)
+	if s.Stat == 0 {
+		flag = false
+	}
+	CacheDbRef.Mu.Unlock()
+	for flag {
+		time.Sleep(time.Second)
+		CacheDbRef.Mu.Lock()
+		if s.Stat == 0 {
+			flag = false
+		}
+		CacheDbRef.Mu.Unlock()
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.ProcessTDS(tmp)
 	CacheDbRef.Mu.Unlock()

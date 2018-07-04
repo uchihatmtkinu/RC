@@ -10,27 +10,50 @@ import (
 )
 
 //PreTxList is to process the TxListX
-func (d *DbRef) PreTxList(b *basic.TxList) error {
-	if d.Leader != b.ID {
-		return fmt.Errorf("Txlist from a miner")
+func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
+	if s == nil {
+		s = new(PreStat)
+		s.Stat = -2
 	}
-	if int(b.TxCnt) != len(b.TxArrayX) {
-		return fmt.Errorf("Number of Tx wrong")
+	if s.Stat == -2 {
+		if d.Leader != b.ID {
+			return fmt.Errorf("PreTxList: Txlist from a miner")
+		}
+		if int(b.TxCnt) != len(b.TxArrayX) {
+			return fmt.Errorf("PreTxList: Number of Tx wrong")
+		}
+		s.Stat = -1
 	}
-	b.TxArray = make([][32]byte, b.TxCnt)
-	for i := uint32(0); i < b.TxCnt; i++ {
-		xxx, ok := d.HashCache[b.TxArrayX[i]]
-		if !ok {
-			//ToDo
-		} else {
-			b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
+	if s.Stat == -1 {
+		s.Stat = int(b.TxCnt)
+		s.Valid = make([]int, b.TxCnt)
+		b.TxArray = make([][32]byte, b.TxCnt)
+		for i := uint32(0); i < b.TxCnt; i++ {
+			xxx, ok := d.HashCache[b.TxArrayX[i]]
+			if !ok {
+				tmpWait, okW := d.WaitHashCache[b.TxArrayX[i]]
+				if okW {
+					tmpWait.DataTL = append(tmpWait.DataTL, b)
+					tmpWait.StatTL = append(tmpWait.StatTL, s)
+					tmpWait.IDTL = append(tmpWait.IDTL, int(i))
+				} else {
+					tmpWait = WaitProcess{nil, nil, nil, nil, nil, nil, nil, nil, nil}
+					tmpWait.DataTL = append(tmpWait.DataTL, b)
+					tmpWait.StatTL = append(tmpWait.StatTL, s)
+					tmpWait.IDTL = append(tmpWait.IDTL, int(i))
+				}
+				d.WaitHashCache[b.TxArrayX[i]] = tmpWait
+			} else {
+				s.Stat--
+				b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
+				s.Valid[i] = 1
+			}
 		}
 	}
-	if b.Hash() != b.HashID {
-		return fmt.Errorf("Hash not match")
-	}
-	if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk) {
-		return fmt.Errorf("Signature not match")
+	if s.Stat == 0 {
+		if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk) {
+			return fmt.Errorf("PreTxList: Signature not match")
+		}
 	}
 	return nil
 }
@@ -38,88 +61,137 @@ func (d *DbRef) PreTxList(b *basic.TxList) error {
 //PreTxDecision is verify the txdecision
 func (d *DbRef) PreTxDecision(b *basic.TxDecision, hash [32]byte) error {
 	if int(b.TxCnt) > len(b.Decision)*8 {
-		return fmt.Errorf("Decision lengh not enough")
+		return fmt.Errorf("PreTxDecision: Decision lengh not enough")
 	}
 	if b.Single == 0 {
 		if b.Target != d.ShardNum {
-			return fmt.Errorf("TxDecision should be the intra-one")
+			return fmt.Errorf("PreTxDecision: TxDecision should be the intra-one")
 		}
 		if shard.GlobalGroupMems[b.ID].Shard != int(d.ShardNum) {
-			return fmt.Errorf("Not the same shard")
+			return fmt.Errorf("PreTxDecision: Not the same shard")
 		}
 		if len(b.Sig) != int(gVar.ShardCnt) {
-			return fmt.Errorf("Signature not enough")
+			return fmt.Errorf("PreTxDecision: Signature not enough")
 		}
 		if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk, d.ShardNum) {
-			return fmt.Errorf("Signature not match")
+			return fmt.Errorf("PreTxDecision: Signature not match")
 		}
 	} else {
 		b.HashID = hash
 		if b.Target != d.ShardNum {
-			return fmt.Errorf("Not the target shard")
+			return fmt.Errorf("PreTxDecision: Not the target shard")
 		}
 		if len(b.Sig) != 1 {
-			return fmt.Errorf("Signature not enough")
+			return fmt.Errorf("PreTxDecision: Signature not enough")
 		}
 		if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk, 0) {
-			return fmt.Errorf("Signature not match")
+			return fmt.Errorf("PreTxDecision: Signature not match")
 		}
 	}
 	return nil
 }
 
 //PreTxDecSet is to process the TxListX
-func (d *DbRef) PreTxDecSet(b *basic.TxDecSet) error {
-	if shard.GlobalGroupMems[b.ID].Role != 0 {
-		return fmt.Errorf("Not a Leader")
+func (d *DbRef) PreTxDecSet(b *basic.TxDecSet, s *PreStat) error {
+	if s == nil {
+		s = new(PreStat)
+		s.Stat = -2
 	}
-	if int(b.TxCnt) != len(b.TxArrayX) || int(b.MemCnt) != len(b.MemD) {
-		return fmt.Errorf("TxDecSet parameter not match")
+	if s.Stat == -2 {
+		if shard.GlobalGroupMems[b.ID].Role != 0 {
+			return fmt.Errorf("PreTxDecSet: Not a Leader")
+		}
+		if int(b.TxCnt) != len(b.TxArrayX) || int(b.MemCnt) != len(b.MemD) {
+			return fmt.Errorf("PreTxDecSet: TxDecSet parameter not match")
+		}
+		s.Stat = -1
 	}
-	b.TxArray = make([][32]byte, b.TxCnt)
-	for i := uint32(0); i < b.TxCnt; i++ {
-		xxx, ok := d.HashCache[b.TxArrayX[i]]
-		if !ok {
-			//ToDo
-		} else {
-			b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
+	if s.Stat == -1 {
+		s.Stat = int(b.TxCnt)
+		s.Valid = make([]int, b.TxCnt)
+		b.TxArray = make([][32]byte, b.TxCnt)
+		for i := uint32(0); i < b.TxCnt; i++ {
+			xxx, ok := d.HashCache[b.TxArrayX[i]]
+			if !ok {
+				tmpWait, okW := d.WaitHashCache[b.TxArrayX[i]]
+				if okW {
+					tmpWait.DataTDS = append(tmpWait.DataTDS, b)
+					tmpWait.StatTDS = append(tmpWait.StatTDS, s)
+					tmpWait.IDTDS = append(tmpWait.IDTDS, int(i))
+				} else {
+					tmpWait = WaitProcess{nil, nil, nil, nil, nil, nil, nil, nil, nil}
+					tmpWait.DataTDS = append(tmpWait.DataTDS, b)
+					tmpWait.StatTDS = append(tmpWait.StatTDS, s)
+					tmpWait.IDTDS = append(tmpWait.IDTDS, int(i))
+				}
+				d.WaitHashCache[b.TxArrayX[i]] = tmpWait
+			} else {
+				s.Stat--
+				s.Valid[i] = 1
+				b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
+			}
 		}
 	}
-	if b.Hash() != b.HashID {
-		return fmt.Errorf("Hash not match")
-	}
-	for i := uint32(0); i < b.MemCnt; i++ {
-		err := d.PreTxDecision(&b.MemD[i], b.HashID)
-		if err != nil {
-			return err
+	if s.Stat == 0 {
+		for i := uint32(0); i < b.MemCnt; i++ {
+			err := d.PreTxDecision(&b.MemD[i], b.HashID)
+			if err != nil {
+				return err
+			}
 		}
-	}
-	if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk) {
-		return fmt.Errorf("Signature not match")
+		if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk) {
+			return fmt.Errorf("PreTxDecSet: Signature not match")
+		}
 	}
 	return nil
 }
 
 //PreTxBlock is to process the TxListX
-func (d *DbRef) PreTxBlock(b *basic.TxBlock) error {
-	if shard.GlobalGroupMems[b.ID].Role != 0 {
-		return fmt.Errorf("Not a Leader")
+func (d *DbRef) PreTxBlock(b *basic.TxBlock, s *PreStat) error {
+	if s == nil {
+		s = new(PreStat)
+		s.Stat = -2
 	}
-	if int(b.TxCnt) != len(b.TxArrayX) {
-		return fmt.Errorf("TxBlock parameter not match")
+	if s.Stat == -2 {
+		if shard.GlobalGroupMems[b.ID].Role != 0 {
+			return fmt.Errorf("PreTxBlock: Not a Leader")
+		}
+		if int(b.TxCnt) != len(b.TxArrayX) {
+			return fmt.Errorf("PreTxBlock: TxBlock parameter not match")
+		}
+		s.Stat = -1
 	}
-	b.TxArray = make([]basic.Transaction, b.TxCnt)
-	for i := uint32(0); i < b.TxCnt; i++ {
-		xxx, ok := d.HashCache[b.TxArrayX[i]]
-		if !ok {
-			//ToDo
-		} else {
-			b.TxArray[i] = *d.TXCache[xxx[0]].Data
+	if s.Stat == -1 {
+		s.Stat = int(b.TxCnt)
+		s.Valid = make([]int, b.TxCnt)
+		b.TxArray = make([]basic.Transaction, b.TxCnt)
+		for i := uint32(0); i < b.TxCnt; i++ {
+			xxx, ok := d.HashCache[b.TxArrayX[i]]
+			if !ok {
+				tmpWait, okW := d.WaitHashCache[b.TxArrayX[i]]
+				if okW {
+					tmpWait.DataTB = append(tmpWait.DataTB, b)
+					tmpWait.StatTB = append(tmpWait.StatTB, s)
+					tmpWait.IDTB = append(tmpWait.IDTB, int(i))
+				} else {
+					tmpWait = WaitProcess{nil, nil, nil, nil, nil, nil, nil, nil, nil}
+					tmpWait.DataTB = append(tmpWait.DataTB, b)
+					tmpWait.StatTB = append(tmpWait.StatTB, s)
+					tmpWait.IDTB = append(tmpWait.IDTB, int(i))
+				}
+				d.WaitHashCache[b.TxArrayX[i]] = tmpWait
+			} else {
+				s.Stat--
+				s.Valid[i] = 1
+				b.TxArray[i] = *d.TXCache[xxx[0]].Data
+			}
 		}
 	}
-	tmp, err := b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk)
-	if !tmp {
-		return err
+	if s.Stat == 0 {
+		tmp, err := b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk)
+		if !tmp {
+			return err
+		}
 	}
 	return nil
 }

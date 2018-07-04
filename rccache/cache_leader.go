@@ -10,6 +10,25 @@ import (
 
 //MakeTXList is to create TxList given transaction
 func (d *DbRef) MakeTXList(b *basic.Transaction) error {
+	tmpPre, okw := d.WaitHashCache[basic.HashCut(b.Hash)]
+	if okw {
+		for i := 0; i < len(tmpPre.DataTB); i++ {
+			tmpPre.StatTB[i].Valid[tmpPre.IDTB[i]] = 1
+			tmpPre.StatTB[i].Stat--
+			tmpPre.DataTB[i].TxArray[tmpPre.IDTB[i]] = *b
+		}
+		for i := 0; i < len(tmpPre.DataTDS); i++ {
+			tmpPre.StatTDS[i].Valid[tmpPre.IDTDS[i]] = 1
+			tmpPre.StatTDS[i].Stat--
+			tmpPre.DataTDS[i].TxArray[tmpPre.IDTDS[i]] = b.Hash
+		}
+		for i := 0; i < len(tmpPre.DataTL); i++ {
+			tmpPre.StatTL[i].Valid[tmpPre.IDTL[i]] = 1
+			tmpPre.StatTL[i].Stat--
+			tmpPre.DataTL[i].TxArray[tmpPre.IDTL[i]] = b.Hash
+		}
+	}
+	delete(d.WaitHashCache, basic.HashCut(b.Hash))
 	tmp, ok := d.TXCache[b.Hash]
 	if !ok {
 		tmp = new(CrossShardDec)
@@ -122,10 +141,6 @@ func (d *DbRef) GenerateStartBlock() error {
 func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	if a.Single == 1 {
 		return fmt.Errorf("TxDecision parameter error")
-	}
-	err := d.PreTxDecision(a, a.HashID)
-	if err != nil {
-		return err
 	}
 	tmp, ok := d.TLIndex[a.HashID]
 	if !ok {
