@@ -71,6 +71,7 @@ func (ms *MemShard) ClearRep() {
 }
 
 func (ms*MemShard) Print(){
+	fmt.Println()
 	fmt.Println("Member data:")
 	fmt.Println("Addres:", ms.Address)
 	fmt.Println("Rep:", ms.Rep)

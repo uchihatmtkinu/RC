@@ -44,7 +44,7 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][
 	if startBlock {
 		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
 	} else {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, [][32]byte{{gVar.MagicNumber}}, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
 	}
 	pow := NewProofOfWork(block)
 	nonce, hash, flag := pow.Run()

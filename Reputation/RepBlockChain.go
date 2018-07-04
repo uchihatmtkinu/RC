@@ -9,6 +9,7 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/rccache"
 	"strconv"
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 const dbFile = "RepBlockchain"
@@ -83,6 +84,7 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	CurrentSyncBlock.Mu.Lock()
 	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  tmpCoSignature)
 	CurrentSyncBlock.Epoch ++
+	shard.PreviousSyncBlockHash = make([][32]byte,gVar.ShardCnt)
 	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
 	defer CurrentSyncBlock.Mu.Unlock()
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
@@ -115,15 +117,9 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 		if err != nil {
 			log.Panic(err)
 		}
-		fmt.Println("Add from other")
-		CurrentSyncBlock.Mu.RLock()
-		CurrentSyncBlock.Block.Print()
-		CurrentSyncBlock.Mu.RUnlock()
+
 		shard.PreviousSyncBlockHash[k] = syncBlock.Hash
-		fmt.Println("Add from other after")
-		CurrentSyncBlock.Mu.RLock()
-		CurrentSyncBlock.Block.Print()
-		CurrentSyncBlock.Mu.RUnlock()
+
 		/*
 		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
 		if err != nil {

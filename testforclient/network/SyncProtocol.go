@@ -106,7 +106,6 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		}
 	}
 	if !sbrxflag && !tbrxflag {
-		fmt.Println("update now-----------")
 		//add transaction block
 		//TODO test
 		//CacheDbRef.GetFinalTxBlock(&txBlockMessage.Block)

@@ -37,7 +37,6 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
 
-	fmt.Println("NewSyncBlock",prevSyncBlockHash)
 	for i := 0; i < int(gVar.ShardSize); i++{
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		//need to consider if a node fail to sign the syncBlock but it is a good node indeed
