@@ -62,7 +62,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 	}
 	fmt.Println("sent CoSi announce")
 	//fmt.Println("wait for ready")
-	//TODO test
+	//TODO modify int(gVar.ShardSize)/2
 	for readyCount < int(gVar.ShardSize) {
 		select {
 		case readyMessage = <-readyCh:
