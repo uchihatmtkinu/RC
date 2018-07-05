@@ -10,7 +10,8 @@ import (
 
 //Hash returns the ID of the TxList
 func (a *TxList) Hash() [32]byte {
-	tmp := make([]byte, 0, a.TxCnt*32)
+	tmp := make([]byte, 0, 4+a.TxCnt*32)
+	tmp = byteSlice(a.Round)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp = append(tmp, a.TxArray[i][:]...)
 	}
@@ -32,9 +33,10 @@ func (a *TxList) Verify(puk *ecdsa.PublicKey) bool {
 }
 
 //Set init an instance of TxList given those parameters
-func (a *TxList) Set(ID uint32) {
+func (a *TxList) Set(ID uint32, height uint32) {
 	a.ID = ID
 	a.TxCnt = 0
+	a.Round = height
 	a.TxArray = nil
 }
 
@@ -49,6 +51,7 @@ func (a *TxList) AddTx(tx *Transaction) {
 func (a *TxList) Encode(tmp *[]byte) {
 	Encode(tmp, a.ID)
 	Encode(tmp, &a.HashID)
+	Encode(tmp, a.Round)
 	Encode(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		Encode(tmp, a.TxArrayX[i])
@@ -65,6 +68,10 @@ func (a *TxList) Decode(buf *[]byte) error {
 	err = Decode(buf, &a.HashID)
 	if err != nil {
 		return fmt.Errorf("TxList HashID decode failed: %s", err)
+	}
+	err = Decode(buf, &a.Round)
+	if err != nil {
+		return fmt.Errorf("TxList Round decode failed: %s", err)
 	}
 	err = Decode(buf, &a.TxCnt)
 	if err != nil {
@@ -92,6 +99,6 @@ func (a *TxList) Print() {
 	fmt.Println("TxList: ID: ", a.ID, " TxCnt: ", a.TxCnt)
 	fmt.Println("Hash: ", base58.Encode(a.HashID[:]))
 	for i := uint32(0); i < a.TxCnt; i++ {
-		fmt.Println(i, ": ", a.TxArray[i])
+		fmt.Println(i, ":", base58.Encode(a.TxArray[i][:]))
 	}
 }

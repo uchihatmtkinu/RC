@@ -48,6 +48,9 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	d.AddCache(b.Hash)
 	d.TXCache[b.Hash] = tmp
+	if d.TLS == nil {
+		d.NewTxList()
+	}
 	if tmp.InCheck[d.ShardNum] != -1 {
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			if tmp.InCheck[i] != 0 {
@@ -83,6 +86,7 @@ func (d *DbRef) SignTDS(x int) {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TDSCache[x][i].Sign(&d.prk)
 	}
+
 }
 
 //NewTxList initialize the txList
@@ -93,12 +97,18 @@ func (d *DbRef) NewTxList() error {
 		d.TLSCache = append(d.TLSCache, *d.TLS)
 		d.TDSCache = append(d.TDSCache, *d.TDS)
 		d.LastIndex++
+		d.TLRound++
 		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.LastIndex)
 	}
 
 	d.TLS = new([gVar.ShardCnt]basic.TxList)
+
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.TLS[i].ID = d.ID
+		d.TLS[i].Round = d.TLRound
+	}
+	if d.TLRound == gVar.NumTxListPerEpoch {
+		d.StopGetTx = true
 	}
 	//d.TL = new(basic.TxList)
 	//d.TL.Set(d.ID)
@@ -108,21 +118,39 @@ func (d *DbRef) NewTxList() error {
 //GenerateTxBlock makes the TxBlock
 func (d *DbRef) GenerateTxBlock() error {
 	height := d.TxB.Height
+	d.TxB = new(basic.TxBlock)
 	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
+
 	for i := 0; i < len(d.Ready); i++ {
 		d.ClearCache(d.Ready[i].Hash)
 	}
 	d.Ready = nil
+	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
+
 	d.DB.AddBlock(d.TxB)
 	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
+	d.DB.ShowAccount()
+
 	return nil
 }
 
 //GenerateFinalBlock generate final block
 func (d *DbRef) GenerateFinalBlock() error {
-	tmp := d.DB.MakeFinalTx()
+	tmp := d.DB.MakeFinalTx(d.ShardNum)
 	height := d.TxB.Height
+	d.TxB = new(basic.TxBlock)
 	d.TxB.MakeTxBlock(d.ID, tmp, d.DB.LastFB[d.ShardNum], &d.prk, height+1, 1, &d.FB[d.ShardNum].HashID, d.ShardNum)
+	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
+	d.FB[d.ShardNum] = d.TxB
+	err := d.DB.AddFinalBlock(d.TxB)
+	if err != nil {
+		fmt.Println(err)
+	}
+	xxx := d.TxB.Serial()
+	//fmt.Println("FB length: ", len(xxx))
+	xxxtmp := new(basic.TxBlock)
+	err = xxxtmp.Decode(&xxx, 1)
+	//fmt.Println(err)
 	return nil
 }
 
@@ -133,7 +161,9 @@ func (d *DbRef) GenerateStartBlock() error {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		tmp[i] = d.FB[i].HashID
 	}
+	d.TxB = new(basic.TxBlock)
 	d.TxB.MakeStartBlock(d.ID, &tmp, d.DB.LastFB[d.ShardNum], &d.prk, height+1)
+	d.DB.AddStartBlock(d.TxB)
 	return nil
 }
 
@@ -157,12 +187,13 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 		tmpTD[i].HashID = d.TLSCache[tmpIndex][i].HashID
 		tmpTD[i].Sig = nil
 		tmpTD[i].Sig = append(tmpTD[i].Sig, a.Sig[i])
-
 	}
+	//fmt.Println("Leader ", d.ID, " process TxDecision: ")
 	for i := uint32(0); i < tmpTL.TxCnt; i++ {
 		tmpTx := d.TXCache[tmpTL.TxArray[i]]
+		//tmpTx.Print()
 		for j := 0; j < len(tmpTx.ShardRelated); j++ {
-			tmpTD[j].Add((a.Decision[x] >> y) & 1)
+			tmpTD[tmpTx.ShardRelated[j]].Add((a.Decision[x] >> y) & 1)
 		}
 		if y < 7 {
 			y++
@@ -172,6 +203,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 		}
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		//fmt.Println("Decision: ", tmpTD[i].Decision, "Sig: ", tmpTD[i].Sig[0])
 		if !tmpTD[i].Verify(&shard.GlobalGroupMems[a.ID].RealAccount.Puk, 0) {
 			return fmt.Errorf("Signature not match %d", i)
 		}
@@ -190,7 +222,34 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 		b.TxCnt = tmpTL.TxCnt
 		b.TxArray = tmpTL.TxArray
+		index := 0
+		shift := byte(0)
+		for i := uint32(0); i < b.TxCnt; i++ {
+			tmp := d.TXCache[b.TxArray[i]]
+			for j := uint32(0); j < b.MemCnt; j++ {
+				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
+			}
+			tmpRes := b.Result(i)
+			if tmpRes == false {
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					if tmp.Decision[j] == 1 {
+						shard.GlobalGroupMems[b.MemD[j].ID].Rep += gVar.RepTN * int64(tmp.Value)
+					} else if tmp.Decision[j] == 2 {
+						shard.GlobalGroupMems[b.MemD[j].ID].Rep -= gVar.RepFP * int64(tmp.Value)
+					}
+				}
+			}
+			if shift < 7 {
+				shift++
+			} else {
+				index++
+				shift = 0
+			}
+			d.TXCache[b.TxArray[i]] = tmp
+		}
+
 	}
+	fmt.Println("Leader", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
@@ -200,9 +259,19 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			tmp.NewFromOther(b.ShardIndex, b.Result(i))
 			d.TXCache[tmpHash] = tmp
 		} else {
+			//tmp.Print()
+			//fmt.Println("result: ", b.Result(i))
 			tmp.UpdateFromOther(b.ShardIndex, b.Result(i))
+			//fmt.Println(base58.Encode(tmp.Data.Hash[:]), "result is", tmp.Res)
 			if tmp.Res == 1 {
 				d.Ready = append(d.Ready, *(tmp.Data))
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					if tmp.Decision[j] == 1 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
+					} else if tmp.Decision[j] == 2 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
+					}
+				}
 			}
 			if tmp.Total == 0 {
 				delete(d.TXCache, tmpHash)
@@ -210,6 +279,10 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 				d.TXCache[tmpHash] = tmp
 			}
 		}
+	}
+	if b.ShardIndex == d.ShardNum {
+		b.TxCnt = 0
+		b.TxArray = nil
 	}
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 )
 
+//IntilizeProcess is init
 func IntilizeProcess(ID int) {
 
 	// IP + port
@@ -60,14 +61,15 @@ func IntilizeProcess(ID int) {
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
-
+	CacheDbRef.New(uint32(ID), acc[ID].Pri)
+	for i := 0; i < int(numCnt); i++ {
+		CacheDbRef.DB.AddAccount(&accWallet[i])
+	}
 	account.MyAccount = acc[ID]
 
 	shard.MyMenShard = &shard.GlobalGroupMems[ID]
 	shard.NumMems = int(gVar.ShardSize)
 	shard.PreviousSyncBlockHash = [][32]byte{{gVar.MagicNumber}}
-
-	CacheDbRef.New(uint32(ID), acc[ID].Pri)
 
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	Reputation.CurrentSyncBlock = Reputation.SafeSyncBlock{Block: nil, Epoch: -1}
@@ -83,10 +85,14 @@ func IntilizeProcess(ID int) {
 	CoSiReadyCh = make(chan bool)
 	SyncReadyCh = make(chan bool)
 
+	FinalTxReadyCh = make(chan bool)
 	//channel used in shard
 	readyCh = make(chan readyInfo, bufferSize)
 
 	//channel used in CoSi
 	cosiAnnounceCh = make(chan []byte)
 
+	//channel used in final block
+	finalSignal = make(chan []byte)
+	startRep = make(chan bool)
 }

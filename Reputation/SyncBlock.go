@@ -1,43 +1,45 @@
 package Reputation
 
 import (
-	"time"
 	"bytes"
-	"encoding/gob"
-	"log"
 	"crypto/sha256"
-	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/shard"
+	"encoding/gob"
+	"fmt"
+	"log"
+	"time"
+
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/ed25519"
-	"fmt"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 //SyncBlock syncblock
 type SyncBlock struct {
-	Timestamp     	 	int64
-	PrevRepBlockHash 	[32]byte
-	PrevSyncBlockHash 	[][32]byte
-	IDlist				[]int
-	TotalRep			[][] int64//Total reputation over epoch, [i][j] i-th user, j-th epoch
-	CoSignature			[]byte
-	Hash          	 	[32]byte
+	Timestamp          int64
+	PrevRepBlockHash   [32]byte
+	PrevSyncBlockHash  [][32]byte
+	PrevFinalBlockHash [32]byte
+	IDlist             []int
+	TotalRep           [][]int64 //Total reputation over epoch, [i][j] i-th user, j-th epoch
+	CoSignature        []byte
+	Hash               [32]byte
 }
 
 // NewSynBlock new sync block
-func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlockHash [32]byte, coSignature []byte) *SyncBlock{
+func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash [][32]byte, prevRepBlockHash [32]byte, prevFBHash [32]byte, coSignature []byte) *SyncBlock {
 	var item *shard.MemShard
 	var repList [][]int64
-	var idList	[]int
-	tmpprevSyncBlockHash:=make([][32]byte,len(prevSyncBlockHash))
-	copy(tmpprevSyncBlockHash,prevSyncBlockHash)
-	tmpcoSignature:=make([]byte,len(coSignature))
-	copy(tmpcoSignature,coSignature)
+	var idList []int
+	tmpprevSyncBlockHash := make([][32]byte, len(prevSyncBlockHash))
+	copy(tmpprevSyncBlockHash, prevSyncBlockHash)
+	tmpcoSignature := make([]byte, len(coSignature))
+	copy(tmpcoSignature, coSignature)
 
 	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
 
-	for i := 0; i < int(gVar.ShardSize); i++{
+	for i := 0; i < int(gVar.ShardSize); i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		//need to consider if a node fail to sign the syncBlock but it is a good node indeed
 		item.SetTotalRep(item.Rep)
@@ -45,7 +47,7 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash[][32]byte, prevRepBlock
 		repList = append(repList, item.TotalRep)
 	}
 
-	block := &SyncBlock{time.Now().Unix(), prevRepBlockHash,tmpprevSyncBlockHash, idList, repList,tmpcoSignature, [32]byte{}}
+	block := &SyncBlock{time.Now().Unix(), prevRepBlockHash, tmpprevSyncBlockHash, prevFBHash, idList, repList, tmpcoSignature, [32]byte{}}
 	block.Hash = sha256.Sum256(block.prepareData())
 	return block
 }
@@ -67,13 +69,12 @@ func (b *SyncBlock) prepareData() []byte {
 	return data
 }
 
-
 // HashRep returns a hash of the TotalRepTransactions in the block
 func (b *SyncBlock) HashTotalRep() []byte {
 	var txHashes []byte
 	var txHash [32]byte
 	for i := range b.TotalRep {
-		for _,item := range b.TotalRep[i] {
+		for _, item := range b.TotalRep[i] {
 			txHashes = append(txHashes, IntToHex(item)[:]...)
 		}
 
@@ -82,12 +83,11 @@ func (b *SyncBlock) HashTotalRep() []byte {
 	return txHash[:]
 }
 
-
 // HashIDList returns a hash of the IDList in the block
 func (b *SyncBlock) HashIDList() []byte {
 	var txHashes []byte
 	var txHash [32]byte
-	for _,item := range b.IDlist {
+	for _, item := range b.IDlist {
 		txHashes = append(txHashes, IntToHex(int64(item))[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)
@@ -98,13 +98,12 @@ func (b *SyncBlock) HashIDList() []byte {
 func (b *SyncBlock) HashPrevSyncBlock() []byte {
 	var txHashes []byte
 	var txHash [32]byte
-	for _,item := range b.PrevSyncBlockHash {
+	for _, item := range b.PrevSyncBlockHash {
 		txHashes = append(txHashes, item[:]...)
 	}
 	txHash = sha256.Sum256(txHashes)
 	return txHash[:]
 }
-
 
 // VerifyCosign verify CoSignature, k-th shard
 func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
@@ -112,7 +111,7 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
 	count := 0
 	mask := b.CoSignature[64:]
 	for i := 0; i < int(gVar.ShardSize); i++ {
-		if maskBit(i, &mask) == cosi.Enabled{
+		if maskBit(i, &mask) == cosi.Enabled {
 			count++
 		}
 	}
@@ -120,11 +119,11 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
 		return false
 	}
 	//verify signature
-	var	pubKeys		[]ed25519.PublicKey
+	var pubKeys []ed25519.PublicKey
 	var it *shard.MemShard
 	sbMessage := b.PrevRepBlockHash[:]
 	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
-	for i:=0; i < int(gVar.ShardSize); i++ {
+	for i := 0; i < int(gVar.ShardSize); i++ {
 		it = &(*ms)[b.IDlist[i]]
 		pubKeys[i] = it.CosiPub
 	}
@@ -135,7 +134,7 @@ func (b *SyncBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
 // UpdateRepToTotalRepInMS update the rep to total rep in memshards
 func (b *SyncBlock) UpdateTotalRepInMS(ms *[]shard.MemShard) {
 	var item *shard.MemShard
-	for i,id := range b.IDlist{
+	for i, id := range b.IDlist {
 		item = &(*ms)[id]
 		item.CopyTotalRepFromSB(b.TotalRep[i])
 	}
@@ -146,16 +145,15 @@ func (b *SyncBlock) Print() {
 	fmt.Println("SyncBlock:")
 	fmt.Println("PrevSyncBlockHash:", b.PrevSyncBlockHash)
 	fmt.Println("RepTransactions:")
-	for i,item := range b.IDlist{
+	for i, item := range b.IDlist {
 		fmt.Print("	GlobalID:", item)
-		fmt.Println("		TotalRep",b.TotalRep[i])
+		fmt.Println("		TotalRep", b.TotalRep[i])
 	}
 
 	fmt.Println("CoSignature:", b.CoSignature)
 	fmt.Println("PrevRepBlockHash:", b.PrevRepBlockHash)
 	fmt.Println("Hash:", b.Hash)
 }
-
 
 // Serialize encode block
 func (b *SyncBlock) Serialize() []byte {
@@ -168,7 +166,6 @@ func (b *SyncBlock) Serialize() []byte {
 	return result.Bytes()
 }
 
-
 // DeserializeSyncBlock decode Syncblock
 func DeserializeSyncBlock(d []byte) *SyncBlock {
 	var block SyncBlock
@@ -179,5 +176,3 @@ func DeserializeSyncBlock(d []byte) *SyncBlock {
 	}
 	return &block
 }
-
-

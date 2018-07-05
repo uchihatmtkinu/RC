@@ -24,7 +24,7 @@ func ShardProcess() {
 
 	shard.StartFlag = true
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
-	if CurrentEpoch != 1 {
+	if CurrentEpoch != -1 {
 		for i := 0; i < int(gVar.ShardSize*gVar.ShardCnt); i++ {
 			shard.GlobalGroupMems[i].ClearRep()
 		}
@@ -44,9 +44,20 @@ func ShardProcess() {
 	if shard.MyMenShard.Role == 1 {
 		MinerReadyProcess()
 	} else {
+		if CurrentEpoch != -1 {
+			go SendStartBlock(&shard.GlobalGroupMems)
+		}
 		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.StopGetTx = false
+	CacheDbRef.UnderSharding = false
+	CacheDbRef.Mu.Unlock()
 	fmt.Println("shard finished")
+	if CurrentEpoch != -1 {
+		CacheDbRef.Clear()
+		FinalTxReadyCh <- true
+	}
 }
 
 //LeaderReadyProcess leader use this

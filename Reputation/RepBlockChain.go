@@ -36,8 +36,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	lastHash = CurrentRepBlock.Block.Hash
 	CurrentRepBlock.Mu.RUnlock()
 
-	tmp := [][32]byte{{0}}
-	cache.TBCache = &tmp
+	//tmp := [][32]byte{{0}}
+	//cache.TBCache = &tmp
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
@@ -48,7 +48,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	}
 	shard.StartFlag = false
 
-	cache.TBCache = nil
+	*cache.TBCache = (*cache.TBCache)[gVar.NumTxBlockForRep:]
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
@@ -71,7 +71,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 }
 
 // add a new syncBlock on RepBlockChain
-func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
+func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
 	tmpCoSignature := make([]byte, len(CoSignature))
 	copy(tmpCoSignature, CoSignature)
@@ -81,7 +81,7 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	CurrentRepBlock.Mu.RUnlock()
 
 	CurrentSyncBlock.Mu.Lock()
-	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash, tmpCoSignature)
+	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash, preFBHash, tmpCoSignature)
 	CurrentSyncBlock.Epoch++
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
@@ -181,12 +181,12 @@ func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		err := os.Remove(dbFile)
-		err = os.Remove(dbFile + ".lock")
+
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
+		err = os.Remove(dbFile + ".lock")
 	}
 
 	var tip [32]byte

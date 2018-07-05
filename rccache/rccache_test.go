@@ -35,23 +35,6 @@ func TestGeneratePriKey(t *testing.T) {
 	//t.Error("No file")
 }
 
-func GenerateTx(x int, y int, z uint32) *basic.Transaction {
-	var tmp basic.Transaction
-	tmp.New(0)
-	var b basic.OutType
-	b.Address = shard.GlobalGroupMems[y].RealAccount.AddrReal
-	b.Value = z
-	var a basic.InType
-	a.Init()
-	a.PrevTx = shard.GlobalGroupMems[x].RealAccount.AddrReal
-	a.Index = z
-	tmp.AddOut(b)
-	tmp.AddIn(a)
-	tmp.Hash = tmp.HashTx()
-	tmp.SignTx(0, &shard.GlobalGroupMems[x].RealAccount.Pri)
-	return &tmp
-}
-
 func TestOutToData(t *testing.T) {
 	numCnt := 4
 	acc := make([]account.RcAcc, numCnt)

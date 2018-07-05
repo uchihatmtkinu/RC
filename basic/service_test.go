@@ -152,7 +152,7 @@ func TestTxList(t *testing.T) {
 	var tmpTx Transaction
 	MakeTx(&tmpIn, &tmpOut, &tmpTx, 1)
 	var tmp1, tmp3 TxList
-	tmp1.Set(123)
+	tmp1.Set(123, 0)
 	for i := 0; i < 5; i++ {
 		tmp1.AddTx(&tmpTx)
 	}

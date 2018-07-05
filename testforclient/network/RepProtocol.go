@@ -5,10 +5,11 @@ import (
 	"encoding/gob"
 	"log"
 
+	"fmt"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"fmt"
 )
 
 //var currentTxList *[]basic.TxList
@@ -19,11 +20,13 @@ func RepProcess(ms *[]shard.MemShard) {
 	var it *shard.MemShard
 	var validateFlag bool
 	var item Reputation.RepPowInfo
+	<-startRep
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan bool)
+	CacheDbRef.Mu.Lock()
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
-
+	CacheDbRef.Mu.Unlock()
 	for flag {
 		select {
 		case item = <-Reputation.RepPowTxCh:
@@ -31,7 +34,7 @@ func RepProcess(ms *[]shard.MemShard) {
 				for i := 0; i < int(gVar.ShardSize); i++ {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-						fmt.Println("have sent "+it.Address)
+						fmt.Println("have sent " + it.Address)
 						go SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, item.Round, item.Hash, item.Nonce})
 					}
 				}
@@ -47,13 +50,12 @@ func RepProcess(ms *[]shard.MemShard) {
 		}
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
-	fmt.Println("PoW ",Reputation.CurrentRepBlock.Round," round finished.")
+	fmt.Println("PoW ", Reputation.CurrentRepBlock.Round, " round finished.")
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
 	//close(Reputation.RepPowRxCh)
 }
-
 
 // SendRepPowMessage send reputation block
 func SendRepPowMessage(addr string, command string, message powInfo) {
@@ -63,7 +65,7 @@ func SendRepPowMessage(addr string, command string, message powInfo) {
 }
 
 // HandleRepPowRx receive reputation block
-func HandleRepPowRx(request []byte)  {
+func HandleRepPowRx(request []byte) {
 	var buff bytes.Buffer
 	var payload powInfo
 
@@ -74,8 +76,8 @@ func HandleRepPowRx(request []byte)  {
 		log.Panic(err)
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
-	if payload.Round > Reputation.CurrentRepBlock.Round{
-		Reputation.RepPowRxCh  <- Reputation.RepPowInfo{payload.Round, payload.Nonce, payload.Hash}
+	if payload.Round > Reputation.CurrentRepBlock.Round {
+		Reputation.RepPowRxCh <- Reputation.RepPowInfo{payload.Round, payload.Nonce, payload.Hash}
 		fmt.Println("Received PoW from others")
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()

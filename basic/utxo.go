@@ -28,8 +28,8 @@ func (a *InType) Acc() bool {
 
 //ShardIndex returns the target shard of the input address
 func (a *InType) ShardIndex() uint32 {
-	tmp := cryptonew.GenerateAddr(a.Puk())
-	return uint32(tmp[0]) % gVar.ShardCnt
+	//tmp := cryptonew.GenerateAddr(a.Puk())
+	return uint32(a.PrevTx[0]) % gVar.ShardCnt
 }
 
 //ShardIndex returns the shard index

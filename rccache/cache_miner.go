@@ -98,17 +98,23 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	var tmpHash [gVar.ShardCnt][]byte
 	var tmpDecision [gVar.ShardCnt]basic.TxDecision
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		tmpHash[i] = []byte{}
+		tmpHash[i] = byteSlice(a.Round)
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
+	//fmt.Println(d.ID, "Process TList:")
+	//a.Print()
+	d.TLSCacheMiner[a.HashID] = a
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
+			//fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
 			d.TLNow.Add(0)
 		} else {
 			var res byte
+			//tmp.Print()
 			if tmp.InCheck[d.ShardNum] == 3 {
 				if d.VerifyTx(tmp.Data) {
+					//fmt.Println(d.ID, "Process TList: Tx ", i, " is ok")
 					res = byte(1)
 					d.LockTx(tmp.Data)
 				}
@@ -120,17 +126,37 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 			}
 		}
 	}
+	//fmt.Println("--------TxDecision from miner: ", d.ID, ":    ")
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		tmpDecision[i].HashID = sha256.Sum256(tmpHash[i])
+		//fmt.Print("Decision: ", tmpDecision[i].Decision, " Sig: ")
+		//fmt.Println("Hash of ", i, " : ", base58.Encode(tmpDecision[i].HashID[:]))
 		tmpDecision[i].Sign(&d.prk, 0)
+		//fmt.Println(tmpDecision[i].Sig[0])
 		d.TLNow.Sig[i].New(&tmpDecision[i].Sig[0])
 	}
+	//fmt.Println(d.TLNow.Sig)
+	//fmt.Println("--------TxDecision from miner: ", d.ID, " end-------------")
 	d.TLSent = d.TLNow
+	d.TLRound++
+	if d.TLRound == gVar.NumTxListPerEpoch {
+		d.StopGetTx = true
+	}
 	return nil
 }
 
 //GetTDS and ready to verify txblock
 func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
+	if d.ShardNum == b.ShardIndex {
+		x, ok := d.TLSCacheMiner[b.HashID]
+		if !ok {
+			fmt.Print("Miner", d.ID, "doenst have such TxList")
+			return fmt.Errorf("Miner %d doenst have such TxList", d.ID)
+		}
+		b.TxCnt = x.TxCnt
+		b.TxArray = x.TxArray
+	}
+	fmt.Println("Miner", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	index := 0
 	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {
@@ -143,6 +169,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			tmp.NewFromOther(b.ShardIndex, tmpRes)
 			d.TXCache[tmpHash] = tmp
 		} else {
+			fmt.Println("Result is", b.Result(i))
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
 			/*if tmp.Total == 0 { //Review
@@ -167,6 +194,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 					}
 				}
 			}
+			d.TXCache[tmpHash] = tmp
 		}
 		if shift < 7 {
 			shift++
@@ -175,12 +203,17 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			shift = 0
 		}
 	}
-
+	if d.ShardNum == b.ShardIndex {
+		delete(d.TLSCacheMiner, b.HashID)
+	}
 	return nil
 }
 
 //GetTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
+	if a.Height != d.TxB.Height+1 {
+		return fmt.Errorf("Height not match")
+	}
 	if a.Kind != 0 {
 		return fmt.Errorf("Not valid txblock type")
 	}
@@ -195,8 +228,13 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 			return fmt.Errorf("Verify txblock; No tx in cache")
 		}
 		if tmp.InCheckSum != 0 {
-			return fmt.Errorf("Not be fully recognized")
+			fmt.Println("Error in crossShard")
+			tmp.Print()
+			return fmt.Errorf("Not be fully recognized %d", i)
 		}
+	}
+	for i := uint32(0); i < a.TxCnt; i++ {
+		tmp := d.TXCache[a.TxArray[i].Hash]
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			if tmp.Decision[j] == 1 {
 				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
@@ -207,26 +245,38 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		d.ClearCache(a.TxArray[i].Hash)
 	}
 	*(d.TBCache) = append(*(d.TBCache), a.HashID)
+	d.TxB = a
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
+	fmt.Println("Account data of", d.ID, ":")
+	d.DB.ShowAccount()
 	return nil
 }
 
 //GetFinalTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
+	if a.Height != d.TxB.Height+1 {
+		return fmt.Errorf("Height not match")
+	}
 	if a.Kind != 1 {
 		return fmt.Errorf("Not valid txblock type")
 	}
-	ok, _ := a.Verify(&shard.GlobalGroupMems[shard.ShardToGlobal[a.ShardID][0]].RealAccount.Puk)
+	/*ok, _ := a.Verify(&shard.GlobalGroupMems[shard.ShardToGlobal[a.ShardID][0]].RealAccount.Puk)
 	if !ok {
 		return fmt.Errorf("Signature not valid")
-	}
+	}*/
+	*(d.TBCache) = append(*(d.TBCache), a.HashID)
+	d.FB[a.ShardID] = a
+	d.TxB = a
 	d.DB.AddFinalBlock(a)
 	return nil
 }
 
 //GetStartTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetStartTxBlock(a *basic.TxBlock) error {
+	if a.Height != d.TxB.Height+1 {
+		return fmt.Errorf("Height not match")
+	}
 	if a.Kind != 2 {
 		return fmt.Errorf("Not valid txblock type")
 	}
@@ -239,6 +289,7 @@ func (d *DbRef) GetStartTxBlock(a *basic.TxBlock) error {
 			return fmt.Errorf("final block hash not valid %d", i)
 		}
 	}
+	d.TxB = a
 	d.DB.AddStartBlock(a)
 	d.DB.UploadAcc(d.ShardNum)
 	return nil
