@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"time"
 
+	"log"
+	"os"
+	"strconv"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/rccache"
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/testforclient/network"
-	"strconv"
-	"os"
-	"log"
 )
 
 func main() {
-	arg,err := strconv.Atoi(os.Args[1])
-	if err != nil{
+	arg, err := strconv.Atoi(os.Args[1])
+	if err != nil {
 		log.Panic(err)
 		os.Exit(1)
 	}
@@ -30,24 +31,28 @@ func main() {
 	close(network.IntialReadyCh)
 
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
+
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
-		network.ShardProcess()
-		tmptx := make([]basic.Transaction, 4*3)
-		for i := 0; i < 4; i++ {
-			fmt.Println(shard.GlobalGroupMems[i].RealAccount.Addr, " shard num: ", basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal))
-		}
+		tmptx := make([]basic.Transaction, int(gVar.ShardCnt*gVar.ShardSize)*1000)
 		cnt := 0
-		for i := 0; i < 4; i++ {
-			for j := 0; j < 4; j++ {
-				if i != j {
-					tmptx[cnt] = *rccache.GenerateTx(i, j, uint32(cnt+1))
-					tmptx[cnt].Print()
-					cnt++
+		for k := 0; k < 1000; k++ {
+			for i := 0; i < int(gVar.ShardCnt*gVar.ShardSize); i++ {
+				for j := 0; j < int(gVar.ShardCnt*gVar.ShardSize); j++ {
+					if i != j {
+						tmptx[cnt] = *rccache.GenerateTx(i, j, uint32(cnt+1))
+						//tmptx[cnt].Print()
+						cnt++
+					}
 				}
 			}
 		}
-		time.Sleep(10 * time.Second)
+		network.ShardProcess()
+		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
+			//fmt.Println(shard.GlobalGroupMems[i].RealAccount.Addr, " shard num: ", basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal))
+		}
+
+		//time.Sleep(5 * time.Second)
 		tmpBatch := new(basic.TransactionBatch)
 		tmpBatch.New(&tmptx)
 		data := tmpBatch.Encode()
