@@ -10,10 +10,18 @@ import (
 	"github.com/uchihatmtkinu/RC/rccache"
 	"github.com/uchihatmtkinu/RC/shard"
 	"github.com/uchihatmtkinu/RC/testforclient/network"
+	"strconv"
+	"os"
+	"log"
 )
 
 func main() {
-	ID := 0
+	arg,err := strconv.Atoi(os.Args[1])
+	if err != nil{
+		log.Panic(err)
+		os.Exit(1)
+	}
+	ID := arg
 	totalepoch := 2
 	network.IntilizeProcess(ID)
 	fmt.Println("test begin")
@@ -90,6 +98,6 @@ func main() {
 
 	fmt.Println("All finished")
 
-	time.Sleep(600 * time.Second)
+	time.Sleep(20 * time.Second)
 
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"bufio"
 )
 
 //IntilizeProcess is init
@@ -27,14 +28,24 @@ func IntilizeProcess(ID int) {
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
 	//GlobalAddrMapToInd = make(map[string]int)
 	MyGlobalID = ID
-	port := int64(2999)
 	file, err := os.Open("PriKeys.txt")
+	defer file.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	fileIP, err := os.Open("IP.txt")
+	defer fileIP.Close()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	scanner := bufio.NewScanner(fileIP)
+	scanner.Split(bufio.ScanLines)
+
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
+
 		acc[i].New(strconv.Itoa(i))
 		acc[i].NewCosi()
 		tmp1 := make([]byte, 121)
@@ -52,8 +63,8 @@ func IntilizeProcess(ID int) {
 		accWallet[i].Value = 100
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
-		port++
-		IPAddr = "127.0.0.1:" + strconv.FormatInt(port, 10)
+		scanner.Scan()
+		IPAddr = scanner.Text()
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		shard.GlobalGroupMems[i].AddRep(int64(i))
