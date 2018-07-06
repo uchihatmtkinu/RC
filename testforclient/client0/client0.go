@@ -57,7 +57,7 @@ func main() {
 		tmpBatch.New(&tmptx)
 		data := tmpBatch.Encode()
 		network.HandleTotalTx(data)
-		for i := 1; i < 4; i++ {
+		for i := 1; i < int(gVar.ShardCnt*gVar.ShardSize); i++ {
 			network.SendTxMessage(shard.GlobalGroupMems[i].Address, "TxM", data)
 		}
 		if k == 1 {
