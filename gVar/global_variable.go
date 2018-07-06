@@ -27,3 +27,7 @@ const NumTxListPerEpoch = 1
 
 //NumTxBlockForRep is the number of blocks for one rep block
 const NumTxBlockForRep = 2
+
+//const GensisAcc = []byte{0}
+
+const GensisAccValue = 2147483647

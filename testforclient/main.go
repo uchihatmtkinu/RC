@@ -49,6 +49,8 @@ type JsData struct {
 }
 
 var txCnt int
+var flag bool
+var transactionCache *[]basic.Transaction
 
 func JsonMake(stat int, start int, last int, name int) int {
 	//url := "https://blockchain.info/rawblock/00000000d1145790a8694403d4063f323d499e655c83426834d4ce2f8dd4a2ee"
@@ -116,38 +118,13 @@ func JsonMake(stat int, start int, last int, name int) int {
 
 }
 
+func getTxDataFromFile() {
+
+}
+
 func main() {
-	/*totalNum := int(gVar.ShardSize * gVar.ShardCnt)
-	fmt.Println("test begin")
-	network.StartServer(1)
-
-	fmt.Println(network.MyGlobalID)
-
-	network.ShardProcess()
-
-	for i := 0; i < totalNum; i++ {
-		fmt.Println()
-		shard.GlobalGroupMems[i].AddRep(int64(i))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i + 1))
-		shard.GlobalGroupMems[i].SetTotalRep(int64(i + 2))
-		shard.GlobalGroupMems[i].Print()
-		fmt.Println(shard.GlobalGroupMems[i].CalTotalRep())
-	}
-	network.RepProcess(&shard.GlobalGroupMems)*/
+	flag = true
 	txCnt = 0
-	/*start := 150000
-	last := start + 50000
-	currentBlockID := start
-
-	for i := 0; i < last; i++ {
-
-		xx := JsonMake(i, currentBlockID, last, 4)
-		if xx >= last {
-			break
-		}
-		currentBlockID = xx
-	}*/
 	file, _ := os.Open("TxData4.txt")
 	for i := 0; i < 50000; i++ {
 		tmp1 := make([]byte, 4)

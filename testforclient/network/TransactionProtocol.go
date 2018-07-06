@@ -110,14 +110,14 @@ func SendTxDecSet(data [][]byte) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
-			fmt.Println(CacheDbRef.ID, "send TDS to", xx)
+			//fmt.Println(CacheDbRef.ID, "send TDS to", xx)
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxDecSetM", data[CacheDbRef.ShardNum])
 		}
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
 		if i != CacheDbRef.ShardNum {
-			fmt.Println(CacheDbRef.ID, "send TDS to", shard.ShardToGlobal[i][xx])
+			//fmt.Println(CacheDbRef.ID, "send TDS to", shard.ShardToGlobal[i][xx])
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
 		}
 	}
@@ -194,8 +194,8 @@ func HandleTxList(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
-	fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
+	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
+	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	flag := true
 	for flag {
