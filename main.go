@@ -54,7 +54,7 @@ func main() {
 			go network.TxGeneralLoop()
 		}
 		//test rep
-		go network.RepProcessLoop(&shard.GlobalGroupMems, totalepoch)
+		go network.RepProcessLoop(&shard.GlobalGroupMems)
 		//Reputation.CurrentRepBlock.Mu.RLock()
 		//Reputation.CurrentRepBlock.Block.Print()
 		//Reputation.CurrentRepBlock.Mu.RUnlock()

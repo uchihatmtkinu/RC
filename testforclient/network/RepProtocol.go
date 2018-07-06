@@ -17,16 +17,14 @@ import (
 //var currentTxDecSet *[]basic.TxDecSet
 
 //RepProcessLoop is the loop of reputation
-func RepProcessLoop(ms *[]shard.MemShard, NumEpoch int) {
-	for i := 0; i < NumEpoch; i++ {
-		flag := true
-		for flag {
-			flag = RepProcess(ms)
-			time.Sleep(time.Second * 2)
-		}
-		fmt.Println("Start to sync")
-		<-startSync
+func RepProcessLoop(ms *[]shard.MemShard) {
+	flag := true
+	for flag {
+		flag = RepProcess(ms)
+		time.Sleep(time.Second * 2)
 	}
+	fmt.Println("Start to sync")
+	startSync <- true
 }
 
 //RepProcess pow proces
