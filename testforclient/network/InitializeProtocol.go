@@ -98,6 +98,7 @@ func IntilizeProcess(ID int) {
 	SyncReadyCh = make(chan bool)
 
 	FinalTxReadyCh = make(chan bool)
+	waitForFB = make(chan bool)
 	//channel used in shard
 	readyCh = make(chan readyInfo, bufferSize)
 

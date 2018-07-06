@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"time"
 
 	"fmt"
 
@@ -21,6 +22,7 @@ func RepProcessLoop(ms *[]shard.MemShard, NumEpoch int) {
 		flag := true
 		for flag {
 			flag = RepProcess(ms)
+			time.Sleep(time.Second * 2)
 		}
 		<-startSync
 	}

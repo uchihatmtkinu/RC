@@ -59,7 +59,6 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	CacheDbRef.GetFinalTxBlock(tmp)
 	fmt.Println(CacheDbRef.ID, "start to make repBlock")
 	startRep <- false
-
 	CacheDbRef.Mu.Unlock()
 	return nil
 }

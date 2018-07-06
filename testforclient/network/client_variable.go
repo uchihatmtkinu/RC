@@ -144,5 +144,7 @@ var ShardReadyCh chan bool
 var CoSiReadyCh chan bool
 var SyncReadyCh chan bool
 
+var waitForFB chan bool
+
 //FinalTxReadyCh whether the FB is done
 var FinalTxReadyCh chan bool
