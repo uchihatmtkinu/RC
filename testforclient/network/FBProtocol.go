@@ -21,9 +21,13 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "FinalTxB", data)
 		}
 	}
-	fmt.Println(CacheDbRef.ID, "start to make repBlock")
-	startRep <- false
 	CacheDbRef.Mu.Unlock()
+
+	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
+	copy(tmp, *CacheDbRef.TBCache)
+	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
+	startRep <- repInfo{Last: false, Hash: tmp}
+	fmt.Println(CacheDbRef.ID, "start to make last repBlock")
 }
 
 //SendStartBlock is to send start block
@@ -50,16 +54,19 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	data := <-finalSignal
 	data1 := make([]byte, len(data))
 	copy(data1, data)
-	tmp := new(basic.TxBlock)
-	err := tmp.Decode(&data1, 1)
+	tmpTB := new(basic.TxBlock)
+	err := tmpTB.Decode(&data1, 1)
 	if err != nil {
 		return err
 	}
 	CacheDbRef.Mu.Lock()
-	CacheDbRef.GetFinalTxBlock(tmp)
-	fmt.Println(CacheDbRef.ID, "start to make repBlock")
-	startRep <- false
+	CacheDbRef.GetFinalTxBlock(tmpTB)
 	CacheDbRef.Mu.Unlock()
+	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
+	copy(tmp, *CacheDbRef.TBCache)
+	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
+	startRep <- repInfo{Last: false, Hash: tmp}
+	fmt.Println(CacheDbRef.ID, "start to make last repBlock")
 	return nil
 }
 

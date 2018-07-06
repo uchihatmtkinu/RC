@@ -107,6 +107,6 @@ func IntilizeProcess(ID int) {
 
 	//channel used in final block
 	finalSignal = make(chan []byte)
-	startRep = make(chan bool)
+	startRep = make(chan repInfo)
 	startSync = make(chan bool)
 }

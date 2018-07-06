@@ -8,7 +8,6 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/rccache"
 	"github.com/uchihatmtkinu/RC/shard"
 )
 
@@ -28,7 +27,7 @@ type RepBlockchainIterator struct {
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
-func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef) {
+func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
 	var lastHash [32]byte
 	var fromOtherFlag bool
 
@@ -41,14 +40,13 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *(cache.TBCache), lastHash)
+	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
 	if fromOtherFlag {
 		RepPowTxCh <- RepPowInfo{CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
 	}
 	shard.StartFlag = false
 
-	*cache.TBCache = (*cache.TBCache)[gVar.NumTxBlockForRep:]
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())

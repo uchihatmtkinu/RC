@@ -68,7 +68,10 @@ func TxGeneralLoop() {
 					CacheDbRef.GenerateTxBlock()
 					if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 						fmt.Println(CacheDbRef.ID, "start to make repBlock")
-						startRep <- true
+						tmp := make([][32]byte, gVar.NumTxBlockForRep)
+						copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+						*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
+						startRep <- repInfo{Last: true, Hash: tmp}
 					}
 					data3 := new([]byte)
 					CacheDbRef.TxB.Encode(data3, 0)
@@ -328,7 +331,10 @@ func HandleTxBlock(data []byte) error {
 	CacheDbRef.Mu.Lock()
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		startRep <- true
+		tmp := make([][32]byte, gVar.NumTxBlockForRep)
+		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
+		startRep <- repInfo{Last: true, Hash: tmp}
 	}
 	if CacheDbRef.TxCnt >= gVar.NumTxPerEpoch {
 		CacheDbRef.UnderSharding = true

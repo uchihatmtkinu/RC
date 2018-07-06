@@ -24,6 +24,7 @@ func RepProcessLoop(ms *[]shard.MemShard, NumEpoch int) {
 			flag = RepProcess(ms)
 			time.Sleep(time.Second * 2)
 		}
+		fmt.Println("Start to sync")
 		<-startSync
 	}
 }
@@ -37,9 +38,8 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan bool)
-	CacheDbRef.Mu.Lock()
-	go Reputation.MyRepBlockChain.MineRepBlock(ms, &CacheDbRef)
-	CacheDbRef.Mu.Unlock()
+	tmp := res.Hash
+	go Reputation.MyRepBlockChain.MineRepBlock(ms, &tmp)
 	for flag {
 		select {
 		case item = <-Reputation.RepPowTxCh:
@@ -67,7 +67,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
-	return res
+	return res.Last
 	//close(Reputation.RepPowRxCh)
 }
 

@@ -88,9 +88,15 @@ var cosiSigCh chan cosi.SignaturePart
 //finalSignal
 var finalSignal chan []byte
 
-var startRep chan bool
+var startRep chan repInfo
 var startTx chan int
 var startSync chan bool
+
+//syncSBInfo sync block info
+type repInfo struct {
+	Last bool
+	Hash [][32]byte
+}
 
 //---------------------- sync process -------------
 //syncSBInfo sync block info
