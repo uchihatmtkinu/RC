@@ -40,7 +40,7 @@ func main() {
 			for i := 0; i < int(gVar.ShardCnt*gVar.ShardSize); i++ {
 				for j := 0; j < int(gVar.ShardCnt*gVar.ShardSize); j++ {
 					if i != j {
-						tmptx[cnt] = *rccache.GenerateTx(i, j, uint32(cnt+1))
+						tmptx[cnt] = *rccache.GenerateTx(i, j, 1)
 						//tmptx[cnt].Print()
 						cnt++
 					}

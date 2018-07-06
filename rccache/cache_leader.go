@@ -232,6 +232,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			tmpRes := b.Result(i)
 			if tmpRes == false {
 				for j := uint32(0); j < gVar.ShardSize; j++ {
+					fmt.Println("TDS:", j, ":", b.MemD[j].ID)
 					if tmp.Decision[j] == 1 {
 						shard.GlobalGroupMems[b.MemD[j].ID].Rep += gVar.RepTN * int64(tmp.Value)
 					} else if tmp.Decision[j] == 2 {

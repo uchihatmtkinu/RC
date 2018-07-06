@@ -379,7 +379,7 @@ func HandleTxDecLeader(data []byte) error {
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
-	tmp.Print()
+	//tmp.Print()
 	err = CacheDbRef.UpdateTXCache(tmp)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)

@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	"bufio"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/account"
 	"github.com/uchihatmtkinu/RC/base58"
@@ -13,7 +15,6 @@ import (
 	"github.com/uchihatmtkinu/RC/cryptonew"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"bufio"
 )
 
 //IntilizeProcess is init
@@ -60,7 +61,7 @@ func IntilizeProcess(ID int) {
 		acc[i].AddrReal = cryptonew.AddressGenerate(&acc[i].Pri)
 		acc[i].Addr = base58.Encode(acc[i].AddrReal[:])
 		accWallet[i].ID = acc[i].AddrReal
-		accWallet[i].Value = 100
+		accWallet[i].Value = 100000
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
 		scanner.Scan()
