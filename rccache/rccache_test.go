@@ -20,7 +20,7 @@ import (
 
 func TestGeneratePriKey(t *testing.T) {
 	file, _ := os.Create("PriKeys.txt")
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 1800; i++ {
 		var tmp account.RcAcc
 		tmp.New(strconv.Itoa(i))
 		tmp.NewCosi()
