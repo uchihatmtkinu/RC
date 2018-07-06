@@ -4,10 +4,10 @@ package gVar
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 2
+const ShardSize uint32 = 4
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 1
+const ShardCnt uint32 = 20
 
 //used in rep calculation, scaling factor
 const RepTP = 1
@@ -20,17 +20,17 @@ const RepFN = 1
 const SlidingWindows = 10
 
 //NumTxBlockPerEpoch is the number of txblocks in one epoch
-const NumTxPerEpoch = 20000 //48000
+const NumTxPerEpoch = 24000 //48000
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 5 //60
+const NumTxListPerEpoch = 12 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 2 //10
+const NumTxBlockForRep = 3 //10
 
-const NumTxPerBlock = 4000 //2000
+const NumTxPerBlock = 2000 //2000
 
-const NumTxPerTL = 4000 //400
+const NumTxPerTL = 2000 //400
 
 //const GensisAcc = []byte{0}
 
@@ -38,4 +38,4 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 1
 
-const NumOfTxForTest = 20000 //int(2 * 60 * 4000 * ShardSize)
+const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
