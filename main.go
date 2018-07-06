@@ -36,7 +36,7 @@ func main() {
 	//cnt := 0
 	for k := 0; k < len(tmptx); k++ {
 		i := rand.Int() % numCnt
-		j := rand.Int() & numCnt
+		j := rand.Int() % numCnt
 		tmptx[k] = *rccache.GenerateTx(i, j, 1)
 	}
 
