@@ -16,6 +16,7 @@ func SendTx(x *[]byte) {
 		if xx != int(CacheDbRef.ID) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxM", *x)
 		}
+
 	}
 	for i := 0; i < int(gVar.ShardCnt); i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
@@ -23,6 +24,7 @@ func SendTx(x *[]byte) {
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "Tx", *x)
 		}
 	}
+	HandleTotalTx(*x)
 }
 
 //SendLoop is the protocol for sending
