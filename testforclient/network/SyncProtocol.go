@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -70,10 +71,10 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	sbrxflag := true
 	//txblock flag
 	//TODO test
-	tbrxflag := false
+	tbrxflag := true
 	//txBlock Transaction block
 	//TODO test
-	//var txBlockMessage syncTBInfo
+	var txBlockMessage syncTBInfo
 	//syncBlock SyncBlock
 	var syncBlockMessage syncSBInfo
 	for sbrxflag || tbrxflag {
@@ -91,8 +92,15 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				}
 			}
 		//TODO test
-		//case txBlockMessage = <-syncTBCh[k]:
-		//	tbrxflag = false
+		case txBlockMessage = <-syncTBCh[k]:
+			ok, err := txBlockMessage.Block.Verify(&(*ms)[shard.ShardToGlobal[k][0]].RealAccount.Puk)
+			if ok {
+				tbrxflag = false
+				tmpBlock := txBlockMessage.Block
+				CacheDbRef.FB[k] = &tmpBlock
+			} else {
+				fmt.Println("FinalTxBlock verify failed: ", err)
+			}
 		case <-syncNotReadyCh[k]:
 			fmt.Println("sleep for not ready")
 			time.Sleep(timeSyncNotReadySleep)
@@ -106,10 +114,11 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		}
 	}
 	if !sbrxflag && !tbrxflag {
-		fmt.Println("update now-----------")
 		//add transaction block
 		//TODO test
-		//CacheDbRef.GetFinalTxBlock(&txBlockMessage.Block)
+		CacheDbRef.Mu.Lock()
+		CacheDbRef.GetFinalTxBlock(&txBlockMessage.Block)
+		CacheDbRef.Mu.Unlock()
 		//update reputation of members
 		syncBlockMessage.Block.UpdateTotalRepInMS(ms)
 		//add sync Block
@@ -118,14 +127,14 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	fmt.Println("received sync from shard:", k)
 }
 
-// sendCosiMessage send cosi message
+//SendSyncMessage send cosi message
 func SendSyncMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
 
-// HandleChallenge rx challenge
+//HandleSyncNotReady rx challenge
 func HandleSyncNotReady(request []byte) {
 	var buff bytes.Buffer
 	var payload syncNotReadyInfo
@@ -137,6 +146,8 @@ func HandleSyncNotReady(request []byte) {
 	}
 	syncNotReadyCh[shard.GlobalGroupMems[payload.ID].Shard] <- true
 }
+
+//HandleRequestSync handles the sync request
 func HandleRequestSync(request []byte) {
 	var buff bytes.Buffer
 	var payload syncRequestInfo
@@ -148,7 +159,7 @@ func HandleRequestSync(request []byte) {
 		log.Panic(err)
 	}
 	addr := shard.GlobalGroupMems[payload.ID].Address
-	fmt.Println("Recived request sync from ",payload.ID)
+	fmt.Println("Recived request sync from ", payload.ID)
 	Reputation.CurrentSyncBlock.Mu.RLock()
 	defer Reputation.CurrentSyncBlock.Mu.RUnlock()
 	if payload.Epoch > Reputation.CurrentSyncBlock.Epoch {
@@ -157,16 +168,15 @@ func HandleRequestSync(request []byte) {
 	}
 	if payload.Epoch == Reputation.CurrentSyncBlock.Epoch {
 		//TODO test
-		//tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
-		//sendTxMessage(addr, "syncTB", tmp.Encode())
+		tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
+		sendTxMessage(addr, "syncTB", tmp.Encode())
 		SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock.Block})
 		return
 	}
 
-
 }
 
-// HandleChallenge rx challenge
+//HandleSyncSBMessage rx challenge
 func HandleSyncSBMessage(request []byte) {
 	var buff bytes.Buffer
 	var payload syncSBInfo
@@ -183,8 +193,12 @@ func HandleSyncSBMessage(request []byte) {
 //HandleSyncTBMessage decodes the txblock
 func HandleSyncTBMessage(request []byte) {
 	var payload syncTBInfo
+	tmpdata := make([]byte, len(request))
+	copy(tmpdata, request)
+	err := payload.Decode(&tmpdata)
 
-	err := payload.Decode(&request)
+	fmt.Println("SyncTBdata:", payload.ID, "Hash:", base58.Encode(payload.Block.HashID[:]))
+	//payload.Block.Print()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -196,13 +210,14 @@ func HandleSyncTBMessage(request []byte) {
 func (s *syncTBInfo) Encode() []byte {
 	var tmp []byte
 	basic.Encode(&tmp, uint32(s.ID))
-	s.Block.Encode(&tmp, 1)
+	tmp = append(tmp, s.Block.Serial()...)
+	fmt.Println("syncTBInfo length: ", len(tmp))
 	return tmp
 }
 
 //Decode is the decode
 func (s *syncTBInfo) Decode(buf *[]byte) error {
-	var tmp int
+	var tmp uint32
 	basic.Decode(buf, &tmp)
 	s.ID = int(tmp)
 	err := s.Block.Decode(buf, 1)

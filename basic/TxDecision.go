@@ -44,6 +44,7 @@ func (a *TxDecision) Sign(prk *ecdsa.PrivateKey, x uint32) {
 	tmp = append(tmp, byteSlice(a.ID)...)
 	tmpHash := sha256.Sum256(tmp)
 	a.Sig[x].Sign(tmpHash[:], prk)
+	//fmt.Println(a.Sig[x], " is the sig of ", tmpHash, "Hash is", base58.Encode(a.HashID[:]))
 }
 
 //Verify the signature using public key
@@ -52,6 +53,7 @@ func (a *TxDecision) Verify(puk *ecdsa.PublicKey, x uint32) bool {
 	tmp = append(a.HashID[:], a.Decision...)
 	tmp = append(tmp, byteSlice(a.ID)...)
 	tmpHash := sha256.Sum256(tmp)
+	//fmt.Println("Verify ", a.Sig[x], " is the sig of ", tmpHash, "Hash is", base58.Encode(a.HashID[:]))
 	return a.Sig[x].Verify(tmpHash[:], puk)
 }
 
@@ -97,7 +99,7 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 	}
 	if a.Single == 1 {
 		a.Sig = make([]RCSign, 1)
-		err = Decode(buf, a.Sig[0])
+		err = Decode(buf, &a.Sig[0])
 		if err != nil {
 			return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 		}
@@ -108,7 +110,7 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 		}
 		a.Sig = make([]RCSign, gVar.ShardCnt)
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			err = Decode(buf, a.Sig[i])
+			err = Decode(buf, &a.Sig[i])
 			if err != nil {
 				return fmt.Errorf("TxDecision Sig decode failed: %s", err)
 			}
@@ -119,6 +121,7 @@ func (a *TxDecision) Decode(buf *[]byte) error {
 
 //Print is
 func (a *TxDecision) Print() {
+	fmt.Println("----------------TxDecision------------------")
 	fmt.Println("TxDecision: ID: ", a.ID, " TxCnt: ", a.TxCnt, " Target: ", a.Target)
 	fmt.Println("Single : ", a.Single, " Hash: ", base58.Encode(a.HashID[:]))
 	fmt.Print("Result: ")

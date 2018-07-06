@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 )
 
@@ -93,6 +94,10 @@ func (a *TxBlock) MakeTxBlock(ID uint32, b *[]Transaction, preHash [32]byte, prk
 	a.TxCnt = uint32(len(*b))
 	a.Height = h
 	a.TxArray = *b
+	a.TxArrayX = make([][SHash]byte, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArrayX[i] = HashCut(a.TxArray[i].Hash)
+	}
 	GenMerkTree(&a.TxArray, &a.MerkleRoot)
 	if kind == 1 {
 		a.PrevFinalHash = *preFH
@@ -257,8 +262,18 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 			}
 		}
 	}
-	if len(*buf) != 0 {
+	/*if len(*buf) != 0 {
 		return fmt.Errorf("TxBlock decode failed: With extra bits")
-	}
+	}*/
 	return nil
+}
+
+//Print output the block data
+func (a *TxBlock) Print() {
+	fmt.Println("----------TxBlock-----------")
+	fmt.Println("ID:", a.ID, "Hash:", base58.Encode(a.HashID[:]), "PrevH:", base58.Encode(a.PrevHash[:]))
+	fmt.Println("Height:", a.Height, "TxCnt:", a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArray[i].Print()
+	}
 }

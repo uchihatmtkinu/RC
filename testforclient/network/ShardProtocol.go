@@ -1,20 +1,22 @@
 package network
 
 import (
-	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/gVar"
-	"fmt"
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"log"
-	"github.com/uchihatmtkinu/RC/Reputation"
 	"time"
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
-)
-var readymask	[]byte
-func ShardProcess(){
-	var beginShard	shard.Instance
 
+	"github.com/uchihatmtkinu/RC/Reputation"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
+)
+
+var readymask []byte
+
+func ShardProcess() {
+	var beginShard shard.Instance
 
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round = -1
@@ -22,7 +24,7 @@ func ShardProcess(){
 
 	shard.StartFlag = true
 	shard.ShardToGlobal = make([][]int, gVar.ShardCnt)
-	if CurrentEpoch != 1 {
+	if CurrentEpoch != -1 {
 		for i := 0; i < int(gVar.ShardSize*gVar.ShardCnt); i++ {
 			shard.GlobalGroupMems[i].ClearRep()
 		}
@@ -36,33 +38,45 @@ func ShardProcess(){
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
 
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
+	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
+	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 
-
-	if shard.MyMenShard.Role == 1{
+	if shard.MyMenShard.Role == 1 {
 		MinerReadyProcess()
-	}	else {
+	} else {
+		if CurrentEpoch != -1 {
+			go SendStartBlock(&shard.GlobalGroupMems)
+		}
 		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.StopGetTx = false
+	CacheDbRef.UnderSharding = false
+	CacheDbRef.Mu.Unlock()
 	fmt.Println("shard finished")
+	if CurrentEpoch != -1 {
+		CacheDbRef.Clear()
+		FinalTxReadyCh <- true
+	}
 }
 
 //LeaderReadyProcess leader use this
-func LeaderReadyProcess(ms *[]shard.MemShard){
-	var readyMessage 	readyInfo
-	var it 				*shard.MemShard
-	var responsemask	[]byte
+func LeaderReadyProcess(ms *[]shard.MemShard) {
+	var readyMessage readyInfo
+	var it *shard.MemShard
+	var responsemask []byte
 
-	intilizeMaskBit(&responsemask, (int(gVar.ShardSize)+7)>>3,cosi.Disabled)
+	intilizeMaskBit(&responsemask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
 
 	readyCount := 1
 	//sent announcement
-	for i:=1; i < int(gVar.ShardSize); i++ {
+	for i := 1; i < int(gVar.ShardSize); i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		SendCosiMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 	}
 	fmt.Println("sent CoSi announce")
 	//fmt.Println("wait for ready")
-	//TODO test
+	//TODO modify int(gVar.ShardSize)/2
 	for readyCount < int(gVar.ShardSize) {
 		select {
 		case readyMessage = <-readyCh:
@@ -72,8 +86,8 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 				fmt.Println("ReadyCount: ", readyCount)
 			}
 		case <-time.After(timeoutSync):
-			for i:=1; i < int(gVar.ShardSize); i++ {
-				if maskBit(i,&responsemask) == cosi.Disabled {
+			for i := 1; i < int(gVar.ShardSize); i++ {
+				if maskBit(i, &responsemask) == cosi.Disabled {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 					SendCosiMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 				}
@@ -81,10 +95,10 @@ func LeaderReadyProcess(ms *[]shard.MemShard){
 		}
 	}
 
-
 }
+
 //MinerReadyProcess member use this
-func MinerReadyProcess(){
+func MinerReadyProcess() {
 	var readyMessage readyInfo
 	readyMessage = <-readyCh
 	for !(readyMessage.Epoch == CurrentEpoch && shard.ShardToGlobal[shard.MyMenShard.Shard][0] == readyMessage.ID) {
@@ -94,7 +108,6 @@ func MinerReadyProcess(){
 	fmt.Println("Sent Ready")
 }
 
-
 func SendShardReadyMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
@@ -102,7 +115,7 @@ func SendShardReadyMessage(addr string, command string, message interface{}) {
 }
 
 //HandleShardReady handle shard ready announcement command
-func HandleShardReadyAnnounce(request []byte){
+func HandleShardReadyAnnounce(request []byte) {
 	var buff bytes.Buffer
 	var payload readyInfo
 	buff.Write(request)
@@ -113,6 +126,7 @@ func HandleShardReadyAnnounce(request []byte){
 	}
 	readyCh <- payload
 }
+
 //HandleShardReady handle shard ready command
 func HandleShardReady(request []byte) {
 	var buff bytes.Buffer

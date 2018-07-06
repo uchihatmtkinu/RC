@@ -46,10 +46,17 @@ type Transaction struct {
 	Hash      [32]byte
 }
 
+//TransactionBatch a set of multiple transactions
+type TransactionBatch struct {
+	TxCnt   uint32
+	TxArray []Transaction
+}
+
 //TxList is the list of tx sent by Leader to miner for their verification
 type TxList struct {
 	ID       uint32
 	HashID   [32]byte
+	Round    uint32
 	TxCnt    uint32
 	TxArray  [][32]byte
 	TxArrayX [][SHash]byte

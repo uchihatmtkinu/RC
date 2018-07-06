@@ -6,8 +6,9 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/uchihatmtkinu/RC/gVar"
 	"fmt"
+
+	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 type sortType struct {
@@ -85,6 +86,7 @@ func (c *Instance) GenerateSeed(a *[][32]byte) error {
 func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 	sortData := make([]sortType, len(*a))
 	for i := 0; i < len(*a); i++ {
+		(*a)[i].PreShard = (*a)[i].Shard
 		sortData[i].Address = (*a)[i].Address
 		sortData[i].ID = uint32(i)
 		sortData[i].Rep = (*a)[i].CalTotalRep()

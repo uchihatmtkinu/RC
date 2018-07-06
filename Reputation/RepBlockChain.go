@@ -1,14 +1,15 @@
 package Reputation
 
 import (
-
-	"github.com/boltdb/bolt"
+	"fmt"
 	"log"
 	"os"
-	"fmt"
-	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/rccache"
 	"strconv"
+
+	"github.com/boltdb/bolt"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/rccache"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 const dbFile = "RepBlockchain"
@@ -17,7 +18,7 @@ const blocksBucket = "blocks"
 //reputation block chain
 type RepBlockchain struct {
 	Tip [32]byte
-	Db *bolt.DB
+	Db  *bolt.DB
 }
 
 // RepBlockchainIterator is used to iterate over Repblockchain blocks
@@ -35,19 +36,19 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 	lastHash = CurrentRepBlock.Block.Hash
 	CurrentRepBlock.Mu.RUnlock()
 
-	tmp := [][32]byte{{0}}
-	cache.TBCache = &tmp
+	//tmp := [][32]byte{{0}}
+	//cache.TBCache = &tmp
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag,  shard.PreviousSyncBlockHash, *(cache.TBCache) ,lastHash)
-	CurrentRepBlock.Round ++
+	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *(cache.TBCache), lastHash)
+	CurrentRepBlock.Round++
 	if fromOtherFlag {
 		RepPowTxCh <- RepPowInfo{CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
 	}
 	shard.StartFlag = false
 
-	cache.TBCache = nil
+	*cache.TBCache = (*cache.TBCache)[gVar.NumTxBlockForRep:]
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
@@ -70,7 +71,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *rccache.DbRef
 }
 
 // add a new syncBlock on RepBlockChain
-func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) {
+func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
 	tmpCoSignature := make([]byte, len(CoSignature))
 	copy(tmpCoSignature, CoSignature)
@@ -79,10 +80,10 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, CoSignature []byte) 
 	lastRepBlockHash = CurrentRepBlock.Block.Hash
 	CurrentRepBlock.Mu.RUnlock()
 
-
 	CurrentSyncBlock.Mu.Lock()
-	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash,  tmpCoSignature)
-	CurrentSyncBlock.Epoch ++
+	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash, preFBHash, tmpCoSignature)
+	CurrentSyncBlock.Epoch++
+	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
 	defer CurrentSyncBlock.Mu.Unlock()
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
@@ -115,20 +116,14 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 		if err != nil {
 			log.Panic(err)
 		}
-		fmt.Println("Add from other")
-		CurrentSyncBlock.Mu.RLock()
-		CurrentSyncBlock.Block.Print()
-		CurrentSyncBlock.Mu.RUnlock()
+
 		shard.PreviousSyncBlockHash[k] = syncBlock.Hash
-		fmt.Println("Add from other after")
-		CurrentSyncBlock.Mu.RLock()
-		CurrentSyncBlock.Block.Print()
-		CurrentSyncBlock.Mu.RUnlock()
+
 		/*
-		err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
-		if err != nil {
-			log.Panic(err)
-		}*/
+			err = b.Put([]byte("lsb"+strconv.FormatInt(int64(k), 10)), syncBlock.Hash[:])
+			if err != nil {
+				log.Panic(err)
+			}*/
 
 		return nil
 	})
@@ -137,10 +132,9 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 	}
 }
 
-
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewRepBlockchain(nodeAdd string) *RepBlockchain {
-	dbFile := dbFile+nodeAdd+".db"
+	dbFile := dbFile + nodeAdd + ".db"
 	if dbExists(dbFile) == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
@@ -180,20 +174,19 @@ func NewRepBlockchain(nodeAdd string) *RepBlockchain {
 	return &bc
 }
 
-
 // CreateRepBlockchain creates a new blockchain DB
 func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
-	dbFile := dbFile+nodeAdd+".db"
+	dbFile := dbFile + nodeAdd + ".db"
 	fmt.Println(dbFile)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		err := os.Remove(dbFile)
-		err = os.Remove(dbFile+".lock")
+
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
+		err = os.Remove(dbFile + ".lock")
 	}
 
 	var tip [32]byte
@@ -235,7 +228,6 @@ func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
 
 	return &bc
 }
-
 
 //iterator
 func (bc *RepBlockchain) Iterator() *RepBlockchainIterator {
@@ -302,7 +294,6 @@ func (i *RepBlockchainIterator) NextToStart() *RepBlock {
 	}
 	return block
 }
-
 
 //whether database exisits
 func dbExists(dbFile string) bool {

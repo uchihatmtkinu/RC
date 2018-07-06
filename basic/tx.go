@@ -158,6 +158,7 @@ func (a *Transaction) AddOut(b OutType) {
 
 //Print is
 func (a *Transaction) Print() {
+	fmt.Println("-----------Transaction-----------------")
 	fmt.Println("Transaction: Time: ", a.Timestamp, " InCnt: ", a.TxinCnt, " OutCnt: ", a.TxoutCnt)
 	fmt.Println("Kind: ", a.Kind)
 	fmt.Println("Hash: ", base58.Encode(a.Hash[:]))
@@ -169,4 +170,39 @@ func (a *Transaction) Print() {
 		fmt.Print(i, " ")
 		a.Out[i].Print()
 	}
+	fmt.Println("-----------Transaction end-----------------")
+}
+
+//New is to initialize a transactionbatch
+func (a *TransactionBatch) New(b *[]Transaction) error {
+	a.TxCnt = uint32(len(*b))
+	a.TxArray = make([]Transaction, a.TxCnt)
+	copy(a.TxArray, *b)
+	return nil
+}
+
+//Encode is to encode a transactionbatch
+func (a *TransactionBatch) Encode() []byte {
+	tmp := make([]byte, 0)
+	Encode(&tmp, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		a.TxArray[i].Encode(&tmp)
+	}
+	return tmp
+}
+
+//Decode is to encode a transactionbatch
+func (a *TransactionBatch) Decode(buf *[]byte) error {
+	err := Decode(buf, &a.TxCnt)
+	if err != nil {
+		return fmt.Errorf("TxBatch failed: %s", err)
+	}
+	a.TxArray = make([]Transaction, a.TxCnt)
+	for i := uint32(0); i < a.TxCnt; i++ {
+		err = a.TxArray[i].Decode(buf)
+		if err != nil {
+			return fmt.Errorf("TxBatch failed: %s", err)
+		}
+	}
+	return nil
 }

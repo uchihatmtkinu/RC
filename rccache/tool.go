@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 //UTXOSet is the set of utxo in database
@@ -52,4 +53,21 @@ func byteSlice(x uint32) []byte {
 	var tmp []byte
 	basic.EncodeInt(&tmp, x)
 	return tmp
+}
+
+func GenerateTx(x int, y int, z uint32) *basic.Transaction {
+	var tmp basic.Transaction
+	tmp.New(0)
+	var b basic.OutType
+	b.Address = shard.GlobalGroupMems[y].RealAccount.AddrReal
+	b.Value = z
+	var a basic.InType
+	a.Init()
+	a.PrevTx = shard.GlobalGroupMems[x].RealAccount.AddrReal
+	a.Index = z
+	tmp.AddOut(b)
+	tmp.AddIn(a)
+	tmp.Hash = tmp.HashTx()
+	tmp.SignTx(0, &shard.GlobalGroupMems[x].RealAccount.Pri)
+	return &tmp
 }

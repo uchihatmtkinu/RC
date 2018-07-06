@@ -7,22 +7,11 @@ import (
 	"log"
 	"net"
 
-	"github.com/uchihatmtkinu/RC/shard"
 	"encoding/gob"
 	"io/ioutil"
+
+	"github.com/uchihatmtkinu/RC/shard"
 )
-
-var nodeAddress string
-var knownNodes = []string{"localhost:3000"}
-var knownGroupNodes = []string{}
-var myheight int
-
-//version
-type verzion struct {
-	Version    int
-	BestHeight int
-	AddrFrom   string
-}
 
 //address
 type addr struct {
@@ -54,7 +43,7 @@ func bytesToCommand(bytees []byte) string {
 }
 
 //send data to addr
-func sendData(addr string , data []byte) {
+func sendData(addr string, data []byte) {
 	conn, err := net.Dial(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
@@ -66,70 +55,6 @@ func sendData(addr string , data []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-/*
-func sendVersion(addr string, height int) {
-	bestHeight := height
-	payload := gobEncode(verzion{nodeVersion, bestHeight, nodeAddress})
-
-	request := append(commandToBytes("version"), payload...)
-
-	sendData(addr, request)
-}
-
-func handleVersion(request []byte, height int) {
-	var buff bytes.Buffer
-	var payload verzion
-
-	buff.Write(request[commandLength:])
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	myBestHeight := height
-	foreignerBestHeight := payload.BestHeight
-
-	if myBestHeight < foreignerBestHeight {
-		myBestHeight = foreignerBestHeight
-		fmt.Print("update bestheigh to", myBestHeight)
-		//sendGetBlocks(payload.AddrFrom)
-	} else if myBestHeight > foreignerBestHeight {
-		sendVersion(payload.AddrFrom, myheight)
-	}
-
-	if !nodeIsKnown(payload.AddrFrom) {
-		knownNodes = append(knownNodes, payload.AddrFrom)
-	}
-}
-
-//sen my addr to addr
-func sendAddr(address string) {
-	nodes := addr{knownNodes}
-	nodes.AddrList = append(nodes.AddrList, nodeAddress)
-	payload := gobEncode(nodes)
-	request := append(commandToBytes("addr"), payload...)
-
-	sendData(address, request)
-}*/
-
-// handle received address
-func handleAddr(request []byte) {
-	var buff bytes.Buffer
-	var payload addr
-
-	buff.Write(request[commandLength:])
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	knownNodes = append(knownNodes, payload.AddrList...)
-	fmt.Printf("There are %d known nodes now!\n", len(knownNodes))
-	//requestBlocks()
 }
 
 // handle connection
@@ -146,20 +71,12 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 //StartServer start a server
 func StartServer(ID int) {
 
-
-
 	ln, err := net.Listen(protocol, shard.MyMenShard.Address)
-	fmt.Println("My IP+Port: ",shard.MyMenShard.Address)
+	fmt.Println("My IP+Port: ", shard.MyMenShard.Address)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer ln.Close()
-
-	//TODO generate block.
-	//bc := NewBlockchain(nodeID)
-
-	//if account.MyAccount.Addr != knownNodes[0] {
-	//	sendVersion(knownNodes[0], myheight)
 
 	requestChannel := make(chan []byte, bufferSize)
 	flag := true
@@ -180,18 +97,14 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		fmt.Printf("Received %s command\n", command)
-		// TODO instead of switch, we can use select to concurrently solve different commands
+		fmt.Printf("%d Received %s command\n", ID, command)
 		switch command {
-
+		case "requestTxB":
+			go HandleRequestTxB(request)
 		case "Tx":
 			go HandleAndSendTx(request)
 		case "TxM":
-			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
-				go HandleTxLeader(request)
-			} else {
-				go HandleTx(request)
-			}
+			go HandleTotalTx(request)
 		case "TxList":
 			go HandleTxList(request)
 		case "TxDec":
@@ -207,9 +120,9 @@ func StartServer(ID int) {
 		case "TxB":
 			go HandleTxBlock(request)
 		case "FinalTxB":
-			go HandleAndSentFinalTxBlock(request)
-		case "FinalTxBM":
 			go HandleFinalTxBlock(request)
+		case "StartTxB":
+			go HandleStartTxBlock(request)
 		//shard
 		case "shardReady":
 			go HandleShardReady(request)
@@ -270,15 +183,4 @@ func gobEncode(data interface{}) []byte {
 		log.Panic(err)
 	}
 	return buff.Bytes()
-}
-
-//whether it is a new node
-func nodeIsKnown(addr string) bool {
-	for _, node := range knownNodes {
-		if node == addr {
-			return true
-		}
-	}
-
-	return false
 }

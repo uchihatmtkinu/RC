@@ -3,8 +3,10 @@ package rccache
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"strconv"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 
 	"github.com/boltdb/bolt"
@@ -35,6 +37,7 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 	defer a.data.Close()
 	a.TXCache = make(map[[32]byte]int, 10000)
 	err = a.data.Update(func(tx *bolt.Tx) error {
+		tx.DeleteBucket([]byte(TBBucket))
 		b := tx.Bucket([]byte(TBBucket))
 		if b == nil {
 			genesis := basic.NewGensisTxBlock()
@@ -160,6 +163,19 @@ func (a *TxBlockChain) AddFinalBlock(x *basic.TxBlock) error {
 		if err != nil {
 			return err
 		}
+		b = tx.Bucket([]byte(TBBucket))
+		err = b.Put(append([]byte("B"), x.HashID[:]...), x.Serial())
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte("XB"), x.HashID[:])
+		if err != nil {
+			return err
+		}
+		if x.Height > a.Height {
+			a.LastTB = x.HashID
+			a.Height = x.Height
+		}
 		a.LastFB[x.ShardID] = x.HashID
 		b = tx.Bucket([]byte(ACCBucket))
 		for i := uint32(0); i < x.TxCnt; i++ {
@@ -169,13 +185,16 @@ func (a *TxBlockChain) AddFinalBlock(x *basic.TxBlock) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 //AddStartBlock is adding a new txblock
 func (a *TxBlockChain) AddStartBlock(x *basic.TxBlock) error {
 	if x.Kind != 2 {
-		return fmt.Errorf("Error block type, should be 1")
+		return fmt.Errorf("Error block type, should be 2")
 	}
 	var err error
 	a.data, err = bolt.Open(a.FileName, 0600, nil)
@@ -278,8 +297,10 @@ func (a *TxBlockChain) AddAccount(x *basic.AccCache) error {
 
 //CheckUTXO is to check whether the utxo is available
 func (a *TxBlockChain) CheckUTXO(x *basic.InType, h [32]byte) bool {
+	//fmt.Println("CheckUTXO: ")
 	if x.Acc() {
 		tmp := a.AccData[x.PrevTx]
+		//fmt.Println("Acc: ", base58.Encode(x.PrevTx[:]), " Balance: ", tmp)
 		return tmp >= x.Index
 	}
 	tmp, ok := a.USet[x.PrevTx]
@@ -373,7 +394,7 @@ func (a *TxBlockChain) UnlockUTXO(x *basic.InType) error {
 }
 
 //MakeFinalTx generates the final blocks transactions
-func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
+func (a *TxBlockChain) MakeFinalTx(shard uint32) *[]basic.Transaction {
 	var err error
 	a.data, err = bolt.Open(a.FileName, 0600, nil)
 	if err != nil {
@@ -383,16 +404,24 @@ func (a *TxBlockChain) MakeFinalTx() *[]basic.Transaction {
 	res := make([]basic.Transaction, 0, 10000)
 	tmpMap := make(map[[32]byte]uint32)
 	for k, v := range a.AccData {
-		var tmpTx basic.Transaction
-		tmpIn := basic.InType{PrevTx: k, Index: v}
-		var tmpOut basic.OutType
-		tmpOut.Value = v
-		tmpOut.Address = k
-		tmpTx.New(1)
-		tmpTx.AddIn(tmpIn)
-		tmpTx.AddOut(tmpOut)
-		res = append(res, tmpTx)
-		tmpMap[tmpOut.Address] = uint32(len(res) - 1)
+		if basic.ShardIndex(k) == shard {
+			var tmpTx basic.Transaction
+			tmpIn := basic.InType{PrevTx: k, Index: v}
+			tmpIn.Sig.R = big.NewInt(0)
+			tmpIn.Sig.S = big.NewInt(0)
+			tmpIn.PukX = big.NewInt(0)
+			tmpIn.PukY = big.NewInt(0)
+
+			var tmpOut basic.OutType
+			tmpOut.Value = v
+			tmpOut.Address = k
+			tmpTx.New(1)
+			tmpTx.AddIn(tmpIn)
+			tmpTx.AddOut(tmpOut)
+			tmpTx.Hash = tmpTx.HashTx()
+			res = append(res, tmpTx)
+			tmpMap[tmpOut.Address] = uint32(len(res) - 1)
+		}
 	}
 	//Mark-UTXO
 	/*
@@ -466,6 +495,30 @@ func (a *TxBlockChain) UpdateFinal(x *basic.TxBlock) error {
 	return err
 }
 
+//RecentBlock is get the recent blocks data
+func (a *TxBlockChain) RecentBlock(height uint32) *[]basic.TxBlock {
+	res := make([]basic.TxBlock, a.Height-height+1)
+	err := a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TBBucket))
+		tmpHash := a.LastTB
+		for true {
+			tmpStr := b.Get(append([]byte("B"), tmpHash[:]...))
+			tmpBlock := new(basic.TxBlock)
+			tmpBlock.Decode(&tmpStr, 1)
+			res = append(res, *tmpBlock)
+			if tmpBlock.Height < height {
+				break
+			}
+			tmpHash = tmpBlock.PrevHash
+		}
+		return nil
+	})
+	if err != nil {
+		return nil
+	}
+	return &res
+}
+
 //UploadAcc is to upload the account data from database
 func (a *TxBlockChain) UploadAcc(shardID uint32) error {
 	var err error
@@ -524,8 +577,7 @@ func (a *TxBlockChain) UpdateAccount() error {
 //ShowAccount prints all account information
 func (a *TxBlockChain) ShowAccount() error {
 	for k, v := range a.AccData {
-		fmt.Println(k, ": ", v)
-		fmt.Println(basic.ShardIndex(k))
+		fmt.Println(base58.Encode(k[:]), "(", basic.ShardIndex(k), ")", ": ", v)
 	}
 	return nil
 }
