@@ -61,7 +61,7 @@ func IntilizeProcess(ID int) {
 		acc[i].AddrReal = cryptonew.AddressGenerate(&acc[i].Pri)
 		acc[i].Addr = base58.Encode(acc[i].AddrReal[:])
 		accWallet[i].ID = acc[i].AddrReal
-		accWallet[i].Value = 100000
+		accWallet[i].Value = 100000000
 		//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 		//TODO need modify
 		scanner.Scan()

@@ -20,13 +20,13 @@ const RepFN = 1
 const SlidingWindows = 10
 
 //NumTxBlockPerEpoch is the number of txblocks in one epoch
-const NumTxPerEpoch = 2000 //48000
+const NumTxPerEpoch = 20000 //48000
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 1 //60
+const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 1 //10
+const NumTxBlockForRep = 2 //10
 
 const NumTxPerBlock = 2000 //2000
 
@@ -38,4 +38,4 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 2
 
-const NumOfTxForTest = 2000 //int(2 * 60 * 4000 * ShardSize)
+const NumOfTxForTest = 20000 //int(2 * 60 * 4000 * ShardSize)
