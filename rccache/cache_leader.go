@@ -265,6 +265,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			//fmt.Println(base58.Encode(tmp.Data.Hash[:]), "result is", tmp.Res)
 			if tmp.Res == 1 {
 				d.Ready = append(d.Ready, *(tmp.Data))
+				tmp.Decision[0] = 2
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					if tmp.Decision[j] == 1 {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
