@@ -139,6 +139,7 @@ func (c *Instance) Sharding(a *[]MemShard, b *[][]int) {
 func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
+		//TODO nagative rep
 		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].Rep+1)
 	}
 	for i := 0; i < len(tmp); i++ {

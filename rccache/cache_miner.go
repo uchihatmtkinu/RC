@@ -235,6 +235,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp := d.TXCache[a.TxArray[i].Hash]
+		tmp.Decision[0] = 2
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			if tmp.Decision[j] == 1 {
 				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
