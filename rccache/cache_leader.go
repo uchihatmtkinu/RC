@@ -126,7 +126,7 @@ func (d *DbRef) GenerateTxBlock() error {
 	}
 	d.Ready = nil
 	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
-
+	d.TxCnt += d.TxB.TxCnt
 	d.DB.AddBlock(d.TxB)
 	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	d.DB.ShowAccount()

@@ -29,6 +29,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	var sigParts []cosi.SignaturePart
 	var cosiSig cosi.SignaturePart
 	// cosi begin
+	<-startSync
 	fmt.Println("Leader CoSi")
 
 	CoSiFlag = true
@@ -166,6 +167,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var mySecret *cosi.Secret
 	var pubKeys []ed25519.PublicKey
 	var it *shard.MemShard
+	<-startSync
 	//var timeoutflag bool
 	//timeoutflag = false
 	//cosiAnnounceCh = make(chan []byte)

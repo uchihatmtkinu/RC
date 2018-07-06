@@ -90,6 +90,7 @@ var finalSignal chan []byte
 
 var startRep chan bool
 var startTx chan int
+var startSync chan bool
 
 //---------------------- sync process -------------
 //syncSBInfo sync block info

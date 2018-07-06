@@ -11,7 +11,7 @@ import (
 
 //"crypto/sha512"
 
-func main() {
+func xmain() {
 	/*
 		outputFile, outputError := os.OpenFile("output.dat", os.O_WRONLY|os.O_CREATE, 0666)
 		if outputError != nil {

@@ -63,7 +63,7 @@ func TxGeneralLoop() {
 
 				//tmp = 0
 
-				if len(CacheDbRef.Ready) > 9 {
+				if len(CacheDbRef.Ready) > gVar.NumTxPerBlock {
 					fmt.Println(CacheDbRef.ID, "sends a TxBlock with", len(CacheDbRef.Ready), "Txs")
 					CacheDbRef.GenerateTxBlock()
 					if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
@@ -73,15 +73,16 @@ func TxGeneralLoop() {
 					data3 := new([]byte)
 					CacheDbRef.TxB.Encode(data3, 0)
 					go SendTxBlock(data3)
-					if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxBlockPerEpoch {
+					if CacheDbRef.TxCnt >= gVar.NumTxPerEpoch {
 						fmt.Println(CacheDbRef.ID, "start to make FB")
 						CacheDbRef.StartTxDone = false
+						CacheDbRef.StopGetTx = true
 						go SendFinalBlock(&shard.GlobalGroupMems)
 					}
 				}
 			}
 
-			if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= 6 {
+			if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= gVar.NumTxPerTL {
 				CacheDbRef.BuildTDS()
 				fmt.Println(CacheDbRef.ID, "sends a TxList with", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TLS[CacheDbRef.ShardNum].HashID[:]))
 				//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
@@ -329,9 +330,10 @@ func HandleTxBlock(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		startRep <- true
 	}
-	if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxBlockPerEpoch {
+	if CacheDbRef.TxCnt >= gVar.NumTxPerEpoch {
 		CacheDbRef.UnderSharding = true
 		CacheDbRef.StartTxDone = false
+		CacheDbRef.StopGetTx = true
 
 		fmt.Println(CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)

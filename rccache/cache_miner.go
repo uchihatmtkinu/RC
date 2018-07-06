@@ -246,6 +246,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		d.ClearCache(a.TxArray[i].Hash)
 	}
 	*(d.TBCache) = append(*(d.TBCache), a.HashID)
+	d.TxCnt += a.TxCnt
 	d.TxB = a
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)

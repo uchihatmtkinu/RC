@@ -15,12 +15,23 @@ import (
 //var currentTxList *[]basic.TxList
 //var currentTxDecSet *[]basic.TxDecSet
 
-//RepProcess pow process
-func RepProcess(ms *[]shard.MemShard) {
+//RepProcessLoop is the loop of reputation
+func RepProcessLoop(ms *[]shard.MemShard, NumEpoch int) {
+	for i := 0; i < NumEpoch; i++ {
+		flag := true
+		for flag {
+			flag = RepProcess(ms)
+		}
+		<-startSync
+	}
+}
+
+//RepProcess pow proces
+func RepProcess(ms *[]shard.MemShard) bool {
 	var it *shard.MemShard
 	var validateFlag bool
 	var item Reputation.RepPowInfo
-	<-startRep
+	res := <-startRep
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan bool)
@@ -54,6 +65,7 @@ func RepProcess(ms *[]shard.MemShard) {
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
+	return res
 	//close(Reputation.RepPowRxCh)
 }
 

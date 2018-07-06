@@ -12,10 +12,7 @@ import (
 func SendFinalBlock(ms *[]shard.MemShard) {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateFinalBlock()
-	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
-		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		startRep <- true
-	}
+
 	var data []byte
 	CacheDbRef.FB[CacheDbRef.ShardNum].Encode(&data, 1)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
@@ -24,6 +21,8 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "FinalTxB", data)
 		}
 	}
+	fmt.Println(CacheDbRef.ID, "start to make repBlock")
+	startRep <- false
 	CacheDbRef.Mu.Unlock()
 }
 
@@ -58,10 +57,9 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GetFinalTxBlock(tmp)
-	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
-		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		startRep <- true
-	}
+	fmt.Println(CacheDbRef.ID, "start to make repBlock")
+	startRep <- false
+
 	CacheDbRef.Mu.Unlock()
 	return nil
 }

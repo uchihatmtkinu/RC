@@ -64,6 +64,7 @@ type DbRef struct {
 	TxB           *basic.TxBlock
 	FB            [gVar.ShardCnt]*basic.TxBlock
 	prk           ecdsa.PrivateKey
+	TxCnt         uint32
 
 	//Miner
 	TLNow      *basic.TxDecision
@@ -105,6 +106,7 @@ func (d *DbRef) Clear() {
 	d.TLRound = 0
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000)
 	d.TLS = nil
+	d.TxCnt = 0
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
 	if len(*d.TBCache) != 0 {
 		fmt.Println("Miner", d.ID, "Cache clear: TBCache is not empty")
@@ -118,6 +120,7 @@ func (d *DbRef) Clear() {
 func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
 	d.prk = prk
+	d.TxCnt = 0
 	d.DB.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000)
 	d.TxB = d.DB.LatestTxBlock()
