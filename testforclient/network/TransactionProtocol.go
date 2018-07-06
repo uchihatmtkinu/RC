@@ -63,7 +63,7 @@ func TxGeneralLoop() {
 
 				//tmp = 0
 
-				if len(CacheDbRef.Ready) > gVar.NumTxPerBlock {
+				if len(CacheDbRef.Ready) >= gVar.NumTxPerBlock {
 					fmt.Println(CacheDbRef.ID, "sends a TxBlock with", len(CacheDbRef.Ready), "Txs")
 					CacheDbRef.GenerateTxBlock()
 					if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
