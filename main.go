@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/rccache"
@@ -17,14 +15,14 @@ import (
 )
 
 func main() {
-	arg, err := strconv.Atoi(os.Args[1])
-	if err != nil {
+	//arg, err := strconv.Atoi(os.Args[1])
+	/*if err != nil {
 		log.Panic(err)
 		os.Exit(1)
-	}
-	ID := arg
+	}*/
+	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(ID)
+	network.IntilizeProcess(os.Args[1], &ID)
 	fmt.Println("test begin")
 	go network.StartServer(ID)
 	<-network.IntialReadyCh

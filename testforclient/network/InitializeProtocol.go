@@ -18,7 +18,7 @@ import (
 )
 
 //IntilizeProcess is init
-func IntilizeProcess(ID int) {
+func IntilizeProcess(input string, ID *int) {
 
 	// IP + port
 	var IPAddr string
@@ -28,7 +28,7 @@ func IntilizeProcess(ID int) {
 	acc := make([]account.RcAcc, numCnt)
 	shard.GlobalGroupMems = make([]shard.MemShard, numCnt)
 	//GlobalAddrMapToInd = make(map[string]int)
-	MyGlobalID = ID
+
 	file, err := os.Open("PriKeys.txt")
 	defer file.Close()
 	if err != nil {
@@ -66,6 +66,11 @@ func IntilizeProcess(ID int) {
 		//TODO need modify
 		scanner.Scan()
 		IPAddr = scanner.Text()
+		if IPAddr == input {
+			MyGlobalID = i
+			*ID = i
+		}
+		IPAddr = IPAddr + ":" + strconv.Itoa(3000+i)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		shard.GlobalGroupMems[i].AddRep(int64(i))
@@ -73,13 +78,13 @@ func IntilizeProcess(ID int) {
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
-	CacheDbRef.New(uint32(ID), acc[ID].Pri)
+	CacheDbRef.New(uint32(*ID), acc[*ID].Pri)
 	for i := 0; i < int(numCnt); i++ {
 		CacheDbRef.DB.AddAccount(&accWallet[i])
 	}
-	account.MyAccount = acc[ID]
+	account.MyAccount = acc[*ID]
 
-	shard.MyMenShard = &shard.GlobalGroupMems[ID]
+	shard.MyMenShard = &shard.GlobalGroupMems[*ID]
 	shard.NumMems = int(gVar.ShardSize)
 	shard.PreviousSyncBlockHash = [][32]byte{{gVar.MagicNumber}}
 
