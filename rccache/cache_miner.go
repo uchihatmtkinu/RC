@@ -169,7 +169,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			tmp.NewFromOther(b.ShardIndex, tmpRes)
 			d.TXCache[tmpHash] = tmp
 		} else {
-			fmt.Println("Result is", b.Result(i))
+			//fmt.Println("Result is", b.Result(i))
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
 			/*if tmp.Total == 0 { //Review
