@@ -43,7 +43,7 @@ func TxGeneralLoop() {
 			if CacheDbRef.TLS == nil {
 				CacheDbRef.NewTxList()
 			}
-			if CacheDbRef.StartIndex <= CacheDbRef.LastIndex && CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].MemCnt > (gVar.ShardSize-1)/2 {
+			if CacheDbRef.StartIndex <= CacheDbRef.LastIndex && CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].MemCnt == (gVar.ShardSize-1) {
 				fmt.Println("Leader", CacheDbRef.ID, "ready to send TDS")
 				CacheDbRef.SignTDS(0)
 				CacheDbRef.ProcessTDS(&CacheDbRef.TDSCache[0][CacheDbRef.ShardNum])
