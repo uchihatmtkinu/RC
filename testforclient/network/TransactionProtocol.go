@@ -36,7 +36,7 @@ func TxGeneralLoop() {
 	fmt.Println(CacheDbRef.ID, "start to process Tx")
 	for {
 		tmp++
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 1)
 		CacheDbRef.Mu.Lock()
 
 		if CacheDbRef.Leader == CacheDbRef.ID && CacheDbRef.StartTxDone {
