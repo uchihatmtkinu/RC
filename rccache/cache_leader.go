@@ -34,7 +34,6 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 		tmp = new(CrossShardDec)
 		tmp.New(b)
 	} else {
-		tmp = new(CrossShardDec)
 		tmp.Update(b)
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {

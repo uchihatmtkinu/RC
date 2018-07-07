@@ -141,7 +141,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.LastIndex = -1
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
 	d.TBCache = new([][32]byte)
-	d.StopGetTx = false
+	d.StopGetTx = true
 	d.UnderSharding = true
 	d.StartTxDone = true
 	d.PrevHeight = 0
