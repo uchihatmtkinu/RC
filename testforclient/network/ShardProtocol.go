@@ -36,11 +36,13 @@ func ShardProcess() {
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
-
+	fmt.Println(CacheDbRef.ID, "Shard Calculated")
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.StopGetTx = false
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
-
+	CacheDbRef.Mu.Unlock()
 	if shard.MyMenShard.Role == 1 {
 		MinerReadyProcess()
 	} else {
@@ -49,10 +51,7 @@ func ShardProcess() {
 		}
 		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
-	CacheDbRef.Mu.Lock()
-	CacheDbRef.StopGetTx = false
-	CacheDbRef.UnderSharding = false
-	CacheDbRef.Mu.Unlock()
+
 	fmt.Println("shard finished")
 	if CurrentEpoch != -1 {
 		CacheDbRef.Clear()

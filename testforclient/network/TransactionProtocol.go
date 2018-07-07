@@ -143,9 +143,13 @@ func SendTxBlock(data *[]byte) {
 func HandleTotalTx(data []byte) error {
 	flag := true
 	for flag {
+		fmt.Println("Shard not done")
+		CacheDbRef.Mu.Lock()
 		if !CacheDbRef.StopGetTx {
 			flag = false
 		}
+		CacheDbRef.Mu.Unlock()
+		time.Sleep(time.Second)
 	}
 
 	if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {

@@ -60,7 +60,7 @@ func main() {
 		j := rand.Int() % numCnt
 		tmptx[k] = *rccache.GenerateTx(i, j, 1)
 	}
-
+	time.Sleep(time.Second * 20)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 
