@@ -42,11 +42,11 @@ func IntilizeProcess(input string, ID *int) {
 		os.Exit(1)
 	}
 	scanner := bufio.NewScanner(fileIP)
-	scanner.Split(bufio.ScanLines)
+	scanner.Split(bufio.ScanWords)
 
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
-
+		//scanner.Scan()
 		acc[i].New(strconv.Itoa(i))
 		acc[i].NewCosi()
 		tmp1 := make([]byte, 121)
