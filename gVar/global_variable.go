@@ -7,7 +7,7 @@ const MagicNumber byte = 66
 const ShardSize uint32 = 4
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 20
+const ShardCnt uint32 = 10
 
 //used in rep calculation, scaling factor
 const RepTP = 1
