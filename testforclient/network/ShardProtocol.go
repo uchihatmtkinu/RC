@@ -86,6 +86,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 				fmt.Println("ReadyCount: ", readyCount)
 			}
 		case <-time.After(timeoutSync):
+			//fmt.Println("Wait shard signal time out")
 			for i := 1; i < int(gVar.ShardSize); i++ {
 				if maskBit(i, &responsemask) == cosi.Disabled {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
