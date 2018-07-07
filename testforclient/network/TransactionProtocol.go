@@ -141,12 +141,13 @@ func SendTxBlock(data *[]byte) {
 
 //HandleTotalTx process the tx
 func HandleTotalTx(data []byte) error {
-	CacheDbRef.Mu.Lock()
-	if CacheDbRef.StopGetTx {
-		CacheDbRef.Mu.Unlock()
-		return fmt.Errorf("Prepare for re-sharding, reject to process Tx")
+	flag := true
+	for flag {
+		if !CacheDbRef.StopGetTx {
+			flag = false
+		}
 	}
-	CacheDbRef.Mu.Unlock()
+
 	if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
 		HandleTxLeader(data)
 	} else {
