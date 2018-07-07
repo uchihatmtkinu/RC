@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -20,9 +21,31 @@ func main() {
 		log.Panic(err)
 		os.Exit(1)
 	}*/
+	fmt.Println("Get the local ip from", os.Args[1])
+	file, err := os.Open(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+	fileinfo, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileSize := fileinfo.Size()
+	buffer := make([]byte, fileSize)
+
+	_, err = file.Read(buffer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Local Address:", string(buffer))
+
 	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(os.Args[1], &ID)
+	network.IntilizeProcess(string(buffer), &ID)
 	fmt.Println("test begin")
 	go network.StartServer(ID)
 	<-network.IntialReadyCh
