@@ -128,7 +128,7 @@ func (d *DbRef) GenerateTxBlock() error {
 	d.TxCnt += d.TxB.TxCnt
 	d.DB.AddBlock(d.TxB)
 	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
-	d.DB.ShowAccount()
+	//d.DB.ShowAccount()
 
 	return nil
 }

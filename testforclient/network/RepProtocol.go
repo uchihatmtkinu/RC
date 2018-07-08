@@ -45,7 +45,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 				for i := 0; i < int(gVar.ShardSize); i++ {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-						fmt.Println("have sent " + it.Address)
+						//fmt.Println("have sent " + it.Address)
 						go SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, item.Round, item.Hash, item.Nonce})
 					}
 				}

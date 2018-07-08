@@ -39,3 +39,5 @@ const GensisAccValue = 2147483647
 const TxSendInterval = 1
 
 const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
+
+const GeneralSleepTime = 0.3

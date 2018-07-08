@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -251,8 +250,8 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	d.TxB = a
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
-	fmt.Println("Account data of", d.ID, ": Hash", base58.Encode(a.HashID[:]))
-	d.DB.ShowAccount()
+	//fmt.Println("Account data of", d.ID, ": Hash", base58.Encode(a.HashID[:]))
+	//d.DB.ShowAccount()
 	return nil
 }
 

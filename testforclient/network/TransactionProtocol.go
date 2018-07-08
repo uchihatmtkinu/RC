@@ -36,7 +36,7 @@ func TxGeneralLoop() {
 	fmt.Println(CacheDbRef.ID, "start to process Tx")
 	for {
 		tmp++
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.Lock()
 
 		if CacheDbRef.Leader == CacheDbRef.ID && CacheDbRef.StartTxDone {
@@ -153,7 +153,7 @@ func HandleTotalTx(data []byte) error {
 			flag = false
 		}
 		CacheDbRef.Mu.Unlock()
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 	}
 
 	if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
@@ -223,7 +223,7 @@ func HandleTxList(data []byte) error {
 	CacheDbRef.PreTxList(tmp, &s)
 	CacheDbRef.Mu.Unlock()
 	for true {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.RLock()
 		if s.Stat == 0 {
 			CacheDbRef.Mu.RUnlock()
@@ -261,7 +261,7 @@ func HandleTxDecSet(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	for flag {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.RLock()
 		if s.Stat == 0 {
 			flag = false
@@ -317,7 +317,7 @@ func HandleTxBlock(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	for flag {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.RLock()
 		if s.Stat == 0 {
 			flag = false
@@ -325,7 +325,6 @@ func HandleTxBlock(data []byte) error {
 		CacheDbRef.Mu.RUnlock()
 	}
 
-	fmt.Println(CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
 	flag = true
 	for flag {
 		CacheDbRef.Mu.Lock()
@@ -336,9 +335,10 @@ func HandleTxBlock(data []byte) error {
 			flag = false
 		}
 		CacheDbRef.Mu.Unlock()
-		time.Sleep(time.Microsecond * 500)
+		time.Sleep(time.Microsecond * 100)
 	}
 	CacheDbRef.Mu.Lock()
+	fmt.Println(CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
@@ -424,7 +424,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	for flag {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.Lock()
 		if s.Stat == 0 {
 			flag = false
