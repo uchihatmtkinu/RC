@@ -189,7 +189,10 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 	}
 	//fmt.Println("Leader ", d.ID, " process TxDecision: ")
 	for i := uint32(0); i < tmpTL.TxCnt; i++ {
-		tmpTx := d.TXCache[tmpTL.TxArray[i]]
+		tmpTx, ok := d.TXCache[tmpTL.TxArray[i]]
+		if !ok {
+			fmt.Println("Not related tx?")
+		}
 		//tmpTx.Print()
 		for j := 0; j < len(tmpTx.ShardRelated); j++ {
 			tmpTD[tmpTx.ShardRelated[j]].Add((a.Decision[x] >> y) & 1)

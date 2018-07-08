@@ -69,9 +69,6 @@ func main() {
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			go network.SendLoop(&tmptx)
 		}
-		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
-			//fmt.Println(shard.GlobalGroupMems[i].RealAccount.Addr, " shard num: ", basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal))
-		}
 		if k == 1 {
 			go network.TxGeneralLoop()
 		}

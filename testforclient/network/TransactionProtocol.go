@@ -92,7 +92,7 @@ func TxGeneralLoop() {
 				//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
 				data1 := new([]byte)
 				CacheDbRef.TLS[CacheDbRef.ShardNum].Encode(data1)
-				go SendTxList(data1)
+				go SendTxList(*data1)
 				CacheDbRef.NewTxList()
 			}
 		}
@@ -100,12 +100,17 @@ func TxGeneralLoop() {
 	}
 }
 
+//TxListLoop is the loop of txlist
+func TxListLoop() {
+
+}
+
 //SendTxList is sending txlist
-func SendTxList(data *[]byte) {
+func SendTxList(data []byte) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
-			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxList", *data)
+			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxList", data)
 		}
 	}
 }
@@ -143,7 +148,6 @@ func SendTxBlock(data *[]byte) {
 func HandleTotalTx(data []byte) error {
 	flag := true
 	for flag {
-		fmt.Println("Shard not done")
 		CacheDbRef.Mu.Lock()
 		if !CacheDbRef.StopGetTx {
 			flag = false
@@ -365,7 +369,7 @@ func HandleTxLeader(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
+	fmt.Println(CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.MakeTXList(&tmp.TxArray[i])
