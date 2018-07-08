@@ -83,12 +83,11 @@ func main() {
 
 		//test cosi
 		if shard.MyMenShard.Role == shard.RoleLeader {
-			network.LeaderCosiProcess(&shard.GlobalGroupMems)
+			network.LeaderCosiProcess(&shard.GlobalGroupMems, t1)
 		} else {
-			network.MemberCosiProcess(&shard.GlobalGroupMems)
+			network.MemberCosiProcess(&shard.GlobalGroupMems, t1)
 		}
-		elapsed := time.Since(t1)
-		fmt.Println("App elapsed: ", elapsed)
+
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)
 

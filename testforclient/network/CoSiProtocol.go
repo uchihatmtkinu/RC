@@ -15,7 +15,7 @@ import (
 )
 
 //LeaderCosiProcess leader use this
-func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
+func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 	//initialize
 	// myCommit my cosi commitment
 	var myCommit cosi.Commitment
@@ -30,6 +30,8 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	var cosiSig cosi.SignaturePart
 	// cosi begin
 	<-startSync
+	elapsed := time.Since(t1)
+	fmt.Println("App elapsed: ", elapsed)
 	fmt.Println("Leader CoSi")
 
 	CoSiFlag = true
@@ -160,7 +162,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 }
 
 // MemberCosiProcess member use this
-func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
+func MemberCosiProcess(ms *[]shard.MemShard, t1 time.Time) (bool, []byte) {
 	var sbMessage []byte
 	// myCommit my cosi commitment
 	var myCommit cosi.Commitment
@@ -168,6 +170,8 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var pubKeys []ed25519.PublicKey
 	var it *shard.MemShard
 	<-startSync
+	elapsed := time.Since(t1)
+	fmt.Println("App elapsed: ", elapsed)
 	//var timeoutflag bool
 	//timeoutflag = false
 	//cosiAnnounceCh = make(chan []byte)
