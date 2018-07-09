@@ -193,6 +193,7 @@ func HandleTxDecLeader(data []byte) error {
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
+	tmpflag := false
 	if x == 0 && CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].MemCnt == gVar.ShardSize-1 {
 		fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")
 		CacheDbRef.SignTDS(0)
@@ -212,11 +213,14 @@ func HandleTxDecLeader(data []byte) error {
 			CacheDbRef.TDSNotReady--
 			fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)
 			if CacheDbRef.TDSNotReady == 0 {
-				StartLastTxBlock <- true
+				tmpflag = true
 			}
 		}
 	}
 	CacheDbRef.Mu.Unlock()
+	if tmpflag {
+		StartLastTxBlock <- true
+	}
 	return nil
 }
 
