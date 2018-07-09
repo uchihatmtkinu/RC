@@ -156,7 +156,7 @@ func (a *TxBlockChain) CreateNewBlockchain(dbFile string) error {
 			err = b.Put([]byte("XB"+strconv.Itoa(int(i))), genesis.HashID[:])
 			a.LastFB[i] = genesis.HashID
 		}
-
+		a.AccData = make(map[[32]byte]uint32, 1000)
 		_, err = tx.CreateBucket([]byte(ACCBucket))
 		if err != nil {
 			log.Panic(err)
