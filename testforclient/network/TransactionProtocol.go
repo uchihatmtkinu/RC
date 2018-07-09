@@ -207,6 +207,13 @@ func HandleTxDecLeader(data []byte) error {
 		go SendTxDecSet(*data2)
 		go TxNormalBlock()
 		CacheDbRef.Release()
+		CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
+		if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
+			CacheDbRef.TDSNotReady--
+		}
+		if CacheDbRef.TDSNotReady == 0 {
+			StartLastTxBlock <- true
+		}
 	}
 	CacheDbRef.Mu.Unlock()
 	return nil
