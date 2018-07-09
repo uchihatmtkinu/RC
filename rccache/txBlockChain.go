@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 	"strconv"
 
 	"github.com/uchihatmtkinu/RC/base58"
@@ -106,6 +107,61 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 				log.Panic(err)
 			}
 		}*/
+		return nil
+	})
+	return err
+}
+
+//CreateNewBlockchain is to init the total chain
+func (a *TxBlockChain) CreateNewBlockchain(dbFile string) error {
+	var err error
+	a.FileName = dbFile
+	if dbExists(a.FileName) {
+		err := os.Remove(a.FileName)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		err = os.Remove(a.FileName + ".lock")
+	}
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		return err
+	}
+	defer a.data.Close()
+	a.TXCache = make(map[[32]byte]int, 10000)
+	err = a.data.Update(func(tx *bolt.Tx) error {
+
+		genesis := basic.NewGensisTxBlock()
+		b, err := tx.CreateBucket([]byte(TBBucket))
+		var tmp []byte
+		genesis.Encode(&tmp, 1)
+		if err != nil {
+			return nil
+		}
+		err = b.Put(append([]byte("B"), genesis.HashID[:]...), tmp)
+		err = b.Put([]byte("XB"), genesis.HashID[:])
+		a.LastTB = genesis.HashID
+		a.Height = 0
+
+		b, err = tx.CreateBucket([]byte(FBBucket))
+		if err != nil {
+			return err
+		}
+		for i := uint32(0); i < gVar.ShardCnt; i++ {
+			genesis := basic.NewGensisFinalTxBlock(i)
+			var tmp []byte
+			genesis.Encode(&tmp, 1)
+			err = b.Put(append([]byte("B"+strconv.Itoa(int(i))), genesis.HashID[:]...), tmp)
+			err = b.Put([]byte("XB"+strconv.Itoa(int(i))), genesis.HashID[:])
+			a.LastFB[i] = genesis.HashID
+		}
+
+		_, err = tx.CreateBucket([]byte(ACCBucket))
+		if err != nil {
+			log.Panic(err)
+		}
+
 		return nil
 	})
 	return err
@@ -686,4 +742,13 @@ func (a *TxBlockChain) UpdateUTXO(x *basic.TxBlock, shardindex uint32) error {
 		return err
 	*/
 	return nil
+}
+
+//whether database exisits
+func dbExists(dbFile string) bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }

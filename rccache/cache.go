@@ -121,7 +121,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
 	d.prk = prk
 	d.TxCnt = 0
-	d.DB.NewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
+	d.DB.CreateNewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000)
 	d.TxB = d.DB.LatestTxBlock()
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
