@@ -27,6 +27,7 @@ func SendTx(x *[]byte) {
 		}
 	}
 	HandleTotalTx(*x)
+	StartNewTxlist <- true
 }
 
 //SendLoop is the protocol for sending

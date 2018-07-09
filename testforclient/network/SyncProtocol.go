@@ -58,6 +58,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 		close(syncTBCh[i])
 		close(syncNotReadyCh[i])
 	}
+
 	fmt.Println("Sync Finished")
 	//ShardProcess()
 }

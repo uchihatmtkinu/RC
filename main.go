@@ -75,8 +75,6 @@ func main() {
 		gVar.T1 = time.Now()
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			go network.SendLoop(&tmptx)
-		}
-		if k == 1 {
 			go network.TxGeneralLoop()
 		}
 		//test rep
