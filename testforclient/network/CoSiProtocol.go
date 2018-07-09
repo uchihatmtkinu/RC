@@ -217,7 +217,6 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	//receive cosisig and verify
 	cosiSigMessage := <-cosiSigCh
-	fmt.Println("Myself SBM at now:", base58.Encode(sbMessage))
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
 	if valid {
