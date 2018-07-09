@@ -37,7 +37,7 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][
 	fmt.Print("Rep: ")
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		fmt.Print(item.Rep)
+		fmt.Print(item.Rep, ' ')
 		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
 	}
 	fmt.Println()
