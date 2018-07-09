@@ -59,7 +59,7 @@ func main() {
 
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
-
+		fmt.Println("Current time: ", time.Now())
 		network.ShardProcess()
 		for l := 0; l < len(tmptx); l++ {
 			i := rand.Int() % numCnt
