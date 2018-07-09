@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 )
@@ -40,6 +41,16 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
+	fmt.Println("--------------------")
+	fmt.Println("Rep data, lastHash:", base58.Encode(lastHash[:]))
+	fmt.Print("Rep data:")
+	for i := 0; i < len(*ms); i++ {
+		fmt.Print((*ms)[i].Rep, ' ')
+	}
+	fmt.Println()
+	fmt.Println(shard.PreviousSyncBlockHash)
+	fmt.Println(*cache)
+	fmt.Println("--------------------")
 	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
 	if fromOtherFlag {
