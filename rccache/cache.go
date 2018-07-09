@@ -104,10 +104,10 @@ type WaitProcess struct {
 //Clear refresh the data for next epoch
 func (d *DbRef) Clear() {
 	d.TLRound = 0
-	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000)
+	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
 	d.TLS = nil
 	d.TxCnt = 0
-	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
+	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
 	if len(*d.TBCache) != 0 {
 		fmt.Println("Miner", d.ID, "Cache clear: TBCache is not empty")
 		for i := 0; i < len(*d.TBCache); i++ {
@@ -132,14 +132,14 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	//d.TLS = new([gVar.ShardCnt]basic.TxList)
 	d.TLS = nil
 	d.TLIndex = make(map[[32]byte]uint32, 100)
-	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 1000)
+	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	d.TLSCache = nil
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.TDSCache = nil
 	d.StartIndex = 0
 	d.LastIndex = -1
-	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 10000)
+	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
 	d.TBCache = new([][32]byte)
 	d.StopGetTx = true
 	d.UnderSharding = true
