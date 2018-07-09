@@ -60,11 +60,11 @@ func main() {
 		j := rand.Int() % numCnt
 		tmptx[k] = *rccache.GenerateTx(i, j, 1)
 	}
-	time.Sleep(time.Second * 20)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 
 		network.ShardProcess()
+		time.Sleep(time.Second * 30)
 		t1 := time.Now()
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			go network.SendLoop(&tmptx)
