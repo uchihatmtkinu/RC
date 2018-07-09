@@ -258,8 +258,8 @@ func HandleTxDecSetLeader(data []byte) error {
 	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.ProcessTDS(tmp)
-	CacheDbRef.TDSCnt[tmp.ID]++
-	if CacheDbRef.TDSCnt[tmp.ID] == gVar.NumTxListPerEpoch {
+	CacheDbRef.TDSCnt[tmp.ShardIndex]++
+	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {
 		CacheDbRef.TDSNotReady--
 		if CacheDbRef.TDSNotReady == 0 {
 			StartLastTxBlock <- true
