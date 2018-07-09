@@ -109,6 +109,6 @@ func main() {
 
 	fmt.Println(network.CacheDbRef.ID, ": All finished")
 
-	time.Sleep(20 * time.Second)
+	//time.Sleep(20 * time.Second)
 
 }
