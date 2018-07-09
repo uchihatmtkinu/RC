@@ -95,9 +95,11 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 		}
 	}
 	fmt.Println(time.Now(), "Shard is ready, sent to other shards")
-	for i := 1; i < int(gVar.ShardCnt); i++ {
-		it = &(*ms)[shard.ShardToGlobal[i][0]]
-		SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+	for i := 0; i < int(gVar.ShardCnt); i++ {
+		if i != shard.MyMenShard.Shard {
+			it = &(*ms)[shard.ShardToGlobal[i][0]]
+			SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+		}
 	}
 
 	for readyLeader < int(gVar.ShardCnt) {
