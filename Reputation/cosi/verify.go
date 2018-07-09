@@ -7,7 +7,6 @@ package cosi
 import (
 	"crypto/sha512"
 	"crypto/subtle"
-	"fmt"
 
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/ed25519/edwards25519"
@@ -75,7 +74,6 @@ func (cos *Cosigners) Verify(message, sig []byte) bool {
 
 	cosigSize := ed25519.SignatureSize + cos.MaskLen()
 	if len(sig) != cosigSize {
-		fmt.Println("Cos verify, length not match")
 		return false
 	}
 
@@ -84,7 +82,6 @@ func (cos *Cosigners) Verify(message, sig []byte) bool {
 
 	// Check that this represents a sufficient set of signers
 	if !cos.policy.Check(cos) {
-		fmt.Println("Policy check failed")
 		return false
 	}
 
@@ -95,7 +92,6 @@ func (cos *Cosigners) verify(message, aggR, sigR, sigS []byte,
 	sigA edwards25519.ExtendedGroupElement) bool {
 
 	if len(sigR) != 32 || len(sigS) != 32 || sigS[31]&224 != 0 {
-		fmt.Println("Small cos verify length failed")
 		return false
 	}
 
@@ -124,7 +120,6 @@ func (cos *Cosigners) verify(message, aggR, sigR, sigS []byte,
 
 	var checkR [32]byte
 	projR.ToBytes(&checkR)
-	fmt.Println("Nani??")
 	return subtle.ConstantTimeCompare(sigR, checkR[:]) == 1
 }
 
@@ -166,7 +161,6 @@ func Verify(publicKeys []ed25519.PublicKey, policy Policy,
 	message, sig []byte) bool {
 
 	if len(sig) < ed25519.SignatureSize {
-		fmt.Println("verify, length not match")
 		return false
 	}
 	cos := NewCosigners(publicKeys, sig[64:])
