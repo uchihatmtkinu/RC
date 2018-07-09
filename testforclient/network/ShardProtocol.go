@@ -66,7 +66,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	var membermask []byte
 	var leadermask []byte
 	intilizeMaskBit(&membermask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
-	intilizeMaskBit(&leadermask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
+	intilizeMaskBit(&leadermask, (int(gVar.ShardCnt)+7)>>3, cosi.Disabled)
 	readyMember := 1
 	readyLeader := 1
 	//sent announcement
