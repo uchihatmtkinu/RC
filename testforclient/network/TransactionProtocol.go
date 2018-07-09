@@ -59,6 +59,13 @@ func TxLastBlock() {
 	data3 := new([]byte)
 	CacheDbRef.TxB.Encode(data3, 0)
 	go SendTxBlock(data3)
+	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
+		fmt.Println(CacheDbRef.ID, "start to make repBlock")
+		tmp := make([][32]byte, gVar.NumTxBlockForRep)
+		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
+		startRep <- repInfo{Last: true, Hash: tmp}
+	}
 	CacheDbRef.StartTxDone = false
 	CacheDbRef.StopGetTx = true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
