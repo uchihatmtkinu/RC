@@ -55,6 +55,7 @@ func main() {
 	numCnt := int(gVar.ShardCnt * gVar.ShardSize)
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
 	//cnt := 0
+	rand.Seed(0)
 	for k := 0; k < len(tmptx); k++ {
 		i := rand.Int() % numCnt
 		j := rand.Int() % numCnt

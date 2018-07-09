@@ -53,7 +53,7 @@ func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 					}
 					_, tmpOK := d.TXCache[xxx[0]]
 					if !tmpOK {
-						fmt.Println("TXcache not ok!")
+						fmt.Println("TXcache not ok! hash:", xxx[0])
 					} else if d.TXCache[xxx[0]] == nil {
 						fmt.Println("TxCache data is null")
 					} else if d.TXCache[xxx[0]].Data == nil {
