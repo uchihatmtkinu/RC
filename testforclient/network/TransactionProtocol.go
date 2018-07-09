@@ -330,7 +330,7 @@ func HandleTxBlock(data []byte) error {
 		CacheDbRef.Mu.Lock()
 		err = CacheDbRef.GetTxBlock(tmp)
 		if err != nil {
-			fmt.Println(err)
+			//fmt.Println(err)
 		} else {
 			flag = false
 		}
