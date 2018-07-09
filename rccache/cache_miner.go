@@ -228,8 +228,8 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 			return fmt.Errorf("Verify txblock; No tx in cache")
 		}
 		if tmp.InCheckSum != 0 {
-			fmt.Println("Error in crossShard")
-			tmp.Print()
+			//fmt.Println("Error in crossShard")
+			//tmp.Print()
 			return fmt.Errorf("Not be fully recognized %d", i)
 		}
 	}

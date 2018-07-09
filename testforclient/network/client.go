@@ -97,7 +97,7 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		fmt.Printf("%d Received %s command\n", ID, command)
+		//fmt.Printf("%d Received %s command\n", ID, command)
 		switch command {
 		case "requestTxB":
 			go HandleRequestTxB(request)

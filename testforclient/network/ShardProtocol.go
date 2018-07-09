@@ -82,7 +82,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			if readyMessage.Epoch == CurrentEpoch {
 				readyCount++
 				setMaskBit((*ms)[readyMessage.ID].InShardId, cosi.Enabled, &responsemask)
-				fmt.Println("ReadyCount: ", readyCount)
+				//fmt.Println("ReadyCount: ", readyCount)
 			}
 		case <-time.After(timeoutSync):
 			//fmt.Println("Wait shard signal time out")

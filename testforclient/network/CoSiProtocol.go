@@ -78,7 +78,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 			commits[(*ms)[commitMessage.ID].InShardId] = commitMessage.Commit
 			setMaskBit((*ms)[commitMessage.ID].InShardId, cosi.Enabled, &cosimask)
 			signCount++
-			fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
+			//fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
@@ -123,7 +123,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 			sigParts[it.InShardId] = reponseMessage.Sig
 			setMaskBit(it.InShardId, cosi.Disabled, &responsemask)
 			responseCount++
-			fmt.Println("Received response from Global ID: ", reponseMessage.ID, ", reponses count:", responseCount, "/", signCount)
+			//fmt.Println("Received response from Global ID: ", reponseMessage.ID, ", reponses count:", responseCount, "/", signCount)
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
