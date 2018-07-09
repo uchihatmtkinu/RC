@@ -210,9 +210,10 @@ func HandleTxDecLeader(data []byte) error {
 		CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
 		if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
 			CacheDbRef.TDSNotReady--
-		}
-		if CacheDbRef.TDSNotReady == 0 {
-			StartLastTxBlock <- true
+			fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)
+			if CacheDbRef.TDSNotReady == 0 {
+				StartLastTxBlock <- true
+			}
 		}
 	}
 	CacheDbRef.Mu.Unlock()
@@ -249,10 +250,11 @@ func HandleTxDecSetLeader(data []byte) error {
 	CacheDbRef.TDSCnt[tmp.ID]++
 	if CacheDbRef.TDSCnt[tmp.ID] == gVar.NumTxListPerEpoch {
 		CacheDbRef.TDSNotReady--
+		if CacheDbRef.TDSNotReady == 0 {
+			StartLastTxBlock <- true
+		}
 	}
-	if CacheDbRef.TDSNotReady == 0 {
-		StartLastTxBlock <- true
-	}
+
 	CacheDbRef.Mu.Unlock()
 	return nil
 }
