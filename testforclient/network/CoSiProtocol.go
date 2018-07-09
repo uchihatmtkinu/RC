@@ -9,6 +9,7 @@ import (
 
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -193,6 +194,8 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	leaderSBMessage := <-cosiAnnounceCh
 	//close(cosiAnnounceCh)
+	fmt.Println("Leader SBM:", base58.Encode(leaderSBMessage))
+	fmt.Println("Myself SBM:", base58.Encode(sbMessage))
 	if !verifySBMessage(sbMessage, leaderSBMessage) {
 		fmt.Println("Sync Block from leader is wrong!")
 		//TODO send warning
@@ -214,7 +217,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	//receive cosisig and verify
 	cosiSigMessage := <-cosiSigCh
-
+	fmt.Println("Myself SBM at now:", base58.Encode(sbMessage))
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
 	if valid {
