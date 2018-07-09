@@ -56,16 +56,16 @@ func main() {
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
 	//cnt := 0
 	rand.Seed(0)
-	for k := 0; k < len(tmptx); k++ {
-		i := rand.Int() % numCnt
-		j := rand.Int() % numCnt
-		tmptx[k] = *rccache.GenerateTx(i, j, 1)
-	}
+
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 
 		network.ShardProcess()
-		time.Sleep(time.Second * 30)
+		for l := 0; l < len(tmptx); l++ {
+			i := rand.Int() % int(gVar.ShardSize)
+			j := rand.Int() % numCnt
+			tmptx[l] = *rccache.GenerateTx(shard.ShardToGlobal[network.CacheDbRef.ShardNum][i], j, 1)
+		}
 		t1 := time.Now()
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			go network.SendLoop(&tmptx)
