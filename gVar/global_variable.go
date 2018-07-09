@@ -1,5 +1,7 @@
 package gVar
 
+import "time"
+
 //MagicNumber magic
 const MagicNumber byte = 66
 
@@ -41,3 +43,5 @@ const TxSendInterval = 5
 const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
 
 const GeneralSleepTime = 50
+
+var T1 time.Time = time.Now()

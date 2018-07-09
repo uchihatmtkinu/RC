@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
@@ -156,7 +157,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 		b.TxCnt = x.TxCnt
 		b.TxArray = x.TxArray
 	}
-	fmt.Println("Miner", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
+	fmt.Println(time.Since(gVar.T1), "Miner", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	index := 0
 	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {

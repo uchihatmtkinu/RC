@@ -15,7 +15,7 @@ import (
 )
 
 //LeaderCosiProcess leader use this
-func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
+func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	//initialize
 	// myCommit my cosi commitment
 	var myCommit cosi.Commitment
@@ -30,7 +30,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 	var cosiSig cosi.SignaturePart
 	// cosi begin
 	<-startSync
-	elapsed := time.Since(t1)
+	elapsed := time.Since(gVar.T1)
 	fmt.Println("App elapsed: ", elapsed)
 	fmt.Println("Leader CoSi")
 
@@ -78,7 +78,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 			commits[(*ms)[commitMessage.ID].InShardId] = commitMessage.Commit
 			setMaskBit((*ms)[commitMessage.ID].InShardId, cosi.Enabled, &cosimask)
 			signCount++
-			//fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
+			fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
@@ -162,7 +162,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard, t1 time.Time) cosi.SignaturePart {
 }
 
 // MemberCosiProcess member use this
-func MemberCosiProcess(ms *[]shard.MemShard, t1 time.Time) (bool, []byte) {
+func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var sbMessage []byte
 	// myCommit my cosi commitment
 	var myCommit cosi.Commitment
@@ -170,7 +170,7 @@ func MemberCosiProcess(ms *[]shard.MemShard, t1 time.Time) (bool, []byte) {
 	var pubKeys []ed25519.PublicKey
 	var it *shard.MemShard
 	<-startSync
-	elapsed := time.Since(t1)
+	elapsed := time.Since(gVar.T1)
 	fmt.Println("App elapsed: ", elapsed)
 	//var timeoutflag bool
 	//timeoutflag = false

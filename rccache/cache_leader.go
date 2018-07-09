@@ -2,6 +2,7 @@ package rccache
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
@@ -252,7 +253,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		}
 
 	}
-	fmt.Println("Leader", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
+	fmt.Println(time.Since(gVar.T1), "Leader", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]

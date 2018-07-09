@@ -66,7 +66,7 @@ func main() {
 			j := rand.Int() % numCnt
 			tmptx[l] = *rccache.GenerateTx(shard.ShardToGlobal[network.CacheDbRef.ShardNum][i], j, 1)
 		}
-		t1 := time.Now()
+		gVar.T1 = time.Now()
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			go network.SendLoop(&tmptx)
 		}
@@ -84,9 +84,9 @@ func main() {
 
 		//test cosi
 		if shard.MyMenShard.Role == shard.RoleLeader {
-			network.LeaderCosiProcess(&shard.GlobalGroupMems, t1)
+			network.LeaderCosiProcess(&shard.GlobalGroupMems)
 		} else {
-			network.MemberCosiProcess(&shard.GlobalGroupMems, t1)
+			network.MemberCosiProcess(&shard.GlobalGroupMems)
 		}
 
 		//test sync

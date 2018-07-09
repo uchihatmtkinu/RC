@@ -33,7 +33,7 @@ func TxGeneralLoop() {
 	tmp := 0
 	flag := true
 	rand.Seed(time.Now().Unix())
-	fmt.Println(CacheDbRef.ID, "start to process Tx")
+	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "start to process Tx:")
 	for {
 		tmp++
 		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
@@ -44,11 +44,11 @@ func TxGeneralLoop() {
 				CacheDbRef.NewTxList()
 			}
 			if CacheDbRef.StartIndex <= CacheDbRef.LastIndex && CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].MemCnt == (gVar.ShardSize-1) {
-				fmt.Println("Leader", CacheDbRef.ID, "ready to send TDS")
+				fmt.Println(time.Since(gVar.T1), "Leader", CacheDbRef.ID, "ready to send TDS:")
 				CacheDbRef.SignTDS(0)
 				CacheDbRef.ProcessTDS(&CacheDbRef.TDSCache[0][CacheDbRef.ShardNum])
 				if flag {
-					fmt.Println(CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].HashID[:]))
+					fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].HashID[:]))
 					data2 := new([][]byte)
 					*data2 = make([][]byte, gVar.ShardCnt)
 
@@ -66,7 +66,7 @@ func TxGeneralLoop() {
 				if len(CacheDbRef.Ready) >= gVar.NumTxPerBlock {
 
 					CacheDbRef.GenerateTxBlock()
-					fmt.Println(CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
+					fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
 					if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 						fmt.Println(CacheDbRef.ID, "start to make repBlock")
 						tmp := make([][32]byte, gVar.NumTxBlockForRep)
@@ -78,7 +78,7 @@ func TxGeneralLoop() {
 					CacheDbRef.TxB.Encode(data3, 0)
 					go SendTxBlock(data3)
 					if CacheDbRef.TxCnt >= gVar.NumTxPerEpoch {
-						fmt.Println(CacheDbRef.ID, "start to make FB")
+						fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "start to make FB")
 						CacheDbRef.StartTxDone = false
 						CacheDbRef.StopGetTx = true
 						go SendFinalBlock(&shard.GlobalGroupMems)
@@ -88,7 +88,7 @@ func TxGeneralLoop() {
 
 			if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= gVar.NumTxPerTL {
 				CacheDbRef.BuildTDS()
-				fmt.Println(CacheDbRef.ID, "sends a TxList with", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TLS[CacheDbRef.ShardNum].HashID[:]))
+				fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "sends a TxList with", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TLS[CacheDbRef.ShardNum].HashID[:]))
 				//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
 				data1 := new([]byte)
 				CacheDbRef.TLS[CacheDbRef.ShardNum].Encode(data1)
@@ -175,7 +175,7 @@ func HandleTx(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.GetTx(&tmp.TxArray[i])
@@ -211,7 +211,7 @@ func HandleTxList(data []byte) error {
 	}
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
-	fmt.Println(CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs")
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	flag := true
 	for flag {
@@ -340,7 +340,7 @@ func HandleTxBlock(data []byte) error {
 		time.Sleep(time.Microsecond * 100)
 	}
 	CacheDbRef.Mu.Lock()
-	fmt.Println(CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
+	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
@@ -371,7 +371,7 @@ func HandleTxLeader(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.MakeTXList(&tmp.TxArray[i])
