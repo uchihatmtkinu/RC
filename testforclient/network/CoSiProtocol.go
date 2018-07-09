@@ -32,7 +32,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	// cosi begin
 	<-startSync
 	elapsed := time.Since(gVar.T1)
-	fmt.Println("App elapsed: ", elapsed)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	fmt.Println("Leader CoSi")
 
 	CoSiFlag = true
@@ -172,7 +172,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var it *shard.MemShard
 	<-startSync
 	elapsed := time.Since(gVar.T1)
-	fmt.Println("App elapsed: ", elapsed)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//var timeoutflag bool
 	//timeoutflag = false
 	//cosiAnnounceCh = make(chan []byte)

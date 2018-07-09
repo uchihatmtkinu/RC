@@ -6,10 +6,10 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 40
+const ShardSize uint32 = 10
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 1
+const ShardCnt uint32 = 4
 
 //used in rep calculation, scaling factor
 const RepTP = 1
