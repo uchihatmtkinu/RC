@@ -47,10 +47,18 @@ func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 				s.Stat--
 				if xxx == nil {
 					fmt.Println("xxx[0] is null")
-				} else if d.TXCache[xxx[0]] == nil {
-					fmt.Println("TxCache data is null")
-				} else if d.TXCache[xxx[0]].Data == nil {
-					fmt.Println("Tx Data is null")
+				} else {
+					if len(xxx) < 1 {
+						fmt.Println("xxx length not enough")
+					}
+					_, tmpOK := d.TXCache[xxx[0]]
+					if !tmpOK {
+						fmt.Println("TXcache not ok!")
+					} else if d.TXCache[xxx[0]] == nil {
+						fmt.Println("TxCache data is null")
+					} else if d.TXCache[xxx[0]].Data == nil {
+						fmt.Println("Tx Data is null")
+					}
 				}
 				b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
 				s.Valid[i] = 1

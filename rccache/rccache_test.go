@@ -118,3 +118,11 @@ func TestOutToData(t *testing.T) {
 	file.Close()
 	t.Error("Check")
 }
+
+func TestSomething(t *testing.T) {
+	x := make(map[int]int, 100)
+	fmt.Println(len(x))
+	x[100] = 10
+	fmt.Println(x[10])
+	t.Error("No file")
+}

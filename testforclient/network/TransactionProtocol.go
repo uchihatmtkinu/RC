@@ -201,6 +201,7 @@ func HandleAndSendTx(data []byte) error {
 
 //HandleTxList when receives a txlist
 func HandleTxList(data []byte) error {
+
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TxList)
@@ -210,6 +211,7 @@ func HandleTxList(data []byte) error {
 	}
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
+	fmt.Println(CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs")
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	flag := true
 	for flag {
