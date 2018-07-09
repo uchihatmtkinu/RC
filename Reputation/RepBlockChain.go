@@ -40,6 +40,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
 
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
+	fmt.Println("Mining parameter: ", lastHash, shard.PreviousSyncBlockHash, *cache)
 	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
 	if fromOtherFlag {
