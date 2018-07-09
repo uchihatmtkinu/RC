@@ -73,7 +73,9 @@ func main() {
 			tmptx[l] = *rccache.GenerateTx(i, j, 1)
 		}
 		gVar.T1 = time.Now()
+		fmt.Println("This time", time.Now())
 		if shard.MyMenShard.Role == shard.RoleLeader {
+			fmt.Println("This is a Leader")
 			go network.SendLoop(&tmptx)
 			go network.TxGeneralLoop()
 		}
