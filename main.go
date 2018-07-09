@@ -62,9 +62,15 @@ func main() {
 
 		network.ShardProcess()
 		for l := 0; l < len(tmptx); l++ {
-			i := rand.Int() % int(gVar.ShardSize)
+			i := rand.Int() % numCnt
+			for true {
+				if basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal) == network.CacheDbRef.ShardNum {
+					break
+				}
+				i = rand.Int() % numCnt
+			}
 			j := rand.Int() % numCnt
-			tmptx[l] = *rccache.GenerateTx(shard.ShardToGlobal[network.CacheDbRef.ShardNum][i], j, 1)
+			tmptx[l] = *rccache.GenerateTx(i, j, 1)
 		}
 		gVar.T1 = time.Now()
 		if shard.MyMenShard.Role == shard.RoleLeader {
