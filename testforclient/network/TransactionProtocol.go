@@ -381,6 +381,7 @@ func HandleTxLeader(data []byte) error {
 		}
 	}
 	CacheDbRef.Mu.Unlock()
+	fmt.Println("Updated size of Txlist: ", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt)
 	return nil
 }
 
