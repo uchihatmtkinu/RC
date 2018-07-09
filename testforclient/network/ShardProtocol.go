@@ -63,46 +63,70 @@ func ShardProcess() {
 func LeaderReadyProcess(ms *[]shard.MemShard) {
 	var readyMessage readyInfo
 	var it *shard.MemShard
-	var responsemask []byte
-
-	intilizeMaskBit(&responsemask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
-
-	readyCount := 1
+	var membermask []byte
+	var leadermask []byte
+	intilizeMaskBit(&membermask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
+	intilizeMaskBit(&leadermask, (int(gVar.ShardSize)+7)>>3, cosi.Disabled)
+	readyMember := 1
+	readyLeader := 1
 	//sent announcement
 	for i := 1; i < int(gVar.ShardSize); i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		SendCosiMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
+		SendShardReadyMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 	}
-	fmt.Println("sent CoSi announce")
 	//fmt.Println("wait for ready")
 	//TODO modify int(gVar.ShardSize)/2
-	for readyCount < int(gVar.ShardSize) {
+	for readyMember < int(gVar.ShardSize) {
 		select {
-		case readyMessage = <-readyCh:
+		case readyMessage = <-readyMemberCh:
 			if readyMessage.Epoch == CurrentEpoch {
-				readyCount++
-				setMaskBit((*ms)[readyMessage.ID].InShardId, cosi.Enabled, &responsemask)
+				readyMember++
+				setMaskBit((*ms)[readyMessage.ID].InShardId, cosi.Enabled, &membermask)
 				//fmt.Println("ReadyCount: ", readyCount)
 			}
 		case <-time.After(timeoutSync):
 			//fmt.Println("Wait shard signal time out")
 			for i := 1; i < int(gVar.ShardSize); i++ {
-				if maskBit(i, &responsemask) == cosi.Disabled {
+				if maskBit(i, &membermask) == cosi.Disabled {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-					SendCosiMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
+					SendShardReadyMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 				}
 			}
 		}
 	}
+	fmt.Println("Shard is ready, sent to other shards")
+	for i := 1; i < int(gVar.ShardCnt); i++ {
+		it = &(*ms)[shard.ShardToGlobal[i][0]]
+		SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+	}
 
+	for readyLeader < int(gVar.ShardCnt) {
+		select {
+		case readyMessage = <-readyLeaderCh:
+			if readyMessage.Epoch == CurrentEpoch {
+				readyLeader++
+				setMaskBit(readyMessage.ID, cosi.Enabled, &leadermask)
+				//fmt.Println("ReadyCount: ", readyCount)
+			}
+		case <-time.After(timeoutSync):
+			for i := 1; i < int(gVar.ShardCnt); i++ {
+				if maskBit(i, &leadermask) == cosi.Disabled {
+					it = &(*ms)[shard.ShardToGlobal[i][0]]
+					SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+				}
+			}
+		}
+
+	}
+	fmt.Println("All shards are ready.")
 }
 
 //MinerReadyProcess member use this
 func MinerReadyProcess() {
 	var readyMessage readyInfo
-	readyMessage = <-readyCh
+	readyMessage = <-readyMemberCh
 	for !(readyMessage.Epoch == CurrentEpoch && shard.ShardToGlobal[shard.MyMenShard.Shard][0] == readyMessage.ID) {
-		readyMessage = <-readyCh
+		readyMessage = <-readyMemberCh
 	}
 	SendShardReadyMessage(LeaderAddr, "shardReady", readyInfo{MyGlobalID, CurrentEpoch})
 	fmt.Println("Sent Ready")
@@ -114,18 +138,7 @@ func SendShardReadyMessage(addr string, command string, message interface{}) {
 	sendData(addr, request)
 }
 
-//HandleShardReady handle shard ready announcement command
-func HandleShardReadyAnnounce(request []byte) {
-	var buff bytes.Buffer
-	var payload readyInfo
-	buff.Write(request)
-	dec := gob.NewDecoder(&buff)
-	err := dec.Decode(&payload)
-	if err != nil {
-		log.Panic(err)
-	}
-	readyCh <- payload
-}
+
 
 //HandleShardReady handle shard ready command
 func HandleShardReady(request []byte) {
@@ -137,6 +150,19 @@ func HandleShardReady(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	readyCh <- payload
+	readyMemberCh <- payload
 
+}
+
+//HandleLeaderReady handle shard ready command from other leader
+func HandleLeaderReady(request []byte) {
+	var buff bytes.Buffer
+	var payload readyInfo
+	buff.Write(request)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	readyLeaderCh <- payload
 }

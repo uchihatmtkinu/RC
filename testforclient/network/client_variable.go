@@ -44,9 +44,10 @@ type readyInfo struct {
 	Epoch int
 }
 
-//readyCh channel used in shard process, indicates the ready for a new epoch
-var readyCh chan readyInfo
-
+//readyMemberCh channel used in shard process, indicates the ready of the member for a new epoch
+var readyMemberCh chan readyInfo
+//readyLeaderCh channel used in shard process, indicates the ready of other shards for a new epoch
+var readyLeaderCh chan readyInfo
 //------------------- rep pow process -------------------------
 //powInfo used in pow
 type powInfo struct {

@@ -127,7 +127,9 @@ func StartServer(ID int) {
 		case "shardReady":
 			go HandleShardReady(request)
 		case "readyAnnoun":
-			go HandleShardReadyAnnounce(request)
+			go HandleShardReady(request)
+		case "leaderReady":
+			go HandleLeaderReady(request)
 		//rep pow
 		case "RepPowAnnou":
 			go HandleRepPowRx(request)

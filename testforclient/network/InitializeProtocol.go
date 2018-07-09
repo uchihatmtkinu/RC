@@ -105,8 +105,8 @@ func IntilizeProcess(input string, ID *int) {
 	FinalTxReadyCh = make(chan bool)
 	waitForFB = make(chan bool)
 	//channel used in shard
-	readyCh = make(chan readyInfo, bufferSize)
-
+	readyMemberCh = make(chan readyInfo, bufferSize)
+	readyLeaderCh = make(chan readyInfo, bufferSize)
 	//channel used in CoSi
 	cosiAnnounceCh = make(chan []byte)
 
