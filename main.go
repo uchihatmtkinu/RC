@@ -56,7 +56,7 @@ func main() {
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
 	//cnt := 0
 	rand.Seed(0)
-
+	time.Sleep(time.Second * 10)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 		fmt.Println("Current time: ", time.Now())
