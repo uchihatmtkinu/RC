@@ -12,7 +12,7 @@ import (
 
 //SendTx is the protocol for sending
 func SendTx(x *[]byte) {
-	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "sending TxBatch")
+	fmt.Println(time.Now(), CacheDbRef.ID, "sending TxBatch")
 	for i := 0; i < int(gVar.ShardSize); i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {

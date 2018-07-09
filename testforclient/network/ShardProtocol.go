@@ -36,7 +36,7 @@ func ShardProcess() {
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
-	fmt.Println(CacheDbRef.ID, "Shard Calculated")
+	fmt.Println(time.Now(), CacheDbRef.ID, "Shard Calculated")
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.StopGetTx = false
@@ -94,7 +94,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			}
 		}
 	}
-	fmt.Println("Shard is ready, sent to other shards")
+	fmt.Println(time.Now(), "Shard is ready, sent to other shards")
 	for i := 1; i < int(gVar.ShardCnt); i++ {
 		it = &(*ms)[shard.ShardToGlobal[i][0]]
 		SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
@@ -106,7 +106,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			if readyMessage.Epoch == CurrentEpoch {
 				readyLeader++
 				setMaskBit(readyMessage.ID, cosi.Enabled, &leadermask)
-				//fmt.Println("ReadyCount: ", readyCount)
+				fmt.Println("ReadyLeaderCount: ", readyLeader)
 			}
 		case <-time.After(timeoutSync):
 			for i := 1; i < int(gVar.ShardCnt); i++ {
@@ -137,8 +137,6 @@ func SendShardReadyMessage(addr string, command string, message interface{}) {
 	request := append(commandToBytes(command), payload...)
 	sendData(addr, request)
 }
-
-
 
 //HandleShardReady handle shard ready command
 func HandleShardReady(request []byte) {

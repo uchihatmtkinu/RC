@@ -30,6 +30,8 @@ const NumTxListPerEpoch = 3 //60
 //NumTxBlockForRep is the number of blocks for one rep block
 const NumTxBlockForRep = 2 //10
 
+const NumTxBlockPerEpoch = 3
+
 const NumTxPerBlock = 8000 //2000
 
 const NumTxPerTL = 8000 //400
@@ -45,3 +47,5 @@ const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
 const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
+
+const TxBlockInterval = time.Second * 10
