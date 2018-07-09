@@ -33,6 +33,7 @@ func TxGeneralLoop() {
 	tmp := 0
 	flag := true
 	rand.Seed(time.Now().Unix())
+	fmt.Println(time.Now())
 	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "start to process Tx:")
 	for {
 		tmp++
