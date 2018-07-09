@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
-	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
 )
@@ -38,10 +37,6 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan bool)
 	tmp := res.Hash
-	fmt.Println("Hash for rep pow:")
-	for i := 0; i < len(tmp); i++ {
-		fmt.Println("Hash:", i, base58.Encode(tmp[i][:]))
-	}
 	go Reputation.MyRepBlockChain.MineRepBlock(ms, &tmp)
 	for flag {
 		select {
@@ -67,7 +62,6 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
 	fmt.Println("PoW ", Reputation.CurrentRepBlock.Round, " round finished.")
-	fmt.Println("RepBlockHash: ", base58.Encode(Reputation.CurrentRepBlock.Block.Hash[:]))
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 	close(Reputation.RepPowRxValidate)
 	close(Reputation.RepPowTxCh)
