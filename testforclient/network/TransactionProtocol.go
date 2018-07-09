@@ -387,6 +387,10 @@ func HandleTxLeader(data []byte) error {
 
 //HandleTxDecLeader when receives a txdec
 func HandleTxDecLeader(data []byte) error {
+	if !CacheDbRef.StartTxDone {
+		fmt.Println("Epoch end, not receive TxDec")
+		return nil
+	}
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TxDecision)
