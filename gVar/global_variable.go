@@ -40,4 +40,4 @@ const TxSendInterval = 1
 
 const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
 
-const GeneralSleepTime = 100
+const GeneralSleepTime = 50
