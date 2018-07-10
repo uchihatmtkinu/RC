@@ -46,8 +46,10 @@ type readyInfo struct {
 
 //readyMemberCh channel used in shard process, indicates the ready of the member for a new epoch
 var readyMemberCh chan readyInfo
+
 //readyLeaderCh channel used in shard process, indicates the ready of other shards for a new epoch
 var readyLeaderCh chan readyInfo
+
 //------------------- rep pow process -------------------------
 //powInfo used in pow
 type powInfo struct {
@@ -155,3 +157,6 @@ var waitForFB chan bool
 
 //FinalTxReadyCh whether the FB is done
 var FinalTxReadyCh chan bool
+
+var StartLastTxBlock chan bool
+var StartNewTxlist chan bool

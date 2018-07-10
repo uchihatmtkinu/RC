@@ -114,4 +114,6 @@ func IntilizeProcess(input string, ID *int,  IpFile string) {
 	finalSignal = make(chan []byte)
 	startRep = make(chan repInfo)
 	startSync = make(chan bool)
+	StartLastTxBlock = make(chan bool)
+	StartNewTxlist = make(chan bool)
 }

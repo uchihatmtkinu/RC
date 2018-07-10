@@ -6,10 +6,10 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 20
+const ShardSize uint32 = 100
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 5
+const ShardCnt uint32 = 4
 
 //used in rep calculation, scaling factor
 const RepTP = 1
@@ -38,10 +38,12 @@ const NumTxPerTL = 8000 //400
 
 const GensisAccValue = 2147483647
 
-const TxSendInterval = 5
+const TxSendInterval = 4
 
 const NumOfTxForTest = 24000 //int(2 * 60 * 4000 * ShardSize)
 
 const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
+
+const TxBlockInterval = time.Second * 10

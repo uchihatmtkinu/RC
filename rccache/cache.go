@@ -65,6 +65,8 @@ type DbRef struct {
 	FB            [gVar.ShardCnt]*basic.TxBlock
 	prk           ecdsa.PrivateKey
 	TxCnt         uint32
+	TDSCnt        []int
+	TDSNotReady   int
 
 	//Miner
 	TLNow      *basic.TxDecision
@@ -127,6 +129,8 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.FB[i] = d.DB.LatestFinalTxBlock(i)
 	}
+	d.TDSCnt = make([]int, gVar.ShardCnt)
+	d.TDSNotReady = int(gVar.ShardCnt)
 	//d.TL = nil
 	//d.TLCache = nil
 	//d.TLS = new([gVar.ShardCnt]basic.TxList)

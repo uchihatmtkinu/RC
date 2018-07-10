@@ -168,7 +168,7 @@ func (d *DbRef) GenerateStartBlock() error {
 }
 
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
-func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
+func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *int) error {
 	if a.Single == 1 {
 		return fmt.Errorf("TxDecision parameter error")
 	}
@@ -177,6 +177,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision) error {
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
 	tmpIndex := tmp - uint32(d.StartIndex)
+	*index = int(tmpIndex)
 	tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 
 	var x, y uint32 = 0, 0
@@ -234,12 +235,13 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			}
 			tmpRes := b.Result(i)
 			if tmpRes == false {
+				tmp.Decision[0] = 1
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					fmt.Println("TDS:", j, ":", b.MemD[j].ID)
 					if tmp.Decision[j] == 1 {
-						shard.GlobalGroupMems[b.MemD[j].ID].Rep += gVar.RepTN * int64(tmp.Value)
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTN * int64(tmp.Value)
 					} else if tmp.Decision[j] == 2 {
-						shard.GlobalGroupMems[b.MemD[j].ID].Rep -= gVar.RepFP * int64(tmp.Value)
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFP * int64(tmp.Value)
 					}
 				}
 			}
@@ -253,7 +255,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		}
 
 	}
-	fmt.Println(time.Since(gVar.T1), "Leader", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
+	fmt.Println(time.Now(), "Leader", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	for i := uint32(0); i < b.TxCnt; i++ {
 		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
@@ -269,12 +271,14 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			//fmt.Println(base58.Encode(tmp.Data.Hash[:]), "result is", tmp.Res)
 			if tmp.Res == 1 {
 				d.Ready = append(d.Ready, *(tmp.Data))
-				tmp.Decision[0] = 2
-				for j := uint32(0); j < gVar.ShardSize; j++ {
-					if tmp.Decision[j] == 1 {
-						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
-					} else if tmp.Decision[j] == 2 {
-						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
+				if tmp.InCheck[d.ShardNum] == 1 {
+					tmp.Decision[0] = 2
+					for j := uint32(0); j < gVar.ShardSize; j++ {
+						if tmp.Decision[j] == 1 {
+							shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
+						} else if tmp.Decision[j] == 2 {
+							shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
+						}
 					}
 				}
 			}

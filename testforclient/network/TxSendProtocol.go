@@ -12,7 +12,7 @@ import (
 
 //SendTx is the protocol for sending
 func SendTx(x *[]byte) {
-	fmt.Println(time.Since(gVar.T1), CacheDbRef.ID, "sending TxBatch")
+	fmt.Println(time.Now(), CacheDbRef.ID, "sending TxBatch")
 	for i := 0; i < int(gVar.ShardSize); i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
@@ -27,11 +27,12 @@ func SendTx(x *[]byte) {
 		}
 	}
 	HandleTotalTx(*x)
+	StartNewTxlist <- true
 }
 
 //SendLoop is the protocol for sending
 func SendLoop(x *[]basic.Transaction) {
-
+	fmt.Println("Prepare for sending TxBatch")
 	for i := 0; i < len(*x)/gVar.NumTxPerTL; i++ {
 		tmp := (*x)[i*gVar.NumTxPerTL : (i+1)*gVar.NumTxPerTL]
 		data := new(basic.TransactionBatch)

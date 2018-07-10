@@ -157,7 +157,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 		b.TxCnt = x.TxCnt
 		b.TxArray = x.TxArray
 	}
-	fmt.Println(time.Since(gVar.T1), "Miner", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
+	fmt.Println(time.Now(), "Miner", d.ID, "get TDS from", b.ID, "with", b.TxCnt, "Txs")
 	index := 0
 	shift := byte(0)
 	for i := uint32(0); i < b.TxCnt; i++ {
@@ -187,6 +187,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
 			if tmpRes == false {
+				tmp.Decision[0] = 1
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					if tmp.Decision[j] == 1 {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTN * int64(tmp.Value)
@@ -236,12 +237,14 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp := d.TXCache[a.TxArray[i].Hash]
-		tmp.Decision[0] = 2
-		for j := uint32(0); j < gVar.ShardSize; j++ {
-			if tmp.Decision[j] == 1 {
-				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
-			} else if tmp.Decision[j] == 2 {
-				shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
+		if tmp.InCheck[d.ShardNum] == 1 {
+			tmp.Decision[0] = 2
+			for j := uint32(0); j < gVar.ShardSize; j++ {
+				if tmp.Decision[j] == 1 {
+					shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
+				} else if tmp.Decision[j] == 2 {
+					shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
+				}
 			}
 		}
 		d.ClearCache(a.TxArray[i].Hash)

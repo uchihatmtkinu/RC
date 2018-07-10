@@ -9,6 +9,7 @@ import (
 
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/ed25519"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -31,7 +32,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	// cosi begin
 	<-startSync
 	elapsed := time.Since(gVar.T1)
-	fmt.Println("App elapsed: ", elapsed)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	fmt.Println("Leader CoSi")
 
 	CoSiFlag = true
@@ -171,7 +172,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var it *shard.MemShard
 	<-startSync
 	elapsed := time.Since(gVar.T1)
-	fmt.Println("App elapsed: ", elapsed)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//var timeoutflag bool
 	//timeoutflag = false
 	//cosiAnnounceCh = make(chan []byte)
@@ -193,6 +194,8 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	leaderSBMessage := <-cosiAnnounceCh
 	//close(cosiAnnounceCh)
+	fmt.Println("Leader SBM:", base58.Encode(leaderSBMessage))
+	fmt.Println("Myself SBM:", base58.Encode(sbMessage))
 	if !verifySBMessage(sbMessage, leaderSBMessage) {
 		fmt.Println("Sync Block from leader is wrong!")
 		//TODO send warning
@@ -214,7 +217,6 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	//receive cosisig and verify
 	cosiSigMessage := <-cosiSigCh
-
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
 	if valid {
