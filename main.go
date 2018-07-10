@@ -45,7 +45,7 @@ func main() {
 
 	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(string(buffer), &ID)
+	network.IntilizeProcess(string(buffer), &ID, os.Args[2])
 	fmt.Println("test begin")
 	go network.StartServer(ID)
 	<-network.IntialReadyCh

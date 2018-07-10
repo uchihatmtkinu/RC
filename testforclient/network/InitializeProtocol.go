@@ -18,7 +18,7 @@ import (
 )
 
 //IntilizeProcess is init
-func IntilizeProcess(input string, ID *int) {
+func IntilizeProcess(input string, ID *int,  IpFile string) {
 
 	// IP + port
 	var IPAddr string
@@ -35,7 +35,7 @@ func IntilizeProcess(input string, ID *int) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fileIP, err := os.Open("IP.txt")
+	fileIP, err := os.Open(IpFile)
 	defer fileIP.Close()
 	if err != nil {
 		fmt.Println(err)
