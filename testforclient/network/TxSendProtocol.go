@@ -27,14 +27,14 @@ func SendTx(x *[]byte) {
 		}
 	}
 	HandleTotalTx(*x)
-	StartNewTxlist <- true
 }
 
 //SendLoop is the protocol for sending
 func SendLoop(x *[]basic.Transaction) {
 	fmt.Println("Prepare for sending TxBatch")
-	for i := 0; i < len(*x)/gVar.NumTxPerTL; i++ {
-		tmp := (*x)[i*gVar.NumTxPerTL : (i+1)*gVar.NumTxPerTL]
+	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
+		tmp := (*x)[i*TxBatchLen : (i+1)*TxBatchLen]
 		data := new(basic.TransactionBatch)
 		data.New(&tmp)
 		tmpHash := data.Encode()

@@ -165,6 +165,7 @@ func HandleTxLeader(data []byte) error {
 	if err != nil {
 		return err
 	}
+	NewTxListFlag := false
 	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
@@ -173,7 +174,13 @@ func HandleTxLeader(data []byte) error {
 			//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 		}
 	}
+	if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= uint32(gVar.TxPerList) {
+		NewTxListFlag = true
+	}
 	CacheDbRef.Mu.Unlock()
+	if NewTxListFlag {
+		StartNewTxlist <- true
+	}
 	fmt.Println("Updated size of Txlist: ", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt)
 	return nil
 }

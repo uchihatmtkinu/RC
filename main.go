@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/rccache"
@@ -23,6 +24,11 @@ func main() {
 	}*/
 	fmt.Println("Get the local ip from", os.Args[1])
 	file, err := os.Open(os.Args[1])
+	initType, initErr := strconv.Atoi(os.Args[3])
+	if initErr != nil {
+		log.Panic(initErr)
+		os.Exit(1)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,7 +51,7 @@ func main() {
 
 	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(string(buffer), &ID, os.Args[2])
+	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
 	fmt.Println("test begin")
 	go network.StartServer(ID)
 	<-network.IntialReadyCh
@@ -77,6 +83,8 @@ func main() {
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
 			go network.SendLoop(&tmptx)
+
+		} else {
 			go network.TxGeneralLoop()
 		}
 		//test rep
