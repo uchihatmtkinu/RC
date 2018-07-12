@@ -59,7 +59,7 @@ func TxListProcess() {
 	cnt := 1
 	for cnt < int(gVar.ShardSize) {
 		select {
-		case <-*TLG.TLChan:
+		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round]:
 			cnt++
 			fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):
@@ -268,13 +268,15 @@ func HandleTxDecLeader(data []byte) error {
 	}
 	//tmp.Print()
 	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
-	var x *chan bool
+	var x *rccache.TLGroup
 	err = CacheDbRef.UpdateTXCache(tmp, x)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	CacheDbRef.Mu.Unlock()
-	*x <- true
+	if x != nil {
+		TLChan[x.TLS[CacheDbRef.ShardNum].Round] <- tmp.ID
+	}
 
 	return nil
 }

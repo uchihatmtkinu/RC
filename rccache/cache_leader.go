@@ -159,15 +159,21 @@ func (d *DbRef) GenerateStartBlock() error {
 }
 
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
-func (d *DbRef) UpdateTXCache(a *basic.TxDecision, outputchannel *chan bool) error {
+func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *TLGroup) error {
 	if a.Single == 1 {
 		return fmt.Errorf("TxDecision parameter error")
 	}
 	tmp, ok := d.TLIndex[a.HashID]
 	if !ok {
+		index = nil
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
-	outputchannel = tmp.TLChan
+	if tmp.TLChan == nil {
+		fmt.Println("TLChan is null")
+	} else {
+		fmt.Println("TLChan is not null")
+	}
+	index = tmp
 	var x, y uint32 = 0, 0
 	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
