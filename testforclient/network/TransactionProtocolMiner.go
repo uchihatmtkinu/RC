@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/rccache"
@@ -141,6 +142,7 @@ func HandleTxBlock(data []byte) error {
 	copy(data1, data)
 	tmp := new(basic.TxBlock)
 	err := tmp.Decode(&data1, 0)
+	fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]))
 	if err != nil {
 		return err
 	}
@@ -160,7 +162,7 @@ func HandleTxBlock(data []byte) error {
 		}
 		CacheDbRef.Mu.RUnlock()
 	}
-
+	fmt.Println("Block", base58.Encode(tmp.HashID[:]), " preprocess done")
 	flag = true
 	for flag {
 		CacheDbRef.Mu.Lock()
