@@ -110,20 +110,26 @@ func StartServer(ID int) {
 		case "TxM":
 			go HandleTotalTx(request)
 		case "TxList":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxList(request)
 		case "TxDec":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxDecLeader(request)
 		case "TxDecSet":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleAndSentTxDecSet(request)
 		case "TxDecSetM":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
 				go HandleTxDecSetLeader(request)
 			} else {
 				go HandleTxDecSet(request)
 			}
 		case "TxB":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxBlock(request)
 		case "FinalTxB":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleFinalTxBlock(request)
 		case "StartTxB":
 			go HandleStartTxBlock(request)
@@ -131,8 +137,10 @@ func StartServer(ID int) {
 		case "shardReady":
 			go HandleShardReady(request)
 		case "readyAnnoun":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleShardReady(request)
 		case "leaderReady":
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleLeaderReady(request)
 		//rep pow
 		case "RepPowAnnou":

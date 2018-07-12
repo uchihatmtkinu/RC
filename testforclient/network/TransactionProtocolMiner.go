@@ -130,13 +130,13 @@ func HandleTxDecSet(data []byte) error {
 //HandleAndSentTxDecSet when receives a txdecset
 func HandleAndSentTxDecSet(data []byte) error {
 	HandleTxDecSet(data)
+	fmt.Println(CacheDbRef.ID, "Get TDS and send")
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxDecSetM", data)
 		}
 	}
-
 	return nil
 }
 
