@@ -208,21 +208,25 @@ func HandleTxDecLeader(data []byte) error {
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
+	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID)
 	tmpflag := false
-	if x == 0 && CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].MemCnt == gVar.ShardSize-1 {
+	if CacheDbRef.TDSCache[x][CacheDbRef.ShardNum].MemCnt == gVar.ShardSize-1 {
 		fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")
-		CacheDbRef.SignTDS(0)
+		CacheDbRef.SignTDS(x)
 		CacheDbRef.ProcessTDS(&CacheDbRef.TDSCache[0][CacheDbRef.ShardNum])
 		fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].HashID[:]))
 		data2 := new([][]byte)
 		*data2 = make([][]byte, gVar.ShardCnt)
 
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			CacheDbRef.TDSCache[0][i].Encode(&(*data2)[i])
+			CacheDbRef.TDSCache[x][i].Encode(&(*data2)[i])
 		}
 		go SendTxDecSet(*data2)
 		go TxNormalBlock()
-		CacheDbRef.Release()
+		CacheDbRef.TLTDSLabel[x] = true
+		if x == 0 {
+			CacheDbRef.Release()
+		}
 		CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
 		if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
 			CacheDbRef.TDSNotReady--

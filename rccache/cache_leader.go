@@ -96,6 +96,7 @@ func (d *DbRef) NewTxList() error {
 		//d.TLCache = append(d.TLCache, *d.TL)
 		d.TLSCache = append(d.TLSCache, *d.TLS)
 		d.TDSCache = append(d.TDSCache, *d.TDS)
+		d.TLTDSLabel = append(d.TLTDSLabel, false)
 		d.LastIndex++
 		d.TLRound++
 		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.LastIndex)
@@ -299,7 +300,13 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 func (d *DbRef) Release() {
 	delete(d.TLIndex, d.TLSCache[0][d.ShardNum].HashID)
 	//d.TLCache = d.TLCache[1:]
-	d.TDSCache = d.TDSCache[1:]
-	d.TLSCache = d.TLSCache[1:]
-	d.StartIndex++
+	for true {
+		d.TDSCache = d.TDSCache[1:]
+		d.TLSCache = d.TLSCache[1:]
+		d.TLTDSLabel = d.TLTDSLabel[1:]
+		d.StartIndex++
+		if d.TLTDSLabel == nil || len(d.TLTDSLabel) == 0 || !d.TLTDSLabel[0] {
+			break
+		}
+	}
 }

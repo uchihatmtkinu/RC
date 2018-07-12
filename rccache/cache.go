@@ -57,6 +57,7 @@ type DbRef struct {
 	TLSCache      [][gVar.ShardCnt]basic.TxList
 	TLSCacheMiner map[[32]byte]*basic.TxList
 	TDSCache      [][gVar.ShardCnt]basic.TxDecSet
+	TLTDSLabel    []bool
 	TLIndex       map[[32]byte]uint32
 	TLS           *[gVar.ShardCnt]basic.TxList
 	TDS           *[gVar.ShardCnt]basic.TxDecSet
@@ -140,6 +141,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
 	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	d.TLSCache = nil
+	d.TLTDSLabel = nil
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.TDSCache = nil
 	d.StartIndex = 0
