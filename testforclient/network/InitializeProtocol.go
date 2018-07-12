@@ -135,4 +135,8 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 	StartLastTxBlock = make(chan bool)
 	StartNewTxlist = make(chan bool)
 	StartSendingTx = make(chan bool)
+	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
+		TxDecRevChan[i] = make(chan txDecRev)
+		TLChan[i] = make(chan uint32)
+	}
 }

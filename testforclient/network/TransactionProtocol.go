@@ -31,11 +31,6 @@ func sendTxMessage(addr string, command string, message []byte) {
 //TxGeneralLoop is the normall loop of transaction cache
 func TxGeneralLoop() {
 	rand.Seed(time.Now().Unix() + int64(CacheDbRef.ID))
-	TxDecRevChan = new([gVar.NumTxListPerEpoch]chan txDecRev)
-	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
-		(*TxDecRevChan)[i] = make(chan txDecRev)
-		TLChan[i] = make(chan uint32)
-	}
 
 	fmt.Println(time.Now())
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to process Tx:")
@@ -127,10 +122,6 @@ func TxLastBlock() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
 	go SendFinalBlock(&shard.GlobalGroupMems)
-	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
-		close((*TxDecRevChan)[i])
-		close(TLChan[i])
-	}
 }
 
 //TxNormalBlock is the loop of TxBlock
@@ -187,7 +178,7 @@ func SendTxDecSet(data [][]byte, round uint32) {
 	mask[CacheDbRef.ShardNum] = true
 	for cnt < int(gVar.ShardCnt) {
 		select {
-		case tmp := <-(*TxDecRevChan)[round]:
+		case tmp := <-TxDecRevChan[round]:
 			fmt.Println("Get txdecRev from", tmp.ID)
 			mask[tmp.ID] = true
 			cnt++
@@ -297,7 +288,7 @@ func HandleTxDecRev(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDecRev)", err)
 		return err
 	}
-	(*TxDecRevChan)[tmp.Round] <- *tmp
+	TxDecRevChan[tmp.Round] <- *tmp
 	return nil
 }
 
