@@ -19,7 +19,7 @@ func HandleTx(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
+	//fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
 	flag := false
 
 	CacheDbRef.Mu.Lock()

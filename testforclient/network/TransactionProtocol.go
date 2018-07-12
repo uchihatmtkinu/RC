@@ -37,7 +37,8 @@ func TxGeneralLoop() {
 		CacheDbRef.NewTxList()
 	}
 	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
-		<-StartNewTxlist
+		//<-StartNewTxlist
+		time.Sleep(gVar.TxSendInterval * time.Second)
 		CacheDbRef.Mu.Lock()
 		CacheDbRef.BuildTDS()
 		fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TLS[CacheDbRef.ShardNum].HashID[:]))
@@ -165,23 +166,23 @@ func HandleTxLeader(data []byte) error {
 	if err != nil {
 		return err
 	}
-	NewTxListFlag := false
-	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
+	//NewTxListFlag := false
+	//fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.MakeTXList(&tmp.TxArray[i])
 		if err != nil {
-			//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+			fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 		}
 	}
 	if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= uint32(gVar.TxPerList) {
-		NewTxListFlag = true
+		//NewTxListFlag = true
 	}
 	CacheDbRef.Mu.Unlock()
-	if NewTxListFlag {
-		StartNewTxlist <- true
-	}
-	fmt.Println("Updated size of Txlist: ", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt)
+	//if NewTxListFlag {
+	//StartNewTxlist <- true
+	//}
+	//fmt.Println("Updated size of Txlist: ", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt)
 	return nil
 }
 
