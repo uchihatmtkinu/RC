@@ -34,7 +34,7 @@ func SendLoopMiner(x *[]basic.Transaction) {
 	fmt.Println("Prepare for sending TxBatch(Miner)")
 	<-StartSendingTx
 	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch
-	for i := 0; i < gVar.NumTxListPerEpoch-1; i++ {
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
 		tmp := (*x)[i*TxBatchLen : (i+1)*TxBatchLen]
 		data := new(basic.TransactionBatch)
 		data.New(&tmp)

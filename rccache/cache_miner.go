@@ -102,8 +102,8 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 		tmpHash[i] = byteSlice(a.Round)
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
-	//fmt.Println(d.ID, "Process TList:")
-	//a.Print()
+	fmt.Println(d.ID, "Process TList:")
+	a.Print()
 	d.TLSCacheMiner[a.HashID] = a
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]

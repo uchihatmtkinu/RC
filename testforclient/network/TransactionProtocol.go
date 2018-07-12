@@ -203,12 +203,12 @@ func HandleTxDecLeader(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	//tmp.Print()
+	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", tmp.HashID)
 	var x int
 	err = CacheDbRef.UpdateTXCache(tmp, &x)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
-	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID)
 	tmpflag := false
 	if CacheDbRef.TDSCache[x][CacheDbRef.ShardNum].MemCnt == gVar.ShardSize-1 {
 		fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")

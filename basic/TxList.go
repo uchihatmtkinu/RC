@@ -96,9 +96,11 @@ func (a *TxList) Decode(buf *[]byte) error {
 
 //Print is
 func (a *TxList) Print() {
+	fmt.Println("---------TxList---------------------")
 	fmt.Println("TxList: ID: ", a.ID, " TxCnt: ", a.TxCnt)
 	fmt.Println("Hash: ", base58.Encode(a.HashID[:]))
 	for i := uint32(0); i < a.TxCnt; i++ {
-		fmt.Println(i, ":", base58.Encode(a.TxArray[i][:]))
+		//fmt.Println(i, ":", base58.Encode(a.TxArray[i][:]))
 	}
+	fmt.Println("---------TxList----END---------------")
 }
