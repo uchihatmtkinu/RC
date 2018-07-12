@@ -268,16 +268,14 @@ func HandleTxDecLeader(data []byte) error {
 	}
 	//tmp.Print()
 	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
-	var x *rccache.TLGroup
-	err = CacheDbRef.UpdateTXCache(tmp, x)
+	var x uint32
+	err = CacheDbRef.UpdateTXCache(tmp, &x)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	CacheDbRef.Mu.Unlock()
-	if x != nil {
-		TLChan[x.TLS[CacheDbRef.ShardNum].Round] <- tmp.ID
-	}
-
+	TLChan[x] <- tmp.ID
+	fmt.Println("TxDecSignal sent")
 	return nil
 }
 
