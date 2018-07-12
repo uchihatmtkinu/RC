@@ -64,8 +64,13 @@ func HandleTxList(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 	CacheDbRef.Mu.Lock()
+	fmt.Println("PreProcess TxList:", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.PreTxList(tmp, &s)
+	fmt.Println("PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
 	CacheDbRef.Mu.Unlock()
+	if s.Stat != 0 {
+		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting")
+	}
 	for true {
 		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.RLock()
