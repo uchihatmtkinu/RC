@@ -175,9 +175,7 @@ func HandleTxLeader(data []byte) error {
 			//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 		}
 	}
-	if CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt >= uint32(gVar.TxPerList) {
-		//NewTxListFlag = true
-	}
+
 	CacheDbRef.Mu.Unlock()
 	//if NewTxListFlag {
 	//StartNewTxlist <- true

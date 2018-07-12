@@ -31,12 +31,10 @@ const NumTxBlockForRep = 3 //10
 
 const GensisAccValue = 2147483647
 
-const TxSendInterval = 4
+const TxSendInterval = 10
 
 const NumOfTxForTest = 400
 
 const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
-
-var TxPerList = 8000

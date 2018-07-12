@@ -110,7 +110,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			if readyMessage.Epoch == CurrentEpoch {
 				readyLeader++
 				setMaskBit(readyMessage.ID, cosi.Enabled, &leadermask)
-				fmt.Println("ReadyLeaderCount: ", readyLeader)
+				fmt.Println(time.Now(), "ReadyLeaderCount: ", readyLeader)
 			}
 		case <-time.After(timeoutSync):
 			for i := 1; i < int(gVar.ShardCnt); i++ {
