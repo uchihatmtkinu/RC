@@ -167,7 +167,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, outputchannel *chan bool) err
 	if !ok {
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
-
+	outputchannel = tmp.TLChan
 	var x, y uint32 = 0, 0
 	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
