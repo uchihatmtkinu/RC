@@ -32,6 +32,11 @@ func sendTxMessage(addr string, command string, message []byte) {
 func TxGeneralLoop() {
 	rand.Seed(time.Now().Unix() + int64(CacheDbRef.ID))
 	TxDecRevChan = new([gVar.NumTxListPerEpoch]chan txDecRev)
+	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
+		(*TxDecRevChan)[i] = make(chan txDecRev)
+		TLChan[i] = make(chan uint32)
+	}
+
 	fmt.Println(time.Now())
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to process Tx:")
 	if CacheDbRef.Now == nil {
@@ -123,6 +128,7 @@ func TxLastBlock() {
 	go SendFinalBlock(&shard.GlobalGroupMems)
 	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
 		close((*TxDecRevChan)[i])
+		close(TLChan[i])
 	}
 }
 
@@ -274,6 +280,7 @@ func HandleTxDecLeader(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	CacheDbRef.Mu.Unlock()
+	fmt.Println("TxDecRound:", x)
 	TLChan[x] <- tmp.ID
 	fmt.Println("TxDecSignal sent")
 	return nil

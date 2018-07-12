@@ -168,5 +168,6 @@ var FinalTxReadyCh chan bool
 var StartLastTxBlock chan bool
 var StartNewTxlist chan bool
 var StartSendingTx chan bool
+
 var TxDecRevChan *[gVar.NumTxListPerEpoch]chan txDecRev
 var TLChan [gVar.NumTxListPerEpoch]chan uint32
