@@ -182,7 +182,7 @@ func SendTxDecSet(data [][]byte, round uint32) {
 			fmt.Println("Get txdecRev from", tmp.ID)
 			mask[tmp.ID] = true
 			cnt++
-		case <-time.After(timeoutTL):
+		case <-time.After(timeoutTxDecRev):
 			for i := uint32(0); i < gVar.ShardCnt; i++ {
 				if !mask[i] {
 					xx := rand.Int()%(int(gVar.ShardSize)-1) + 1

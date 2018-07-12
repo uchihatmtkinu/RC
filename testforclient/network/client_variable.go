@@ -19,7 +19,8 @@ const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 10 * time.Second
 const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
-const timeoutTL = 20 * time.Second
+const timeoutTL = 60 * time.Second
+const timeoutTxDecRev = 5 * time.Second
 
 //CurrentEpoch epoch now
 var CurrentEpoch int
