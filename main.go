@@ -80,10 +80,9 @@ func main() {
 		}
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())
+		go network.SendLoop(&tmptx)
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
-			go network.SendLoop(&tmptx)
-
 		} else {
 			go network.TxGeneralLoop()
 		}
