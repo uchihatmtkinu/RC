@@ -99,7 +99,7 @@ func (d *DbRef) NewTxList() error {
 		d.Now.TLS[i].ID = d.ID
 		d.Now.TLS[i].Round = d.TLRound
 	}
-	d.Now.TLChan = new(chan bool)
+
 	if d.TLRound == gVar.NumTxListPerEpoch {
 		d.StopGetTx = true
 	}
@@ -288,6 +288,5 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 func (d *DbRef) Release(x *TLGroup) {
 	//d.TLCache = d.TLCache[1:]
 	hash := x.TLS[d.ShardNum].HashID
-	close(*x.TLChan)
 	delete(d.TLIndex, hash)
 }

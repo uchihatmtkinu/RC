@@ -85,9 +85,8 @@ type DbRef struct {
 
 //TLGroup is the group of TL
 type TLGroup struct {
-	TLS    [gVar.ShardCnt]basic.TxList
-	TDS    [gVar.ShardCnt]basic.TxDecSet
-	TLChan *chan bool
+	TLS [gVar.ShardCnt]basic.TxList
+	TDS [gVar.ShardCnt]basic.TxDecSet
 }
 
 //PreStat is used in pre-defined request
