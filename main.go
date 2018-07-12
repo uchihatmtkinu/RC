@@ -61,12 +61,13 @@ func main() {
 	numCnt := int(gVar.ShardCnt * gVar.ShardSize)
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
 	//cnt := 0
-	rand.Seed(0)
+
 	time.Sleep(time.Second * 20)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 		fmt.Println("Current time: ", time.Now())
 		network.ShardProcess()
+		rand.Seed(int64(network.CacheDbRef.ID))
 		for l := 0; l < len(tmptx); l++ {
 			i := rand.Int() % numCnt
 			for true {
