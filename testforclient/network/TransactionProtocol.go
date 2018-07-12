@@ -117,7 +117,7 @@ func SendTxDecSet(data [][]byte) {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
 		if i != CacheDbRef.ShardNum {
-			//fmt.Println(CacheDbRef.ID, "send TDS to", shard.ShardToGlobal[i][xx])
+			fmt.Println(CacheDbRef.ID, "(Leader) send TDS to", shard.ShardToGlobal[i][xx], "Shard: ", i, "Its Leader is:", shard.ShardToGlobal[i][0])
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
 		}
 	}
