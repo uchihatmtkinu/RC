@@ -62,14 +62,15 @@ func TxListProcess() {
 	CacheDbRef.NewTxList()
 	CacheDbRef.Mu.Unlock()
 	cnt := 1
-	for cnt < int(gVar.ShardSize) {
+	timeoutflag := true
+	for timeoutflag && cnt < int(gVar.ShardSize) {
 		select {
 		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round]:
 			cnt++
 			fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):
 			fmt.Println("TxDecSet is not full, someone doesn't send in time")
-			break
+			timeoutflag = false
 		}
 	}
 	tmpflag := false
@@ -173,7 +174,7 @@ func SendTxDecSet(data [][]byte, round uint32) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxDecSetM", data[CacheDbRef.ShardNum])
 		}
 	}
-	rand.Seed(int64(CacheDbRef.ID) + time.Now().Unix())
+	rand.Seed(int64(CacheDbRef.ID) + time.Now().Unix() + rand.Int63())
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
 		if i != CacheDbRef.ShardNum {
