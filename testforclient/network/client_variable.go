@@ -123,8 +123,8 @@ type syncRequestInfo struct {
 
 //txDecRev request sync
 type txDecRev struct {
-	ID    int
-	Round int
+	ID    uint32
+	Round uint32
 }
 
 //TxBRequestInfo request txB

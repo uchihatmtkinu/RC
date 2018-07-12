@@ -93,11 +93,12 @@ func HandleTxList(data []byte) error {
 }
 
 //HandleTxDecSet when receives a txdecset
-func HandleTxDecSet(data []byte, id *uint32) error {
+func HandleTxDecSet(data []byte, h *uint32, id *uint32) error {
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TxDecSet)
 	err := tmp.Decode(&data1)
+	*h = tmp.Round
 	*id = tmp.ID
 	if err != nil {
 		return err
@@ -131,8 +132,13 @@ func HandleTxDecSet(data []byte, id *uint32) error {
 //HandleAndSentTxDecSet when receives a txdecset
 func HandleAndSentTxDecSet(data []byte) error {
 	var id uint32
-	HandleTxDecSet(data, &id)
-	sendTxMessage(shard.GlobalGroupMems[id].Address, "TxDecRev", []byte("ok"))
+	var round uint32
+	HandleTxDecSet(data, &round, &id)
+	var tmp txDecRev
+	tmp.ID = CacheDbRef.ShardNum
+	tmp.Round = round
+	datax := tmp.Encode()
+	sendTxMessage(shard.GlobalGroupMems[id].Address, "TxDecRev", datax)
 	fmt.Println(CacheDbRef.ID, "Get TDS and send")
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]

@@ -103,6 +103,7 @@ func StartServer(ID int) {
 		}
 		//fmt.Printf("%d Received %s command\n", ID, command)
 		var tmp uint32
+		var tmp2 uint32
 		switch command {
 
 		case "requestTxB":
@@ -125,7 +126,7 @@ func StartServer(ID int) {
 			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
 				go HandleTxDecSetLeader(request)
 			} else {
-				go HandleTxDecSet(request, &tmp)
+				go HandleTxDecSet(request, &tmp, &tmp2)
 			}
 		case "TxDecRev":
 			HandleTxDecRev(request)

@@ -181,13 +181,14 @@ func SendTxDecSet(data [][]byte, round uint32) {
 	for cnt < int(gVar.ShardCnt) {
 		select {
 		case tmp := <-(*TxDecRevChan)[round]:
+			fmt.Println("Get txdecRev from", tmp.ID)
 			mask[tmp.ID] = true
 			cnt++
 		case <-time.After(timeoutTL):
 			for i := uint32(0); i < gVar.ShardCnt; i++ {
 				if !mask[i] {
 					xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
-					fmt.Println(CacheDbRef.ID, "(Leader) send TDS to", shard.ShardToGlobal[i][xx], "Shard: ", i, "Its Leader is:", shard.ShardToGlobal[i][0])
+					fmt.Println(CacheDbRef.ID, "(Leader) RE send TDS to", shard.ShardToGlobal[i][xx], "Shard: ", i, "Its Leader is:", shard.ShardToGlobal[i][0])
 					sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
 				}
 			}
@@ -245,7 +246,6 @@ func HandleTxLeader(data []byte) error {
 			//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 		}
 	}
-
 	CacheDbRef.Mu.Unlock()
 	return nil
 }
@@ -396,6 +396,7 @@ func (a *txDecRev) Decode(buf *[]byte) error {
 	if err != nil {
 		return err
 	}
+
 	err = basic.Decode(buf, &a.Round)
 	if err != nil {
 		return err

@@ -51,7 +51,7 @@ func (a *TxDecSet) Set(b *TxList, x uint32, y int) {
 	a.ID = b.ID
 	a.HashID = b.HashID
 	a.MemCnt = 0
-
+	a.Round = b.Round
 	a.ShardIndex = x
 	if y == 1 {
 		a.TxCnt = 0
@@ -98,6 +98,7 @@ func (a *TxDecSet) Result(index uint32) bool {
 //Encode encode the TxDecSet into []byte
 func (a *TxDecSet) Encode(tmp *[]byte) {
 	Encode(tmp, a.ID)
+	Encode(tmp, a.Round)
 	Encode(tmp, &a.HashID)
 	Encode(tmp, a.MemCnt)
 	Encode(tmp, a.TxCnt)
@@ -116,6 +117,10 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxDecSet ID decode failed: %s", err)
+	}
+	err = Decode(buf, &a.Round)
+	if err != nil {
+		return fmt.Errorf("TxDecSet Round decode failed: %s", err)
 	}
 	err = Decode(buf, &a.HashID)
 	if err != nil {

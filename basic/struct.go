@@ -77,6 +77,7 @@ type TxDecision struct {
 //TxDecSet is the set of all decisions from one shard, signed by leader
 type TxDecSet struct {
 	ID         uint32
+	Round      uint32
 	HashID     [32]byte
 	MemCnt     uint32
 	ShardIndex uint32
