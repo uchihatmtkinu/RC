@@ -20,6 +20,7 @@ func SendTx(x *[]byte) {
 		}
 
 	}
+	rand.Seed(int64(CacheDbRef.ID) + time.Now().Unix())
 	for i := 0; i < int(gVar.ShardCnt); i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
 		if i != int(CacheDbRef.ShardNum) {
