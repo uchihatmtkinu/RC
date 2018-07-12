@@ -61,7 +61,6 @@ func main() {
 	numCnt := int(gVar.ShardCnt * gVar.ShardSize)
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
 	//cnt := 0
-
 	time.Sleep(time.Second * 20)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard

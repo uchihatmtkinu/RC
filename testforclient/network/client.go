@@ -44,16 +44,20 @@ func bytesToCommand(bytees []byte) string {
 
 //send data to addr
 func sendData(addr string, data []byte) {
-	conn, err := net.Dial(protocol, addr)
-	if err != nil {
-		fmt.Printf("%s is not available\n", addr)
-		return
-	}
-	defer conn.Close()
+	for true {
+		conn, err := net.Dial(protocol, addr)
+		if err != nil {
+			fmt.Printf("%s is not available\n", addr)
+			return
+		}
+		defer conn.Close()
 
-	_, err = io.Copy(conn, bytes.NewReader(data))
-	if err != nil {
-		log.Panic(err)
+		_, err = io.Copy(conn, bytes.NewReader(data))
+		if err == nil {
+			//log.Panic(err)
+			break
+		}
+		conn.Close()
 	}
 }
 
