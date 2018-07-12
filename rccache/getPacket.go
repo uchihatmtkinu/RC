@@ -3,6 +3,7 @@ package rccache
 import (
 	"fmt"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -15,6 +16,7 @@ func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 		s = new(PreStat)
 		s.Stat = -2
 	}
+	fmt.Println("PreProcess TxList:", base58.Encode(b.HashID[:]))
 	if s.Stat == -2 {
 		if d.Leader != b.ID {
 			return fmt.Errorf("PreTxList: Txlist from a miner")

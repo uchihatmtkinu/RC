@@ -112,6 +112,7 @@ func HandleTxDecSet(data []byte) error {
 		CacheDbRef.Mu.RUnlock()
 	}
 	CacheDbRef.Mu.Lock()
+	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	err = CacheDbRef.GetTDS(tmp)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
