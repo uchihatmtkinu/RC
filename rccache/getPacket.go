@@ -144,6 +144,21 @@ func (d *DbRef) PreTxDecSet(b *basic.TxDecSet, s *PreStat) error {
 			} else {
 				s.Stat--
 				s.Valid[i] = 1
+				if xxx == nil {
+					fmt.Println("TDS xxx[0] is null")
+				} else {
+					if len(xxx) < 1 {
+						fmt.Println("TDS xxx length not enough")
+					}
+					_, tmpOK := d.TXCache[xxx[0]]
+					if !tmpOK {
+						fmt.Println("TDS TXcache not ok! hash:", xxx[0])
+					} else if d.TXCache[xxx[0]] == nil {
+						fmt.Println("TDS TxCache data is null")
+					} else if d.TXCache[xxx[0]].Data == nil {
+						fmt.Println("TDS Tx Data is null")
+					}
+				}
 				b.TxArray[i] = d.TXCache[xxx[0]].Data.Hash
 			}
 		}
