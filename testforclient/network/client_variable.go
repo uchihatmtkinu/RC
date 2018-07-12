@@ -160,3 +160,4 @@ var FinalTxReadyCh chan bool
 
 var StartLastTxBlock chan bool
 var StartNewTxlist chan bool
+var StartSendingTx chan bool

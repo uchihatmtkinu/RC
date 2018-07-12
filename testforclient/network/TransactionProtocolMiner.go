@@ -20,7 +20,13 @@ func HandleTx(data []byte) error {
 		return err
 	}
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
+	flag := false
+
 	CacheDbRef.Mu.Lock()
+	if !CacheDbRef.StartSendingTX {
+		flag = true
+		CacheDbRef.StartSendingTX = true
+	}
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.GetTx(&tmp.TxArray[i])
 		if err != nil {
@@ -28,6 +34,9 @@ func HandleTx(data []byte) error {
 		}
 	}
 	CacheDbRef.Mu.Unlock()
+	if flag {
+		StartSendingTx <- true
+	}
 	return nil
 }
 

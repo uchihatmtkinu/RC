@@ -78,10 +78,11 @@ type DbRef struct {
 
 	TBCache *[][32]byte
 
-	Leader        uint32
-	UnderSharding bool
-	StopGetTx     bool
-	StartTxDone   bool
+	Leader         uint32
+	UnderSharding  bool
+	StopGetTx      bool
+	StartTxDone    bool
+	StartSendingTX bool
 }
 
 //PreStat is used in pre-defined request
@@ -149,6 +150,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.UnderSharding = true
 	d.StartTxDone = true
 	d.PrevHeight = 0
+	d.StartSendingTX = false
 }
 
 //CrossShardDec  is the database of cache

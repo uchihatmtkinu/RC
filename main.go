@@ -80,20 +80,16 @@ func main() {
 		}
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())
-		go network.SendLoop(&tmptx)
+
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
-		} else {
 			go network.TxGeneralLoop()
+			go network.SendLoopLeader(&tmptx)
+		} else {
+			go network.SendLoopMiner(&tmptx)
 		}
 		//test rep
 		go network.RepProcessLoop(&shard.GlobalGroupMems)
-		//Reputation.CurrentRepBlock.Mu.RLock()
-		//Reputation.CurrentRepBlock.Block.Print()
-		//Reputation.CurrentRepBlock.Mu.RUnlock()
-		/*for i := 0; i < int(gVar.ShardSize); i++ {
-			shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][i]].AddRep(int64(shard.ShardToGlobal[shard.MyMenShard.Shard][i]))
-		}*/
 
 		//test cosi
 		if shard.MyMenShard.Role == shard.RoleLeader {
@@ -104,20 +100,6 @@ func main() {
 
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)
-
-		/*Reputation.CurrentSyncBlock.Mu.RLock()
-		Reputation.CurrentSyncBlock.Block.Print()
-		Reputation.CurrentSyncBlock.Mu.RUnlock()
-		network.CacheDbRef.Mu.Lock()
-		fmt.Println("FB from", network.CacheDbRef.ID)
-		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			network.CacheDbRef.FB[i].Print()
-		}
-		network.CacheDbRef.Mu.Unlock()
-
-		for i := 0; i < int(gVar.ShardSize*gVar.ShardCnt); i++ {
-			shard.GlobalGroupMems[i].Print()
-		}*/
 
 	}
 
