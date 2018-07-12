@@ -19,6 +19,7 @@ const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 10 * time.Second
 const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
+const timeoutTL = 20 * time.Second
 
 //CurrentEpoch epoch now
 var CurrentEpoch int
@@ -120,6 +121,12 @@ type syncRequestInfo struct {
 	Epoch int
 }
 
+//txDecRev request sync
+type txDecRev struct {
+	ID    int
+	Round int
+}
+
 //TxBRequestInfo request txB
 type TxBRequestInfo struct {
 	Address string
@@ -161,3 +168,4 @@ var FinalTxReadyCh chan bool
 var StartLastTxBlock chan bool
 var StartNewTxlist chan bool
 var StartSendingTx chan bool
+var TxDecRevChan *[gVar.NumTxListPerEpoch]chan txDecRev

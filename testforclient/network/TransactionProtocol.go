@@ -31,24 +31,73 @@ func sendTxMessage(addr string, command string, message []byte) {
 //TxGeneralLoop is the normall loop of transaction cache
 func TxGeneralLoop() {
 	rand.Seed(time.Now().Unix() + int64(CacheDbRef.ID))
+	TxDecRevChan = new([gVar.NumTxListPerEpoch]chan txDecRev)
 	fmt.Println(time.Now())
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to process Tx:")
-	if CacheDbRef.TLS == nil {
+	if CacheDbRef.Now == nil {
 		CacheDbRef.NewTxList()
 	}
 	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
 		//<-StartNewTxlist
 		time.Sleep(gVar.TxSendInterval * time.Second)
-		CacheDbRef.Mu.Lock()
-		CacheDbRef.BuildTDS()
-		fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TLS[CacheDbRef.ShardNum].HashID[:]))
-		//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
-		data1 := new([]byte)
-		CacheDbRef.TLS[CacheDbRef.ShardNum].Encode(data1)
-		go SendTxList(*data1)
-		CacheDbRef.NewTxList()
-		CacheDbRef.Mu.Unlock()
+		go TxListProcess()
 	}
+}
+
+//TxListProcess is the process for txlist
+func TxListProcess() {
+	CacheDbRef.Mu.Lock()
+	CacheDbRef.BuildTDS()
+	TLG := CacheDbRef.Now
+	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
+	//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
+	data1 := new([]byte)
+	TLG.TLS[CacheDbRef.ShardNum].Encode(data1)
+	go SendTxList(*data1)
+	CacheDbRef.NewTxList()
+	CacheDbRef.Mu.Unlock()
+	cnt := 1
+	for cnt < int(gVar.ShardSize) {
+		select {
+		case <-*TLG.TLChan:
+			cnt++
+			fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
+		case <-time.After(timeoutTL):
+			fmt.Println("TxDecSet is not full, someone doesn't send in time")
+			break
+		}
+	}
+	tmpflag := false
+	CacheDbRef.Mu.Lock()
+
+	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")
+	CacheDbRef.SignTDS(TLG)
+	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum])
+	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(TLG.TDS[CacheDbRef.ShardNum].HashID[:]))
+	data2 := new([][]byte)
+	*data2 = make([][]byte, gVar.ShardCnt)
+
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		TLG.TDS[i].Encode(&(*data2)[i])
+	}
+	go SendTxDecSet(*data2, TLG.TLS[CacheDbRef.ShardNum].Round)
+	go TxNormalBlock()
+
+	CacheDbRef.Release(TLG)
+
+	CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
+	if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
+		CacheDbRef.TDSNotReady--
+		fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)
+		if CacheDbRef.TDSNotReady == 0 {
+			tmpflag = true
+		}
+	}
+	CacheDbRef.Mu.Unlock()
+	if tmpflag {
+		StartLastTxBlock <- true
+	}
+
 }
 
 //TxLastBlock is the txlastblock
@@ -72,6 +121,9 @@ func TxLastBlock() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
 	go SendFinalBlock(&shard.GlobalGroupMems)
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
+		close((*TxDecRevChan)[i])
+	}
 }
 
 //TxNormalBlock is the loop of TxBlock
@@ -103,10 +155,11 @@ func SendTxList(data []byte) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxList", data)
 		}
 	}
+
 }
 
 //SendTxDecSet is sending txDecSet
-func SendTxDecSet(data [][]byte) {
+func SendTxDecSet(data [][]byte, round uint32) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
@@ -120,6 +173,24 @@ func SendTxDecSet(data [][]byte) {
 		if i != CacheDbRef.ShardNum {
 			fmt.Println(CacheDbRef.ID, "(Leader) send TDS to", shard.ShardToGlobal[i][xx], "Shard: ", i, "Its Leader is:", shard.ShardToGlobal[i][0])
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
+		}
+	}
+	cnt := 1
+	mask := make([]bool, gVar.ShardCnt)
+	mask[CacheDbRef.ShardNum] = true
+	for cnt < int(gVar.ShardCnt) {
+		select {
+		case tmp := <-(*TxDecRevChan)[round]:
+			mask[tmp.ID] = true
+			cnt++
+		case <-time.After(timeoutTL):
+			for i := uint32(0); i < gVar.ShardCnt; i++ {
+				if !mask[i] {
+					xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
+					fmt.Println(CacheDbRef.ID, "(Leader) send TDS to", shard.ShardToGlobal[i][xx], "Shard: ", i, "Its Leader is:", shard.ShardToGlobal[i][0])
+					sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
+				}
+			}
 		}
 	}
 }
@@ -167,8 +238,6 @@ func HandleTxLeader(data []byte) error {
 	if err != nil {
 		return err
 	}
-	//NewTxListFlag := false
-	//fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) gets a txBatch with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	for i := uint32(0); i < tmp.TxCnt; i++ {
 		err = CacheDbRef.MakeTXList(&tmp.TxArray[i])
@@ -178,10 +247,6 @@ func HandleTxLeader(data []byte) error {
 	}
 
 	CacheDbRef.Mu.Unlock()
-	//if NewTxListFlag {
-	//StartNewTxlist <- true
-	//}
-	//fmt.Println("Updated size of Txlist: ", CacheDbRef.TLS[CacheDbRef.ShardNum].TxCnt)
 	return nil
 }
 
@@ -203,42 +268,28 @@ func HandleTxDecLeader(data []byte) error {
 	}
 	//tmp.Print()
 	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
-	var x int
-	err = CacheDbRef.UpdateTXCache(tmp, &x)
+	var x *chan bool
+	err = CacheDbRef.UpdateTXCache(tmp, x)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
-	tmpflag := false
-	if CacheDbRef.TDSCache[x][CacheDbRef.ShardNum].MemCnt == gVar.ShardSize-1 {
-		fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")
-		CacheDbRef.SignTDS(x)
-		CacheDbRef.ProcessTDS(&CacheDbRef.TDSCache[0][CacheDbRef.ShardNum])
-		fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(CacheDbRef.TDSCache[0][CacheDbRef.ShardNum].HashID[:]))
-		data2 := new([][]byte)
-		*data2 = make([][]byte, gVar.ShardCnt)
-
-		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			CacheDbRef.TDSCache[x][i].Encode(&(*data2)[i])
-		}
-		go SendTxDecSet(*data2)
-		go TxNormalBlock()
-		CacheDbRef.TLTDSLabel[x] = true
-		if x == 0 {
-			CacheDbRef.Release()
-		}
-		CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
-		if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
-			CacheDbRef.TDSNotReady--
-			fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)
-			if CacheDbRef.TDSNotReady == 0 {
-				tmpflag = true
-			}
-		}
-	}
 	CacheDbRef.Mu.Unlock()
-	if tmpflag {
-		StartLastTxBlock <- true
+	*x <- true
+
+	return nil
+}
+
+//HandleTxDecRev is handle the receive data from other shard miner
+func HandleTxDecRev(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	tmp := new(txDecRev)
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println(CacheDbRef.ID, "has a error(TxDecRev)", err)
+		return err
 	}
+	(*TxDecRevChan)[tmp.Round] <- *tmp
 	return nil
 }
 
@@ -325,6 +376,27 @@ func (a *TxBRequestInfo) Decode(buf *[]byte) error {
 		return err
 	}
 	err = basic.Decode(buf, &a.Shard)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//Encode is encode
+func (a *txDecRev) Encode() []byte {
+	tmp := make([]byte, 0, 8)
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	return tmp
+}
+
+//Decode is encode
+func (a *txDecRev) Decode(buf *[]byte) error {
+	err := basic.Decode(buf, &a.ID)
+	if err != nil {
+		return err
+	}
+	err = basic.Decode(buf, &a.Round)
 	if err != nil {
 		return err
 	}

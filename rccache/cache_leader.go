@@ -47,13 +47,13 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	d.AddCache(b.Hash)
 	d.TXCache[b.Hash] = tmp
-	if d.TLS == nil {
+	if d.Now == nil {
 		d.NewTxList()
 	}
 	if tmp.InCheck[d.ShardNum] != -1 {
 		for i := uint32(0); i < gVar.ShardCnt; i++ {
 			if tmp.InCheck[i] != 0 {
-				d.TLS[i].AddTx(b)
+				d.Now.TLS[i].AddTx(b)
 			}
 		}
 	}
@@ -63,27 +63,26 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 //BuildTDS is to build all txDecSet
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
-	d.TLS[d.ShardNum].Sign(&d.prk)
+	d.Now.TLS[d.ShardNum].Sign(&d.prk)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if d.ShardNum != i {
-			d.TLS[i].HashID = d.TLS[i].Hash()
+			d.Now.TLS[i].HashID = d.Now.TLS[i].Hash()
 		}
 	}
-	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if i == d.ShardNum {
-			d.TDS[i].Set(&d.TLS[i], d.ShardNum, 1)
+			d.Now.TDS[i].Set(&d.Now.TLS[i], d.ShardNum, 1)
 		} else {
-			d.TDS[i].Set(&d.TLS[i], d.ShardNum, 0)
+			d.Now.TDS[i].Set(&d.Now.TLS[i], d.ShardNum, 0)
 		}
 	}
 
 }
 
 //SignTDS is to sign all txDecSet
-func (d *DbRef) SignTDS(x int) {
+func (d *DbRef) SignTDS(x *TLGroup) {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TDSCache[x][i].Sign(&d.prk)
+		(*x).TDS[i].Sign(&d.prk)
 	}
 
 }
@@ -91,27 +90,19 @@ func (d *DbRef) SignTDS(x int) {
 //NewTxList initialize the txList
 //Must after BuildTDS
 func (d *DbRef) NewTxList() error {
-	if d.TLS != nil {
-		//d.TLCache = append(d.TLCache, *d.TL)
-		d.TLSCache = append(d.TLSCache, *d.TLS)
-		d.TDSCache = append(d.TDSCache, *d.TDS)
-		d.TLTDSLabel = append(d.TLTDSLabel, false)
-		d.LastIndex++
+	if d.Now != nil {
+		d.TLIndex[d.Now.TLS[d.ShardNum].Hash()] = d.Now
 		d.TLRound++
-		d.TLIndex[d.TLS[d.ShardNum].Hash()] = uint32(d.LastIndex)
 	}
-
-	d.TLS = new([gVar.ShardCnt]basic.TxList)
-
+	d.Now = new(TLGroup)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TLS[i].ID = d.ID
-		d.TLS[i].Round = d.TLRound
+		d.Now.TLS[i].ID = d.ID
+		d.Now.TLS[i].Round = d.TLRound
 	}
+	d.Now.TLChan = new(chan bool)
 	if d.TLRound == gVar.NumTxListPerEpoch {
 		d.StopGetTx = true
 	}
-	//d.TL = new(basic.TxList)
-	//d.TL.Set(d.ID)
 	return nil
 }
 
@@ -168,7 +159,7 @@ func (d *DbRef) GenerateStartBlock() error {
 }
 
 //UpdateTXCache is to pick the transactions into ready slice given txdecision
-func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *int) error {
+func (d *DbRef) UpdateTXCache(a *basic.TxDecision, outputchannel *chan bool) error {
 	if a.Single == 1 {
 		return fmt.Errorf("TxDecision parameter error")
 	}
@@ -176,22 +167,19 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *int) error {
 	if !ok {
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
-	tmpIndex := tmp - uint32(d.StartIndex)
-	*index = int(tmpIndex)
-	tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
 
 	var x, y uint32 = 0, 0
 	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 
 		tmpTD[i].Set(a.ID, i, 1)
-		tmpTD[i].HashID = d.TLSCache[tmpIndex][i].HashID
+		tmpTD[i].HashID = tmp.TLS[i].HashID
 		tmpTD[i].Sig = nil
 		tmpTD[i].Sig = append(tmpTD[i].Sig, a.Sig[i])
 	}
 	//fmt.Println("Leader ", d.ID, " process TxDecision: ")
-	for i := uint32(0); i < tmpTL.TxCnt; i++ {
-		tmpTx, ok := d.TXCache[tmpTL.TxArray[i]]
+	for i := uint32(0); i < tmp.TLS[d.ShardNum].TxCnt; i++ {
+		tmpTx, ok := d.TXCache[tmp.TLS[d.ShardNum].TxArray[i]]
 		if !ok {
 			fmt.Println("Not related tx?")
 		}
@@ -213,7 +201,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *int) error {
 		}
 	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		d.TDSCache[tmpIndex][i].Add(&tmpTD[i])
+		tmp.TDS[i].Add(&tmpTD[i])
 	}
 	return nil
 }
@@ -222,10 +210,10 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *int) error {
 func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 	if b.ShardIndex == d.ShardNum {
 		tmp, _ := d.TLIndex[b.HashID]
-		tmpIndex := tmp - uint32(d.StartIndex)
-		tmpTL := d.TLSCache[tmpIndex][d.ShardNum]
-		b.TxCnt = tmpTL.TxCnt
-		b.TxArray = tmpTL.TxArray
+		//tmpIndex := tmp - uint32(d.StartIndex)
+		//tmpTL := (*d.TLSCache[tmpIndex])[d.ShardNum]
+		b.TxCnt = tmp.TLS[d.ShardNum].TxCnt
+		b.TxArray = tmp.TLS[d.ShardNum].TxArray
 		index := 0
 		shift := byte(0)
 		for i := uint32(0); i < b.TxCnt; i++ {
@@ -296,16 +284,9 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 }
 
 //Release delete the first element of the cache
-func (d *DbRef) Release() {
-	delete(d.TLIndex, d.TLSCache[0][d.ShardNum].HashID)
+func (d *DbRef) Release(x *TLGroup) {
 	//d.TLCache = d.TLCache[1:]
-	for true {
-		d.TDSCache = d.TDSCache[1:]
-		d.TLSCache = d.TLSCache[1:]
-		d.TLTDSLabel = d.TLTDSLabel[1:]
-		d.StartIndex++
-		if d.TLTDSLabel == nil || len(d.TLTDSLabel) == 0 || !d.TLTDSLabel[0] {
-			break
-		}
-	}
+	hash := x.TLS[d.ShardNum].HashID
+	close(*x.TLChan)
+	delete(d.TLIndex, hash)
 }

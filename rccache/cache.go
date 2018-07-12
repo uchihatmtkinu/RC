@@ -54,13 +54,10 @@ type DbRef struct {
 
 	//Leader
 	//TLCache  []basic.TxList
-	TLSCache      [][gVar.ShardCnt]basic.TxList
 	TLSCacheMiner map[[32]byte]*basic.TxList
-	TDSCache      [][gVar.ShardCnt]basic.TxDecSet
-	TLTDSLabel    []bool
-	TLIndex       map[[32]byte]uint32
-	TLS           *[gVar.ShardCnt]basic.TxList
-	TDS           *[gVar.ShardCnt]basic.TxDecSet
+	TLChannel     []*chan bool
+	TLIndex       map[[32]byte]*TLGroup
+	Now           *TLGroup
 	Ready         []basic.Transaction
 	TxB           *basic.TxBlock
 	FB            [gVar.ShardCnt]*basic.TxBlock
@@ -86,6 +83,13 @@ type DbRef struct {
 	StartSendingTX bool
 }
 
+//TLGroup is the group of TL
+type TLGroup struct {
+	TLS    [gVar.ShardCnt]basic.TxList
+	TDS    [gVar.ShardCnt]basic.TxDecSet
+	TLChan *chan bool
+}
+
 //PreStat is used in pre-defined request
 type PreStat struct {
 	Stat  int
@@ -109,7 +113,6 @@ type WaitProcess struct {
 func (d *DbRef) Clear() {
 	d.TLRound = 0
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
-	d.TLS = nil
 	d.TxCnt = 0
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
 	if len(*d.TBCache) != 0 {
@@ -136,14 +139,14 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	//d.TL = nil
 	//d.TLCache = nil
 	//d.TLS = new([gVar.ShardCnt]basic.TxList)
-	d.TLS = nil
-	d.TLIndex = make(map[[32]byte]uint32, 100)
+	//d.TLS = nil
+	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
-	d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
-	d.TLSCache = nil
-	d.TLTDSLabel = nil
+	//d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
+	//d.TLSCache = nil
+	//d.TLTDSLabel = nil
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
-	d.TDSCache = nil
+	//d.TDSCache = nil
 	d.StartIndex = 0
 	d.LastIndex = -1
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
