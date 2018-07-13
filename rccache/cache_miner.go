@@ -54,6 +54,10 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
+	err := d.AddCache(a.Hash)
+	if err != nil {
+		return err
+	}
 	tmpPre, okw := d.WaitHashCache[basic.HashCut(a.Hash)]
 	if okw {
 		for i := 0; i < len(tmpPre.DataTB); i++ {
@@ -92,7 +96,6 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 	}
 	d.DB.AddTx(a)
 	d.TXCache[a.Hash] = tmp
-	d.AddCache(a.Hash)
 	return nil
 }
 

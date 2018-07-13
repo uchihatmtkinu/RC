@@ -37,7 +37,7 @@ func (a *TxDecSet) Verify(puk *ecdsa.PublicKey) bool {
 	if sha256.Sum256(tmp) != a.HashID {
 		return false
 	}
-	tmp = make([]byte, 0, 36+len(a.MemD[0].Decision)*int(a.MemCnt))
+	tmp = make([]byte, 0, 36+int(a.TxCnt/4*a.MemCnt))
 	tmp = append(byteSlice(a.ID), a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		tmp = append(tmp, a.MemD[i].Decision...)

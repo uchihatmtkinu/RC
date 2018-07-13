@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"time"
 
 	"encoding/gob"
 	"io/ioutil"
@@ -102,7 +101,7 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		fmt.Println(time.Now(), ID, "Received", command, "command")
+		//fmt.Println(time.Now(), ID, "Received", command, "command")
 		var tmp uint32
 		var tmp2 uint32
 		switch command {
@@ -114,16 +113,16 @@ func StartServer(ID int) {
 		case "TxM":
 			go HandleTotalTx(request)
 		case "TxList":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxList(request)
 		case "TxDec":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxDecLeader(request)
 		case "TxDecSet":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleAndSentTxDecSet(request)
 		case "TxDecSetM":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
 				go HandleTxDecSetLeader(request)
 			} else {
@@ -132,10 +131,10 @@ func StartServer(ID int) {
 		case "TxDecRev":
 			HandleTxDecRev(request)
 		case "TxB":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxBlock(request)
 		case "FinalTxB":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleFinalTxBlock(request)
 		case "StartTxB":
 			go HandleStartTxBlock(request)
@@ -143,10 +142,10 @@ func StartServer(ID int) {
 		case "shardReady":
 			go HandleShardReady(request)
 		case "readyAnnoun":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleShardReady(request)
 		case "leaderReady":
-			//fmt.Printf("%d Received %s command\n", ID, command)
+			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleLeaderReady(request)
 		//rep pow
 		case "RepPowAnnou":

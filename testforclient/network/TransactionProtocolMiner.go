@@ -13,6 +13,7 @@ import (
 
 //HandleTx when receives a tx
 func HandleTx(data []byte) error {
+
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TransactionBatch)
@@ -24,6 +25,7 @@ func HandleTx(data []byte) error {
 	flag := false
 
 	CacheDbRef.Mu.Lock()
+	fmt.Println(time.Now(), "TxBatch Started")
 	if !CacheDbRef.StartSendingTX {
 		flag = true
 		CacheDbRef.StartSendingTX = true
@@ -34,7 +36,9 @@ func HandleTx(data []byte) error {
 			//fmt.Println(CacheDbRef.ID, "has a error", i, ": ", err)
 		}
 	}
+	fmt.Println(time.Now(), "TxBatch Finished")
 	CacheDbRef.Mu.Unlock()
+
 	if flag {
 		fmt.Println("Start sending packets")
 		StartSendingTx <- true
@@ -54,7 +58,7 @@ func HandleTxList(data []byte) error {
 	}
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
-	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round)
+	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round, base58.Encode(tmp.HashID[:]))
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
