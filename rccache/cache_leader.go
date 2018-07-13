@@ -48,6 +48,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {
 		if ok {
+			delete(d.HashCache, basic.HashCut(b.Hash))
 			delete(d.TXCache, b.Hash)
 		}
 		return fmt.Errorf("Not related TX")
@@ -55,7 +56,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	if tmp.Res == 1 {
 		d.Ready = append(d.Ready, *tmp.Data)
 	}
-	d.DB.AddTx(b)
+	//d.DB.AddTx(b)
 
 	d.TXCache[b.Hash] = tmp
 	if d.Now == nil {
@@ -282,6 +283,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 				}
 			}
 			if tmp.Total == 0 {
+				delete(d.HashCache, basic.HashCut(tmpHash))
 				delete(d.TXCache, tmpHash)
 			} else {
 				d.TXCache[tmpHash] = tmp

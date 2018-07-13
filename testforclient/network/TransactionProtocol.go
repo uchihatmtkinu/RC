@@ -325,6 +325,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	flag := true
+	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
 	if s.Stat == 0 {
@@ -340,7 +341,7 @@ func HandleTxDecSetLeader(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	CacheDbRef.ProcessTDS(tmp)
 	CacheDbRef.TDSCnt[tmp.ShardIndex]++
 	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {

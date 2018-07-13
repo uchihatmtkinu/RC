@@ -3,6 +3,7 @@ package rccache
 import (
 	"fmt"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -155,7 +156,7 @@ func (d *DbRef) PreTxDecSet(b *basic.TxDecSet, s *PreStat) error {
 					}
 					_, tmpOK := d.TXCache[xxx[0]]
 					if !tmpOK {
-						fmt.Println("TDS TXcache not ok! hash:", xxx[0])
+						fmt.Println("TDS TXcache not ok! hash:", base58.Encode(xxx[0][:]))
 					} else if d.TXCache[xxx[0]] == nil {
 						fmt.Println("TDS TxCache data is null")
 					} else if d.TXCache[xxx[0]].Data == nil {

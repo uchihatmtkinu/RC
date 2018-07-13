@@ -90,6 +90,7 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 	}
 	if tmp.InCheck[d.ShardNum] == 0 {
 		if ok {
+			delete(d.HashCache, basic.HashCut(a.Hash))
 			delete(d.TXCache, a.Hash)
 		}
 		return fmt.Errorf("Not related TX")
