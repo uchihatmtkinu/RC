@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -58,20 +60,21 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 			tmpPre.StatTB[i].Valid[tmpPre.IDTB[i]] = 1
 			tmpPre.StatTB[i].Stat--
 			tmpPre.DataTB[i].TxArray[tmpPre.IDTB[i]] = *a
-			go SendingChan(&tmpPre.StatTB[i].Channel)
+			SendingChan(&tmpPre.StatTB[i].Channel)
 		}
 		for i := 0; i < len(tmpPre.DataTDS); i++ {
 			tmpPre.StatTDS[i].Valid[tmpPre.IDTDS[i]] = 1
 			tmpPre.StatTDS[i].Stat--
 			tmpPre.DataTDS[i].TxArray[tmpPre.IDTDS[i]] = a.Hash
-			go SendingChan(&tmpPre.StatTDS[i].Channel)
+			SendingChan(&tmpPre.StatTDS[i].Channel)
 		}
 		for i := 0; i < len(tmpPre.DataTL); i++ {
 			tmpPre.StatTL[i].Valid[tmpPre.IDTL[i]] = 1
 			tmpPre.StatTL[i].Stat--
 			tmpPre.DataTL[i].TxArray[tmpPre.IDTL[i]] = a.Hash
-			go SendingChan(&tmpPre.StatTL[i].Channel)
+			SendingChan(&tmpPre.StatTL[i].Channel)
 		}
+		fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(a.Hash[:]))
 	}
 	delete(d.WaitHashCache, basic.HashCut(a.Hash))
 	tmp, ok := d.TXCache[a.Hash]
