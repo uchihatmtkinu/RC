@@ -13,6 +13,7 @@ import (
 func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 	if s == nil {
 		s = new(PreStat)
+		s.Channel = make(chan bool)
 		s.Stat = -2
 	}
 

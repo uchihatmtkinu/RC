@@ -71,14 +71,15 @@ func HandleTxList(data []byte) error {
 	if s.Stat != 0 {
 		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting")
 	}
-	for true {
-		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
-		CacheDbRef.Mu.RLock()
-		if s.Stat == 0 {
-			CacheDbRef.Mu.RUnlock()
-			break
+	timeoutFlag := true
+	cnt := s.Stat
+	for timeoutFlag && cnt > 0 {
+		select {
+		case <-s.Channel:
+			cnt--
+		case <-time.After(timeoutTL):
+			timeoutFlag = false
 		}
-		CacheDbRef.Mu.RUnlock()
 	}
 	CacheDbRef.Mu.Lock()
 	err = CacheDbRef.ProcessTL(tmp)
@@ -104,21 +105,22 @@ func HandleTxDecSet(data []byte, h *uint32, id *uint32) error {
 		return err
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
-	flag := true
+
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
-	if s.Stat == 0 {
-		flag = false
-	}
 	CacheDbRef.Mu.Unlock()
-	for flag {
-		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
-		CacheDbRef.Mu.RLock()
-		if s.Stat == 0 {
-			flag = false
+
+	timeoutFlag := true
+	cnt := s.Stat
+	for timeoutFlag && cnt > 0 {
+		select {
+		case <-s.Channel:
+			cnt--
+		case <-time.After(timeoutTL):
+			timeoutFlag = false
 		}
-		CacheDbRef.Mu.RUnlock()
 	}
+
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	err = CacheDbRef.GetTDS(tmp)
@@ -161,23 +163,27 @@ func HandleTxBlock(data []byte) error {
 		return err
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
-	flag := true
+
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxBlock(tmp, &s)
-	if s.Stat == 0 {
-		flag = false
-	}
 	CacheDbRef.Mu.Unlock()
-	for flag {
-		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
-		CacheDbRef.Mu.RLock()
-		if s.Stat == 0 {
-			flag = false
+
+	timeoutFlag := true
+	cnt := s.Stat
+	for timeoutFlag && cnt > 0 {
+		select {
+		case <-s.Channel:
+			cnt--
+		case <-time.After(timeoutTL):
+			timeoutFlag = false
 		}
-		CacheDbRef.Mu.RUnlock()
 	}
-	fmt.Println("Block", base58.Encode(tmp.HashID[:]), " preprocess done")
-	flag = true
+	if cnt == 0 {
+		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess done")
+	} else {
+		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess timeout")
+	}
+	flag := true
 	for flag {
 		CacheDbRef.Mu.Lock()
 		err = CacheDbRef.GetTxBlock(tmp)

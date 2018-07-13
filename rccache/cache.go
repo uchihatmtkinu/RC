@@ -91,8 +91,9 @@ type TLGroup struct {
 
 //PreStat is used in pre-defined request
 type PreStat struct {
-	Stat  int
-	Valid []int
+	Stat    int
+	Valid   []int
+	Channel chan bool
 }
 
 //WaitProcess is the current wait process

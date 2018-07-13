@@ -71,3 +71,8 @@ func GenerateTx(x int, y int, z uint32) *basic.Transaction {
 	tmp.SignTx(0, &shard.GlobalGroupMems[x].RealAccount.Pri)
 	return &tmp
 }
+
+//SendingChan is to send the signal on channel
+func SendingChan(tmp *chan bool) {
+	*tmp <- true
+}
