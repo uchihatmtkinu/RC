@@ -2,9 +2,7 @@ package rccache
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -36,7 +34,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 			tmpPre.DataTL[i].TxArray[tmpPre.IDTL[i]] = b.Hash
 			SendingChan(&tmpPre.StatTL[i].Channel)
 		}
-		fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(b.Hash[:]))
+		//fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(b.Hash[:]))
 	}
 	delete(d.WaitHashCache, basic.HashCut(b.Hash))
 	tmp, ok := d.TXCache[b.Hash]

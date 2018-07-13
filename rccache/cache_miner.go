@@ -4,9 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -78,7 +76,7 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 			tmpPre.DataTL[i].TxArray[tmpPre.IDTL[i]] = a.Hash
 			SendingChan(&tmpPre.StatTL[i].Channel)
 		}
-		fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(a.Hash[:]))
+		//fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(a.Hash[:]))
 	}
 	delete(d.WaitHashCache, basic.HashCut(a.Hash))
 	tmp, ok := d.TXCache[a.Hash]
@@ -95,7 +93,7 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 		}
 		return fmt.Errorf("Not related TX")
 	}
-	d.DB.AddTx(a)
+	//d.DB.AddTx(a)
 	d.TXCache[a.Hash] = tmp
 	return nil
 }

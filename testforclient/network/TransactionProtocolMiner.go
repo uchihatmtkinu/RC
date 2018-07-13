@@ -37,7 +37,7 @@ func HandleTx() {
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				for j := 0; j < len(TBCache); j++ {
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
-						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
+						err := CacheDbRef.GetTx(&TBCache[j].TxArray[i])
 						if err != nil {
 							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
@@ -203,13 +203,18 @@ func HandleTxBlock(data []byte) error {
 	} else {
 		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
-
-	CacheDbRef.Mu.Lock()
-	err = CacheDbRef.GetTxBlock(tmp)
-	if err != nil {
-		fmt.Println("txBlock", base58.Encode(tmp.HashID[:]), " error", err)
+	flag := true
+	for flag {
+		CacheDbRef.Mu.Lock()
+		err = CacheDbRef.GetTxBlock(tmp)
+		if err != nil {
+			fmt.Println("txBlock", base58.Encode(tmp.HashID[:]), " error", err)
+		} else {
+			flag = false
+		}
+		CacheDbRef.Mu.Unlock()
+		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
 	}
-	CacheDbRef.Mu.Unlock()
 
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
