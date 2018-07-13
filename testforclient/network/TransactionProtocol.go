@@ -174,6 +174,7 @@ func SendTxDecSet(data [][]byte, round uint32) {
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxDecSet", data[i])
 		}
 	}
+
 	cnt := 1
 	mask := make([]bool, gVar.ShardCnt)
 	mask[CacheDbRef.ShardNum] = true
@@ -244,15 +245,19 @@ func HandleTxLeader() {
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				tmpCnt := 0
+				bad := 0
 				for j := 0; j < len(TBCache); j++ {
+					tmpCnt += int(TBCache[j].TxCnt)
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
 						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
 						if err != nil {
+							bad++
 							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished")
+				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}

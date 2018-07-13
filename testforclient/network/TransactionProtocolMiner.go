@@ -105,6 +105,9 @@ func HandleTxList(data []byte) error {
 		if i != CacheDbRef.ShardNum {
 			data2[i] = (*tmpBatch)[i].Encode()
 			go sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxM", data2[i])
+			if xx == int(i+1) {
+				go sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxM", data2[i])
+			}
 		}
 	}
 	return nil
