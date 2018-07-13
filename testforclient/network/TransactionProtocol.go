@@ -259,9 +259,11 @@ func HandleTxDecLeader(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 		return err
 	}
-
+	fmt.Println("Into TxDecLeader func")
 	CacheDbRef.Mu.Lock()
+	fmt.Println("Ready to preprocess TxDec")
 	err = CacheDbRef.PreTxDecision(tmp, tmp.HashID)
+	fmt.Println("Preprocess TxDec done")
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}

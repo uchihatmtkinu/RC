@@ -13,7 +13,6 @@ import (
 func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 	if s == nil {
 		s = new(PreStat)
-		s.Channel = make(chan bool)
 		s.Stat = -2
 	}
 
@@ -66,6 +65,9 @@ func (d *DbRef) PreTxList(b *basic.TxList, s *PreStat) error {
 				s.Valid[i] = 1
 			}
 		}
+	}
+	if s.Stat > 0 {
+		s.Channel = make(chan bool, s.Stat)
 	}
 	if s.Stat == 0 {
 		if !b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk) {
@@ -164,6 +166,9 @@ func (d *DbRef) PreTxDecSet(b *basic.TxDecSet, s *PreStat) error {
 			}
 		}
 	}
+	if s.Stat > 0 {
+		s.Channel = make(chan bool, s.Stat)
+	}
 	if s.Stat == 0 {
 		for i := uint32(0); i < b.MemCnt; i++ {
 			err := d.PreTxDecision(&b.MemD[i], b.HashID)
@@ -218,6 +223,9 @@ func (d *DbRef) PreTxBlock(b *basic.TxBlock, s *PreStat) error {
 				b.TxArray[i] = *d.TXCache[xxx[0]].Data
 			}
 		}
+	}
+	if s.Stat > 0 {
+		s.Channel = make(chan bool, s.Stat)
 	}
 	if s.Stat == 0 {
 		tmp, err := b.Verify(&shard.GlobalGroupMems[b.ID].RealAccount.Puk)
