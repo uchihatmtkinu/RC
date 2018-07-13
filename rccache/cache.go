@@ -204,7 +204,12 @@ func (d *DbRef) AddCache(HashID [32]byte) error {
 	if !ok {
 		d.HashCache[tmp] = [][32]byte{HashID}
 	} else {
+		fmt.Println("fuck!!!")
 		d.HashCache[tmp] = append(xxx, HashID)
+		for i := 0; i < len(xxx); i++ {
+			fmt.Println("hashCache", i, ":", base58.Encode(xxx[i][:]))
+		}
+		fmt.Println(base58.Encode(HashID[:]))
 	}
 	return nil
 }
