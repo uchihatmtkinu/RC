@@ -48,6 +48,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	if tmp.Res == 1 {
 		d.Ready = append(d.Ready, *tmp.Data)
 	}
+	d.DB.AddTx(b)
 	d.AddCache(b.Hash)
 	d.TXCache[b.Hash] = tmp
 	if d.Now == nil {

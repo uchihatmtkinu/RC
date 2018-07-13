@@ -28,6 +28,9 @@ const TBBucket = "TxBlock"
 //FBBucket is the bucket of Final Blocks
 const FBBucket = "FBTxBlock"
 
+//TXBucket is the txbucket
+const TXBucket = "TxBucket"
+
 //byteCompare is the func used for string compare
 func byteCompare(a, b interface{}) int {
 	switch a.(type) {

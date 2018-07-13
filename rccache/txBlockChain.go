@@ -100,6 +100,11 @@ func (a *TxBlockChain) NewBlockchain(dbFile string) error {
 				a.AccData[tmp.ID] = tmp.Value
 			}
 		}
+		tx.DeleteBucket([]byte(TXBucket))
+		_, err := tx.CreateBucket([]byte(TXBucket))
+		if err != nil {
+			log.Panic(err)
+		}
 		//Mark-UTXO
 		/*b = tx.Bucket([]byte(UTXOBucket))
 		if b == nil {
@@ -162,7 +167,71 @@ func (a *TxBlockChain) CreateNewBlockchain(dbFile string) error {
 		if err != nil {
 			log.Panic(err)
 		}
+		_, err = tx.CreateBucket([]byte(TXBucket))
+		if err != nil {
+			log.Panic(err)
+		}
+		return nil
+	})
+	return err
+}
 
+//AddTx is adding a new transaction
+func (a *TxBlockChain) AddTx(x *basic.Transaction) error {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TXBucket))
+		var tmp []byte
+		x.Encode(&tmp)
+		err := b.Put(append([]byte("B"), x.Hash[:]...), tmp)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return nil
+}
+
+//ReqTx request a transaction
+func (a *TxBlockChain) ReqTx(hash [32]byte) *basic.Transaction {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	tmp := new(basic.Transaction)
+	err = a.data.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TXBucket))
+		tmpStr := b.Get(append([]byte("B"), hash[:]...))
+		err := tmp.Decode(&tmpStr)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return tmp
+}
+
+//ClearTx request a transaction
+func (a *TxBlockChain) ClearTx() error {
+	var err error
+	a.data, err = bolt.Open(a.FileName, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer a.data.Close()
+	err = a.data.Update(func(tx *bolt.Tx) error {
+		tx.DeleteBucket([]byte(TBBucket))
+		_, err := tx.CreateBucket([]byte(TXBucket))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return err

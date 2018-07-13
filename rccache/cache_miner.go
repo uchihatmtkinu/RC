@@ -87,6 +87,7 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 		}
 		return fmt.Errorf("Not related TX")
 	}
+	d.DB.AddTx(a)
 	d.TXCache[a.Hash] = tmp
 	d.AddCache(a.Hash)
 	return nil
@@ -237,7 +238,10 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		}
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp := d.TXCache[a.TxArray[i].Hash]
+		tmp, ok := d.TXCache[a.TxArray[i].Hash]
+		if !ok {
+			continue
+		}
 		if tmp.InCheck[d.ShardNum] == 1 {
 			tmp.Decision[0] = 2
 			for j := uint32(0); j < gVar.ShardSize; j++ {

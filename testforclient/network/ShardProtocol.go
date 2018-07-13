@@ -39,6 +39,7 @@ func ShardProcess() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "Shard Calculated")
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
 	CacheDbRef.Mu.Lock()
+	CacheDbRef.DB.ClearTx()
 	CacheDbRef.TDSCnt = make([]int, gVar.ShardCnt)
 	CacheDbRef.TDSNotReady = int(gVar.ShardCnt)
 	CacheDbRef.StopGetTx = false

@@ -78,6 +78,7 @@ func HandleTxList(data []byte) error {
 		case <-s.Channel:
 			cnt--
 		case <-time.After(timeoutTL):
+			fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "time out")
 			timeoutFlag = false
 		}
 	}
@@ -117,6 +118,7 @@ func HandleTxDecSet(data []byte, h *uint32, id *uint32) error {
 		case <-s.Channel:
 			cnt--
 		case <-time.After(timeoutTL):
+			fmt.Println("TDS:", base58.Encode(tmp.HashID[:]), "time out")
 			timeoutFlag = false
 		}
 	}
@@ -183,18 +185,14 @@ func HandleTxBlock(data []byte) error {
 	} else {
 		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
-	flag := true
-	for flag {
-		CacheDbRef.Mu.Lock()
-		err = CacheDbRef.GetTxBlock(tmp)
-		if err != nil {
-			//fmt.Println(err)
-		} else {
-			flag = false
-		}
-		CacheDbRef.Mu.Unlock()
-		time.Sleep(time.Microsecond * 100)
+
+	CacheDbRef.Mu.Lock()
+	err = CacheDbRef.GetTxBlock(tmp)
+	if err != nil {
+		fmt.Println("txBlock", base58.Encode(tmp.HashID[:]), " error", err)
 	}
+	CacheDbRef.Mu.Unlock()
+
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
