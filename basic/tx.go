@@ -116,7 +116,8 @@ func (a *Transaction) Decode(buf *[]byte) error {
 }
 
 //New is to initialize a transaction
-func (a *Transaction) New(kind int) error {
+func (a *Transaction) New(kind int, seed int64) error {
+	rand.Seed(seed)
 	a.Timestamp = uint64(time.Now().Unix()) + rand.Uint64()
 	a.Locktime = rand.Uint32()
 	a.TxinCnt = 0

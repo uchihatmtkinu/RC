@@ -30,7 +30,7 @@ func sendTxMessage(addr string, command string, message []byte) {
 
 //TxGeneralLoop is the normall loop of transaction cache
 func TxGeneralLoop() {
-	rand.Seed(time.Now().Unix() + int64(CacheDbRef.ID))
+	rand.Seed(time.Now().Unix() * int64(CacheDbRef.ID))
 
 	fmt.Println(time.Now())
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to process Tx:")
@@ -165,7 +165,7 @@ func SendTxDecSet(data [][]byte, round uint32) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxDecSetM", data[CacheDbRef.ShardNum])
 		}
 	}
-	rand.Seed(int64(CacheDbRef.ID) + time.Now().Unix() + rand.Int63())
+	rand.Seed(int64(CacheDbRef.ID)*time.Now().Unix() + rand.Int63())
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
 		if i != CacheDbRef.ShardNum {

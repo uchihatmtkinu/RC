@@ -55,9 +55,10 @@ func byteSlice(x uint32) []byte {
 	return tmp
 }
 
-func GenerateTx(x int, y int, z uint32) *basic.Transaction {
+//GenerateTx is to generate a new tx
+func GenerateTx(x int, y int, z uint32, seed int64) *basic.Transaction {
 	var tmp basic.Transaction
-	tmp.New(0)
+	tmp.New(0, seed)
 	var b basic.OutType
 	b.Address = shard.GlobalGroupMems[y].RealAccount.AddrReal
 	b.Value = z
