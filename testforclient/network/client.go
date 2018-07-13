@@ -111,6 +111,10 @@ func StartServer(ID int) {
 			go HandleAndSendTx(request)
 		case "TxM":
 			go HandleTotalTx(request)
+		case "TxMM":
+			go HandleTxMM(request)
+		case "TxMMRec":
+			go HandleTxMMRec(request)
 		case "TxList":
 			fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxList(request)

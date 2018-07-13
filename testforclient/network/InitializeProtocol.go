@@ -138,5 +138,6 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
 		TxDecRevChan[i] = make(chan txDecRev, gVar.ShardCnt)
 		TLChan[i] = make(chan uint32, gVar.ShardSize)
+		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
 	}
 }

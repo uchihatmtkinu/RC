@@ -216,6 +216,23 @@ func HandleTotalTx(data []byte) error {
 	return nil
 }
 
+//HandleTxMM process the tx
+func HandleTxMM(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	var tmp TxBatchInfo
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println("TxMM decode error")
+		return err
+	}
+	xxx := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
+
+	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMMRec", xxx.Encode())
+	HandleTotalTx(tmp.Data)
+	return nil
+}
+
 //HandleAndSendTx when receives a tx
 func HandleAndSendTx(data []byte) error {
 	HandleTotalTx(data)
@@ -340,6 +357,7 @@ func HandleTxDecSetLeader(data []byte) error {
 		}
 		CacheDbRef.Mu.Unlock()
 	}
+	flag = false
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	CacheDbRef.ProcessTDS(tmp)
@@ -347,11 +365,14 @@ func HandleTxDecSetLeader(data []byte) error {
 	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {
 		CacheDbRef.TDSNotReady--
 		if CacheDbRef.TDSNotReady == 0 {
-			StartLastTxBlock <- true
+			fmt.Println("All TDS received")
+			flag = true
 		}
 	}
-
 	CacheDbRef.Mu.Unlock()
+	if flag {
+		StartLastTxBlock <- true
+	}
 	return nil
 }
 

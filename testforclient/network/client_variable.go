@@ -70,11 +70,13 @@ type requetRepInfo struct {
 
 //RepBlockRxInfo receive rep block
 type RepBlockRxInfo struct {
-	Round	int
-	Block	Reputation.RepBlock
+	Round int
+	Block Reputation.RepBlock
 }
+
 //RxRepBlockCh,
-var RxRepBlockCh	chan *Reputation.RepBlock
+var RxRepBlockCh chan *Reputation.RepBlock
+
 //------------------- cosi process -------------------------
 //commitInfo used in commitCh
 type commitInfo struct {
@@ -159,6 +161,13 @@ type TxBatchCacheType struct {
 	Data [][]byte
 }
 
+type TxBatchInfo struct {
+	ID      uint32
+	ShardID uint32
+	Round   uint32
+	Data    []byte
+}
+
 //channel used in sync
 //syncCh
 var syncSBCh [gVar.ShardCnt]chan syncSBInfo
@@ -195,3 +204,5 @@ var TLChan [gVar.NumTxListPerEpoch]chan uint32
 var TxBatchCache chan []byte
 
 var StopGetTx chan bool
+
+var txMCh [gVar.NumTxListPerEpoch]chan txDecRev
