@@ -13,19 +13,22 @@ var (
 //difficulty difficulty in pow
 const difficulty = 16
 
-//RepPowRxInfo receive pow info
+//RepPowInfo receive pow info
 type RepPowInfo struct {
+	ID		int
 	Round	int
 	Nonce	int
 	Hash 	[32]byte
 }
+
+
 //channel used in rep pow
 //RepPowRxCh rx pow repblock from others
 var RepPowRxCh chan RepPowInfo
 //RepPowTxCh tx a pow repblock
 var RepPowTxCh chan RepPowInfo
 //RepPowRxValidate flag - validate the received repblock
-var RepPowRxValidate chan bool
+var RepPowRxValidate chan RepPowInfo
 //MyRepBlockChain my reputation blockchain
 var MyRepBlockChain *RepBlockchain
 //RepBlockIter an iterator on repblockchain
@@ -48,4 +51,7 @@ var CurrentSyncBlock	SafeSyncBlock
 var CurrentRepBlock		SafeRepBlock
 //CurrentCoSignature current cosinature
 var CurrentCoSignature	cosi.SignaturePart
-
+//NonceMap map for nonce
+var NonceMap map[int]int
+//IDToNonce InShardID to nonce
+var IDToNonce []int

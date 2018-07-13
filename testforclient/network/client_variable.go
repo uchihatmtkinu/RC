@@ -61,6 +61,19 @@ type powInfo struct {
 	Nonce int
 }
 
+//requetRepInfo used in pow
+type requetRepInfo struct {
+	ID    int
+	Round int
+}
+
+//RepBlockRxInfo receive rep block
+type RepBlockRxInfo struct {
+	Round	int
+	Block	Reputation.RepBlock
+}
+//RxRepBlockCh,
+var RxRepBlockCh	chan *Reputation.RepBlock
 //------------------- cosi process -------------------------
 //commitInfo used in commitCh
 type commitInfo struct {

@@ -28,7 +28,7 @@ type RepBlockchainIterator struct {
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
-func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
+func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, ID int) {
 	var lastHash [32]byte
 	var fromOtherFlag bool
 
@@ -54,7 +54,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
 	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
 	if fromOtherFlag {
-		RepPowTxCh <- RepPowInfo{CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
+		RepPowTxCh <- RepPowInfo{ID, CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
 	}
 	shard.StartFlag = false
 
@@ -79,6 +79,29 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte) {
 	}
 }
 
+func (bc*RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock){
+	CurrentRepBlock.Block = repBlock
+
+	err := bc.Db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = b.Put([]byte("lb"), CurrentRepBlock.Block.Hash[:])
+		if err != nil {
+			log.Panic(err)
+		}
+
+		bc.Tip = CurrentRepBlock.Block.Hash
+
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+}
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, CoSignature []byte) {
 	var lastRepBlockHash [32]byte

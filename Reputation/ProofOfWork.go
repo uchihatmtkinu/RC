@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+	"github.com/uchihatmtkinu/RC/shard"
 )
 
 
@@ -57,15 +58,16 @@ func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 		select {
 		case candidateRepBlock =<-RepPowRxCh:{
 			if candidateRepBlock.Round > CurrentRepBlock.Round {
+				NonceMap[candidateRepBlock.Nonce]++
+				IDToNonce[shard.GlobalGroupMems[candidateRepBlock.ID].InShardId] = candidateRepBlock.Nonce
 				if pow.Validate(candidateRepBlock.Nonce) {
 					nonce = candidateRepBlock.Nonce
 					hash = candidateRepBlock.Hash
 					flag = false
-					RepPowRxValidate <- true
+					RepPowRxValidate <- candidateRepBlock
 					fmt.Println("validate PoW from others - true")
 					return nonce, hash, flag
 				} else {
-					RepPowRxValidate <- false
 					fmt.Println("validate PoW from others - false")
 				}
 			}
