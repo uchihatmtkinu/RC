@@ -42,7 +42,7 @@ func ShardProcess() {
 	CacheDbRef.DB.ClearTx()
 	CacheDbRef.TDSCnt = make([]int, gVar.ShardCnt)
 	CacheDbRef.TDSNotReady = int(gVar.ShardCnt)
-
+	StopGetTx = make(chan bool, 1)
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.Mu.Unlock()

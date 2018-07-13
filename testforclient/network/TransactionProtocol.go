@@ -122,6 +122,7 @@ func TxLastBlock() {
 	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
+	close(StopGetTx)
 	go SendFinalBlock(&shard.GlobalGroupMems)
 }
 
@@ -253,7 +254,7 @@ func HandleTxLeader() {
 						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
 						if err != nil {
 							bad++
-							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+							fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
 					}
 				}

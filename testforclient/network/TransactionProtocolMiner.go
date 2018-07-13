@@ -225,6 +225,7 @@ func HandleTxBlock(data []byte) error {
 		CacheDbRef.StartTxDone = false
 		StopGetTx <- true
 		fmt.Println(CacheDbRef.ID, "waits for FB")
+		close(StopGetTx)
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
 	CacheDbRef.Mu.Unlock()
