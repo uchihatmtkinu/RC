@@ -53,20 +53,13 @@ func HandleTxList(data []byte) error {
 	}
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
-	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round)
 	s := rccache.PreStat{Stat: -2, Valid: nil}
-	flag := true
-	for flag {
-		CacheDbRef.Mu.Lock()
-		if CacheDbRef.TLRound == tmp.Round && !CacheDbRef.StopGetTx {
-			flag = false
-		}
-		CacheDbRef.Mu.Unlock()
-	}
+
 	CacheDbRef.Mu.Lock()
-	fmt.Println("PreProcess TxList:", base58.Encode(tmp.HashID[:]))
+	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.PreTxList(tmp, &s)
-	fmt.Println("PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
+	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
 	CacheDbRef.Mu.Unlock()
 	if s.Stat != 0 {
 		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting")
@@ -78,7 +71,7 @@ func HandleTxList(data []byte) error {
 		case <-s.Channel:
 			cnt--
 		case <-time.After(timeoutTL):
-			fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "time out")
+			fmt.Println(time.Now(), "TxList:", base58.Encode(tmp.HashID[:]), "time out")
 			timeoutFlag = false
 		}
 	}

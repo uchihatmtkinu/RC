@@ -85,8 +85,9 @@ func (d *DbRef) BuildTDS() {
 
 //SignTDS is to sign all txDecSet
 func (d *DbRef) SignTDS(x *TLGroup) {
+	fmt.Println(len(x.TDS))
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		(*x).TDS[i].Sign(&d.prk)
+		x.TDS[i].Sign(&d.prk)
 	}
 
 }
