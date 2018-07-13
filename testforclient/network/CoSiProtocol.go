@@ -219,10 +219,10 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	cosiSigMessage := <-cosiSigCh
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
-	if valid {
+	//if valid {
 		Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
 
-	}
+	//}
 	//close cosi
 	CoSiFlag = false
 	close(cosiChallengeCh)
