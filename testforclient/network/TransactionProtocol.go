@@ -71,7 +71,8 @@ func TxListProcess() {
 	tmpflag := false
 	CacheDbRef.Mu.Lock()
 
-	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS:")
+	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
+	fmt.Println("TLG TDS length", len(TLG.TDS))
 	CacheDbRef.SignTDS(TLG)
 	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum])
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(TLG.TDS[CacheDbRef.ShardNum].HashID[:]))
