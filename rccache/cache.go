@@ -184,7 +184,7 @@ func (c *CrossShardDec) Print() {
 func (d *DbRef) ClearCache(HashID [32]byte) error {
 	tmp := basic.HashCut(HashID)
 	xxx := d.HashCache[tmp]
-	if len(xxx) == 0 && xxx[0] == HashID {
+	if len(xxx) == 1 && xxx[0] == HashID {
 		delete(d.HashCache, tmp)
 	} else {
 		for i := 0; i < len(xxx); i++ {
