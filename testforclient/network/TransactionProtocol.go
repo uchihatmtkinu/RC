@@ -119,7 +119,7 @@ func TxLastBlock() {
 		startRep <- repInfo{Last: true, Hash: tmp}
 	}
 	CacheDbRef.StartTxDone = false
-	CacheDbRef.StopGetTx = true
+	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
 	go SendFinalBlock(&shard.GlobalGroupMems)
@@ -208,12 +208,9 @@ func SendTxBlock(data *[]byte) {
 
 //HandleTotalTx process the tx
 func HandleTotalTx(data []byte) error {
-
-	if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
-		HandleTxLeader(data)
-	} else {
-		HandleTx(data)
-	}
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	TxBatchCache <- data1
 	return nil
 }
 
@@ -230,23 +227,39 @@ func HandleAndSendTx(data []byte) error {
 }
 
 //HandleTxLeader when receives a tx
-func HandleTxLeader(data []byte) error {
-	data1 := make([]byte, len(data))
-	copy(data1, data)
-	tmp := new(basic.TransactionBatch)
-	err := tmp.Decode(&data1)
-	if err != nil {
-		return err
-	}
-	CacheDbRef.Mu.Lock()
-	for i := uint32(0); i < tmp.TxCnt; i++ {
-		err = CacheDbRef.MakeTXList(&tmp.TxArray[i])
-		if err != nil {
-			//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+func HandleTxLeader() {
+	flag := true
+	var TBCache []*basic.TransactionBatch
+	for flag {
+		select {
+		case data := <-TxBatchCache:
+			data1 := make([]byte, len(data))
+			copy(data1, data)
+			tmp := new(basic.TransactionBatch)
+			err := tmp.Decode(&data1)
+			if err == nil {
+				TBCache = append(TBCache, tmp)
+			}
+		case <-time.After(time.Second):
+			if len(TBCache) > 0 {
+				CacheDbRef.Mu.Lock()
+				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				for j := 0; j < len(TBCache); j++ {
+					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
+						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
+						if err != nil {
+							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+						}
+					}
+				}
+				fmt.Println(time.Now(), "TxBatch Finished")
+				CacheDbRef.Mu.Unlock()
+				TBCache = make([]*basic.TransactionBatch, 0)
+			}
+		case <-StopGetTx:
+			flag = false
 		}
 	}
-	CacheDbRef.Mu.Unlock()
-	return nil
 }
 
 //HandleTxDecLeader when receives a txdec
@@ -259,9 +272,11 @@ func HandleTxDecLeader(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 		return err
 	}
-
+	fmt.Println("Into TxDecLeader func")
 	CacheDbRef.Mu.Lock()
+	fmt.Println("Ready to preprocess TxDec")
 	err = CacheDbRef.PreTxDecision(tmp, tmp.HashID)
+	fmt.Println("Preprocess TxDec done")
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}

@@ -101,7 +101,7 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		//fmt.Printf("%d Received %s command\n", ID, command)
+		//fmt.Println(time.Now(), ID, "Received", command, "command")
 		var tmp uint32
 		var tmp2 uint32
 		switch command {

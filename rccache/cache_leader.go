@@ -12,6 +12,10 @@ import (
 
 //MakeTXList is to create TxList given transaction
 func (d *DbRef) MakeTXList(b *basic.Transaction) error {
+	err := d.AddCache(b.Hash)
+	if err != nil {
+		return err
+	}
 	tmpPre, okw := d.WaitHashCache[basic.HashCut(b.Hash)]
 	if okw {
 		for i := 0; i < len(tmpPre.DataTB); i++ {
@@ -52,7 +56,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 		d.Ready = append(d.Ready, *tmp.Data)
 	}
 	d.DB.AddTx(b)
-	d.AddCache(b.Hash)
+
 	d.TXCache[b.Hash] = tmp
 	if d.Now == nil {
 		d.NewTxList()
@@ -88,9 +92,7 @@ func (d *DbRef) BuildTDS() {
 
 //SignTDS is to sign all txDecSet
 func (d *DbRef) SignTDS(x *TLGroup) {
-	fmt.Println(len(x.TDS))
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		fmt.Println("Check", i, x.TDS[i].HashID)
 		x.TDS[i].Sign(&d.prk)
 	}
 
@@ -109,9 +111,6 @@ func (d *DbRef) NewTxList() error {
 		d.Now.TLS[i].Round = d.TLRound
 	}
 
-	if d.TLRound == gVar.NumTxListPerEpoch {
-		d.StopGetTx = true
-	}
 	return nil
 }
 
@@ -219,20 +218,23 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *uint32) error {
 //ProcessTDS deal with the TDS
 func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 	if b.ShardIndex == d.ShardNum {
-		tmp, _ := d.TLIndex[b.HashID]
+		tmp1, _ := d.TLIndex[b.HashID]
 		//tmpIndex := tmp - uint32(d.StartIndex)
 		//tmpTL := (*d.TLSCache[tmpIndex])[d.ShardNum]
-		b.TxCnt = tmp.TLS[d.ShardNum].TxCnt
-		b.TxArray = tmp.TLS[d.ShardNum].TxArray
+		b.TxCnt = tmp1.TLS[d.ShardNum].TxCnt
+		b.TxArray = tmp1.TLS[d.ShardNum].TxArray
 		index := 0
 		shift := byte(0)
 		for i := uint32(0); i < b.TxCnt; i++ {
-			tmp := d.TXCache[b.TxArray[i]]
+			tmp, ok2 := d.TXCache[b.TxArray[i]]
 			for j := uint32(0); j < b.MemCnt; j++ {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
 			tmpRes := b.Result(i)
 			if tmpRes == false {
+				if !ok2 {
+					fmt.Println("Whats the fuck?")
+				}
 				tmp.Decision[0] = 1
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					if tmp.Decision[j] == 1 {

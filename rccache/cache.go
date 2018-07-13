@@ -79,11 +79,9 @@ type DbRef struct {
 
 	TBCache *[][32]byte
 
-	Leader         uint32
-	UnderSharding  bool
-	StopGetTx      bool
-	StartTxDone    bool
-	StartSendingTX bool
+	Leader        uint32
+	UnderSharding bool
+	StartTxDone   bool
 }
 
 //TLGroup is the group of TL
@@ -154,11 +152,10 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.LastIndex = -1
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
 	d.TBCache = new([][32]byte)
-	d.StopGetTx = true
 	d.UnderSharding = true
 	d.StartTxDone = true
 	d.PrevHeight = 0
-	d.StartSendingTX = false
+
 }
 
 //CrossShardDec  is the database of cache
@@ -186,8 +183,8 @@ func (c *CrossShardDec) Print() {
 //ClearCache is to handle the TxCache of hash
 func (d *DbRef) ClearCache(HashID [32]byte) error {
 	tmp := basic.HashCut(HashID)
-	xxx := d.HashCache[tmp]
-	if len(xxx) == 1 && xxx[0] == HashID {
+	//xxx := d.HashCache[tmp]
+	/*if len(xxx) == 1 && xxx[0] == HashID {
 		delete(d.HashCache, tmp)
 	} else {
 		for i := 0; i < len(xxx); i++ {
@@ -196,7 +193,8 @@ func (d *DbRef) ClearCache(HashID [32]byte) error {
 				d.HashCache[tmp] = xxx
 			}
 		}
-	}
+	}*/
+	delete(d.HashCache, tmp)
 	delete(d.TXCache, HashID)
 	return nil
 }
@@ -208,6 +206,9 @@ func (d *DbRef) AddCache(HashID [32]byte) error {
 	if !ok {
 		d.HashCache[tmp] = [][32]byte{HashID}
 	} else {
+		if xxx[0] == HashID {
+			return fmt.Errorf("Existing")
+		}
 		fmt.Println("fuck!!!")
 		d.HashCache[tmp] = append(xxx, HashID)
 		for i := 0; i < len(xxx); i++ {

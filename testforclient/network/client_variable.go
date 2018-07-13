@@ -1,6 +1,7 @@
 package network
 
 import (
+	"sync"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
@@ -153,6 +154,11 @@ type syncNotReadyInfo struct {
 	Epoch int
 }
 
+type TxBatchCacheType struct {
+	Mu   sync.RWMutex
+	Data [][]byte
+}
+
 //channel used in sync
 //syncCh
 var syncSBCh [gVar.ShardCnt]chan syncSBInfo
@@ -185,3 +191,7 @@ var StartSendingTx chan bool
 
 var TxDecRevChan [gVar.NumTxListPerEpoch]chan txDecRev
 var TLChan [gVar.NumTxListPerEpoch]chan uint32
+
+var TxBatchCache chan []byte
+
+var StopGetTx chan bool
