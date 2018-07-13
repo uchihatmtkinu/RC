@@ -184,6 +184,13 @@ func (a *TransactionBatch) New(b *[]Transaction) error {
 	return nil
 }
 
+//Add is to add a transactionbatch
+func (a *TransactionBatch) Add(b *Transaction) error {
+	a.TxCnt++
+	a.TxArray = append(a.TxArray, *b)
+	return nil
+}
+
 //Encode is to encode a transactionbatch
 func (a *TransactionBatch) Encode() []byte {
 	tmp := make([]byte, 0)

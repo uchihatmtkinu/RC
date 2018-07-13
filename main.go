@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/rccache"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -73,6 +74,7 @@ func main() {
 			j := rand.Int() % numCnt
 			k := uint32(rand.Int()%5 + 1)
 			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63())
+			fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 		}
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())

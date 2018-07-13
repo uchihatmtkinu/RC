@@ -100,7 +100,7 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 }
 
 //ProcessTL verify the transactions in the txlist
-func (d *DbRef) ProcessTL(a *basic.TxList) error {
+func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) error {
 	d.TLNow = new(basic.TxDecision)
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
@@ -114,6 +114,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	fmt.Println(d.ID, "Process TList:")
 	a.Print()
 	d.TLSCacheMiner[a.HashID] = a
+	*tmpBatch = make([]basic.TransactionBatch, gVar.ShardCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
@@ -130,6 +131,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 				}
 				d.TLNow.Add(res)
 				for j := 0; j < len(tmp.ShardRelated); j++ {
+					(*tmpBatch)[tmp.ShardRelated[j]].Add(tmp.Data)
 					tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
 					tmpDecision[tmp.ShardRelated[j]].Add(res)
 				}

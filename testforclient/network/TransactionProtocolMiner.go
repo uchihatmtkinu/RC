@@ -87,26 +87,42 @@ func HandleTxList(data []byte) error {
 			timeoutFlag = false
 		}
 	}
+	fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
-	err = CacheDbRef.ProcessTL(tmp)
+	tmpBatch := new([]basic.TransactionBatch)
+	err = CacheDbRef.ProcessTL(tmp, tmpBatch)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
 	}
 	var sent []byte
 	CacheDbRef.TLSent.Encode(&sent)
 	CacheDbRef.Mu.Unlock()
+	fmt.Println(time.Now(), "Start Sending TxBatch to other shards", base58.Encode(tmp.HashID[:]))
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDec", sent)
+	xx := shard.MyMenShard.InShardId
+	data2 := make([][]byte, gVar.ShardCnt)
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		if i != CacheDbRef.ShardNum {
+			data2[i] = (*tmpBatch)[i].Encode()
+			go sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxM", data2[i])
+		}
+	}
 	return nil
 }
 
 //HandleTxDecSet when receives a txdecset
-func HandleTxDecSet(data []byte, h *uint32, id *uint32) error {
+func HandleTxDecSet(data []byte, typeInput int) error {
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TxDecSet)
 	err := tmp.Decode(&data1)
-	*h = tmp.Round
-	*id = tmp.ID
+	if typeInput == 1 {
+		var tmp1 txDecRev
+		tmp1.ID = CacheDbRef.ShardNum
+		tmp1.Round = tmp.Round
+		datax := tmp1.Encode()
+		go sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDecRev", datax)
+	}
 	if err != nil {
 		return err
 	}
@@ -140,14 +156,8 @@ func HandleTxDecSet(data []byte, h *uint32, id *uint32) error {
 
 //HandleAndSentTxDecSet when receives a txdecset
 func HandleAndSentTxDecSet(data []byte) error {
-	var id uint32
-	var round uint32
-	HandleTxDecSet(data, &round, &id)
-	var tmp txDecRev
-	tmp.ID = CacheDbRef.ShardNum
-	tmp.Round = round
-	datax := tmp.Encode()
-	sendTxMessage(shard.GlobalGroupMems[id].Address, "TxDecRev", datax)
+	HandleTxDecSet(data, 1)
+
 	fmt.Println(CacheDbRef.ID, "Get TDS and send")
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
