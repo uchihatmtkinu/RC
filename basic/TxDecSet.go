@@ -19,7 +19,7 @@ func (a *TxDecSet) Hash() [32]byte {
 
 //Sign signs the TxDecSet
 func (a *TxDecSet) Sign(prk *ecdsa.PrivateKey) {
-	tmp := make([]byte, 0, 36+len(a.MemD[0].Decision)*int(a.MemCnt))
+	tmp := make([]byte, 0, 36+int(a.TxCnt/4*a.MemCnt))
 	tmp = append(byteSlice(a.ID), a.HashID[:]...)
 	for i := uint32(0); i < a.MemCnt; i++ {
 		tmp = append(tmp, a.MemD[i].Decision...)

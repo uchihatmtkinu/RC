@@ -36,6 +36,7 @@ func HandleTx(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	if flag {
+		fmt.Println("Start sending packets")
 		StartSendingTx <- true
 	}
 	return nil
@@ -55,7 +56,6 @@ func HandleTxList(data []byte) error {
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round)
 	s := rccache.PreStat{Stat: -2, Valid: nil}
-
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.PreTxList(tmp, &s)
