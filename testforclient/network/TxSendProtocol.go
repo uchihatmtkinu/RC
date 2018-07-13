@@ -2,7 +2,6 @@ package network
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -20,13 +19,7 @@ func SendTx(x *[]byte) {
 		}
 
 	}
-	rand.Seed(int64(CacheDbRef.ID) * time.Now().Unix())
-	for i := 0; i < int(gVar.ShardCnt); i++ {
-		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1
-		if i != int(CacheDbRef.ShardNum) {
-			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "Tx", *x)
-		}
-	}
+
 	HandleTotalTx(*x)
 }
 

@@ -31,7 +31,7 @@ func HandleTx() {
 				StartSendingTx <- true
 				sendFlag = true
 			}
-		case <-time.After(time.Second):
+		case <-time.After(time.Microsecond * 100):
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
