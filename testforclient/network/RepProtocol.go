@@ -8,10 +8,11 @@ import (
 
 	"fmt"
 
+	"math/rand"
+
 	"github.com/uchihatmtkinu/RC/Reputation"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"math/rand"
 )
 
 //var currentTxList *[]basic.TxList
@@ -73,21 +74,21 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	RxRepBlockCh = make(chan *Reputation.RepBlock, 10)
 	correctNonce := 0
 	askrep := 0
-	for key,value := range Reputation.NonceMap{
+	for key, value := range Reputation.NonceMap {
 		if value >= int(gVar.ShardSize) {
 			correctNonce = key
 		}
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
-	if correctNonce != Reputation.CurrentRepBlock.Block.Nonce{
+	if correctNonce != Reputation.CurrentRepBlock.Block.Nonce {
 		rand.Seed(int64(shard.MyMenShard.Shard*3000+shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
 		askrep = rand.Intn(int(gVar.ShardSize))
-		for Reputation.IDToNonce[askrep] != correctNonce{
+		for Reputation.IDToNonce[askrep] != correctNonce {
 			askrep = (askrep + 1) % int(gVar.ShardSize)
 		}
 		SendRepPowMessage((*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][askrep]].Address, "RequestRep", requetRepInfo{MyGlobalID, Reputation.CurrentRepBlock.Round})
-		receiveflag:= true
-		for receiveflag{
+		receiveflag := true
+		for receiveflag {
 			select {
 			case receiveRepBlock := <-RxRepBlockCh:
 				{
@@ -142,8 +143,8 @@ func HandleRepPowRx(request []byte) {
 // HandleRepBlockRx receive reputation block
 func HandleRepBlockRx(request []byte) {
 	var buff bytes.Buffer
-	var payload RepBlockRxInfo
-
+	//var payload RepBlockRxInfo
+	var payload Reputation.RepBlock
 	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
@@ -151,9 +152,9 @@ func HandleRepBlockRx(request []byte) {
 		log.Panic(err)
 	}
 
-	RxRepBlockCh <- &payload.Block
+	//RxRepBlockCh <- &payload.Block
+	RxRepBlockCh <- &payload
 	fmt.Println("Received Reputation Block from others")
-
 
 }
 
