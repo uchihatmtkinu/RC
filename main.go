@@ -68,12 +68,12 @@ func main() {
 		network.ShardProcess()
 		rand.Seed(int64(network.CacheDbRef.ID) * time.Now().Unix())
 		for l := 0; l < len(tmptx); l++ {
-			var i int
+			i := rand.Int() % numCnt
 			for true {
-				i := rand.Int() % numCnt
 				if basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal) == network.CacheDbRef.ShardNum {
 					break
 				}
+				i = rand.Int() % numCnt
 			}
 			j := rand.Int() % numCnt
 			k := uint32(rand.Int()%5 + 1)

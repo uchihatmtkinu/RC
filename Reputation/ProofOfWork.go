@@ -5,18 +5,15 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+
 	"github.com/uchihatmtkinu/RC/shard"
 )
 
-
-
-
 // ProofOfWork represents a proof-of-work
 type ProofOfWork struct {
-	RepBlock  *RepBlock
-	Target *big.Int
+	RepBlock *RepBlock
+	Target   *big.Int
 }
-
 
 // NewProofOfWork builds and returns a ProofOfWork
 func NewProofOfWork(b *RepBlock) *ProofOfWork {
@@ -56,22 +53,23 @@ func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 	fmt.Println("Mining the RepBlock containing")
 	for nonce < maxNonce && flag {
 		select {
-		case candidateRepBlock =<-RepPowRxCh:{
-			if candidateRepBlock.Round > CurrentRepBlock.Round {
-				NonceMap[candidateRepBlock.Nonce]++
-				IDToNonce[shard.GlobalGroupMems[candidateRepBlock.ID].InShardId] = candidateRepBlock.Nonce
-				if pow.Validate(candidateRepBlock.Nonce) {
-					nonce = candidateRepBlock.Nonce
-					hash = candidateRepBlock.Hash
-					flag = false
-					RepPowRxValidate <- candidateRepBlock
-					fmt.Println("validate PoW from others - true")
-					return nonce, hash, flag
-				} else {
-					fmt.Println("validate PoW from others - false")
+		case candidateRepBlock = <-RepPowRxCh:
+			{
+				if candidateRepBlock.Round > CurrentRepBlock.Round {
+					//NonceMap[candidateRepBlock.Nonce]++//Change
+					IDToNonce[shard.GlobalGroupMems[candidateRepBlock.ID].InShardId] = candidateRepBlock.Nonce
+					if pow.Validate(candidateRepBlock.Nonce) {
+						nonce = candidateRepBlock.Nonce
+						hash = candidateRepBlock.Hash
+						flag = false
+						RepPowRxValidate <- candidateRepBlock
+						fmt.Println("validate PoW from others - true")
+						return nonce, hash, flag
+					} else {
+						fmt.Println("validate PoW from others - false")
+					}
 				}
 			}
-		}
 		default:
 			{
 				data := pow.prepareData(nonce)
@@ -102,5 +100,3 @@ func (pow *ProofOfWork) Validate(nonce int) bool {
 
 	return isValid
 }
-
-

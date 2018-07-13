@@ -254,7 +254,7 @@ func HandleTxLeader() {
 						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
 						if err != nil {
 							bad++
-							fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
 					}
 				}

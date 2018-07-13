@@ -46,6 +46,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 		select {
 		case item = <-Reputation.RepPowTxCh:
 			{
+				Reputation.NonceMap[item.Nonce]++
 				for i := 0; i < int(gVar.ShardSize); i++ {
 					if i != shard.MyMenShard.InShardId {
 						it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
@@ -75,12 +76,13 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	correctNonce := 0
 	askrep := 0
 	for key, value := range Reputation.NonceMap {
-		if value >= int(gVar.ShardSize) {
+		if value >= int(gVar.ShardSize/2) {
 			correctNonce = key
 		}
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if correctNonce != Reputation.CurrentRepBlock.Block.Nonce {
+		fmt.Println("Rep Nounce not match")
 		rand.Seed(int64(shard.MyMenShard.Shard*3000+shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
 		askrep = rand.Intn(int(gVar.ShardSize))
 		for Reputation.IDToNonce[askrep] != correctNonce {
@@ -92,8 +94,10 @@ func RepProcess(ms *[]shard.MemShard) bool {
 			select {
 			case receiveRepBlock := <-RxRepBlockCh:
 				{
-					Reputation.MyRepBlockChain.AddRepBlockFromOthers(receiveRepBlock)
-					receiveflag = false
+					if receiveRepBlock.Nonce == correctNonce {
+						Reputation.MyRepBlockChain.AddRepBlockFromOthers(receiveRepBlock)
+						receiveflag = false
+					}
 				}
 			case <-time.After(timeoutSync):
 				{
@@ -170,7 +174,8 @@ func HandleRequestRepBlockRx(request []byte) {
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Round == Reputation.CurrentRepBlock.Round {
-		SendRepPowMessage(shard.GlobalGroupMems[payload.ID].Address, "RepBlock", Reputation.CurrentRepBlock.Block.Serialize())
+		//SendRepPowMessage(shard.GlobalGroupMems[payload.ID].Address, "RepBlock", Reputation.CurrentRepBlock.Block.Serialize())
+		SendRepPowMessage(shard.GlobalGroupMems[payload.ID].Address, "RepBlock", Reputation.CurrentRepBlock.Block)
 		fmt.Println("Send Reputation Block To ID: ", payload.ID)
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
