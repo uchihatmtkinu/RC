@@ -149,9 +149,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList) error {
 	//fmt.Println("--------TxDecision from miner: ", d.ID, " end-------------")
 	d.TLSent = d.TLNow
 	d.TLRound++
-	if d.TLRound == gVar.NumTxListPerEpoch {
-		d.StopGetTx = true
-	}
+
 	return nil
 }
 

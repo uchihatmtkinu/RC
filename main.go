@@ -81,8 +81,10 @@ func main() {
 			fmt.Println("This is a Leader")
 			go network.TxGeneralLoop()
 			go network.SendLoopLeader(&tmptx)
+			go network.HandleTxLeader()
 		} else {
 			go network.SendLoopMiner(&tmptx)
+			go network.HandleTx()
 		}
 		//test rep
 		go network.RepProcessLoop(&shard.GlobalGroupMems)

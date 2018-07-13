@@ -12,38 +12,46 @@ import (
 )
 
 //HandleTx when receives a tx
-func HandleTx(data []byte) error {
-
-	data1 := make([]byte, len(data))
-	copy(data1, data)
-	tmp := new(basic.TransactionBatch)
-	err := tmp.Decode(&data1)
-	if err != nil {
-		return err
-	}
-	//fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBatch with", tmp.TxCnt, "Txs")
-	flag := false
-
-	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), "TxBatch Started")
-	if !CacheDbRef.StartSendingTX {
-		flag = true
-		CacheDbRef.StartSendingTX = true
-	}
-	for i := uint32(0); i < tmp.TxCnt; i++ {
-		err = CacheDbRef.GetTx(&tmp.TxArray[i])
-		if err != nil {
-			//fmt.Println(CacheDbRef.ID, "has a error", i, ": ", err)
+func HandleTx() {
+	flag := true
+	sendFlag := false
+	var TBCache []*basic.TransactionBatch
+	for flag {
+		select {
+		case data := <-TxBatchCache:
+			data1 := make([]byte, len(data))
+			copy(data1, data)
+			tmp := new(basic.TransactionBatch)
+			err := tmp.Decode(&data1)
+			if err == nil {
+				TBCache = append(TBCache, tmp)
+			}
+			if !sendFlag {
+				fmt.Println("Start sending packets")
+				StartSendingTx <- true
+				sendFlag = true
+			}
+		case <-time.After(time.Second):
+			if len(TBCache) > 0 {
+				CacheDbRef.Mu.Lock()
+				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				for j := 0; j < len(TBCache); j++ {
+					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
+						err := CacheDbRef.MakeTXList(&TBCache[j].TxArray[i])
+						if err != nil {
+							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
+						}
+					}
+				}
+				fmt.Println(time.Now(), "TxBatch Finished")
+				CacheDbRef.Mu.Unlock()
+				TBCache = make([]*basic.TransactionBatch, 0)
+			}
+		case <-StopGetTx:
+			flag = false
 		}
 	}
-	fmt.Println(time.Now(), "TxBatch Finished")
-	CacheDbRef.Mu.Unlock()
 
-	if flag {
-		fmt.Println("Start sending packets")
-		StartSendingTx <- true
-	}
-	return nil
 }
 
 //HandleTxList when receives a txlist
@@ -202,8 +210,7 @@ func HandleTxBlock(data []byte) error {
 	if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
 		CacheDbRef.UnderSharding = true
 		CacheDbRef.StartTxDone = false
-		CacheDbRef.StopGetTx = true
-
+		StopGetTx <- true
 		fmt.Println(CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}

@@ -111,9 +111,6 @@ func (d *DbRef) NewTxList() error {
 		d.Now.TLS[i].Round = d.TLRound
 	}
 
-	if d.TLRound == gVar.NumTxListPerEpoch {
-		d.StopGetTx = true
-	}
 	return nil
 }
 

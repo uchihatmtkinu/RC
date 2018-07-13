@@ -32,7 +32,7 @@ func SendTx(x *[]byte) {
 
 //SendLoopMiner is the protocol for sending
 func SendLoopMiner(x *[]basic.Transaction) {
-	fmt.Println("Prepare for sending TxBatch(Miner)")
+	fmt.Println(time.Now(), "Prepare for sending TxBatch(Miner)")
 	<-StartSendingTx
 	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch
 	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
@@ -43,7 +43,6 @@ func SendLoopMiner(x *[]basic.Transaction) {
 		SendTx(&tmpHash)
 		time.Sleep(time.Second * gVar.TxSendInterval)
 	}
-	CacheDbRef.StartSendingTX = false
 }
 
 //SendLoopLeader is the protocol for sending
