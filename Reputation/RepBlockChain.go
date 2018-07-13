@@ -80,6 +80,8 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, I
 }
 
 func (bc*RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock){
+	CurrentRepBlock.Mu.Lock()
+	defer CurrentRepBlock.Mu.Unlock()
 	CurrentRepBlock.Block = repBlock
 
 	err := bc.Db.Update(func(tx *bolt.Tx) error {

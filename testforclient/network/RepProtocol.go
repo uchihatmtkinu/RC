@@ -70,10 +70,9 @@ func RepProcess(ms *[]shard.MemShard) bool {
 		}
 	}
 	//if nonce is wrong request for reputation block
-	var askrep int
 	RxRepBlockCh = make(chan *Reputation.RepBlock, 10)
 	correctNonce := 0
-	askrep = 0
+	askrep := 0
 	for key,value := range Reputation.NonceMap{
 		if value >= int(gVar.ShardSize) {
 			correctNonce = key
@@ -81,6 +80,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	}
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if correctNonce != Reputation.CurrentRepBlock.Block.Nonce{
+		rand.Seed(int64(shard.MyMenShard.Shard*3000+shard.MyMenShard.InShardId) + time.Now().UTC().UnixNano())
 		askrep = rand.Intn(int(gVar.ShardSize))
 		for Reputation.IDToNonce[askrep] != correctNonce{
 			askrep = (askrep + 1) % int(gVar.ShardSize)
@@ -150,12 +150,10 @@ func HandleRepBlockRx(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	Reputation.CurrentRepBlock.Mu.RLock()
-	if payload.Round == Reputation.CurrentRepBlock.Round {
-		RxRepBlockCh <- &payload.Block
-		fmt.Println("Received Reputation Block from others")
-	}
-	Reputation.CurrentRepBlock.Mu.RUnlock()
+
+	RxRepBlockCh <- &payload.Block
+	fmt.Println("Received Reputation Block from others")
+
 
 }
 

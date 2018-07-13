@@ -150,6 +150,10 @@ func StartServer(ID int) {
 		//rep pow
 		case "RepPowAnnou":
 			go HandleRepPowRx(request)
+		case "RepBlock":
+			go HandleRepBlockRx(request)
+		case "RequestRep":
+			go HandleRequestRepBlockRx(request)
 
 		//cosi protocol
 		case "cosiAnnoun":
