@@ -164,7 +164,6 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	CoSiFlag = false
 	close(cosiCommitCh)
 	close(cosiResponseCh)
-	Reputation.CurrentSyncBlock.Block.VerifyCoSignature(ms)
 	return cosiSig
 }
 
@@ -223,7 +222,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	//receive cosisig and verify
 	cosiSigMessage := <-cosiSigCh
-	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
+	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), sbMessage, cosiSigMessage)
 	//add sync block
 	//if valid {
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)

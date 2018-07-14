@@ -1,6 +1,8 @@
 package gVar
 
-import "time"
+import (
+	"time"
+)
 
 //MagicNumber magic
 const MagicNumber byte = 66
