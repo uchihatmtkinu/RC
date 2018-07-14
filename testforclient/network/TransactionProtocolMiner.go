@@ -34,16 +34,19 @@ func HandleTx() {
 		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
+				tmpCnt := 0
+				bad := 0
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				for j := 0; j < len(TBCache); j++ {
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
 						err := CacheDbRef.GetTx(&TBCache[j].TxArray[i])
 						if err != nil {
+							bad++
 							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished")
+				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}

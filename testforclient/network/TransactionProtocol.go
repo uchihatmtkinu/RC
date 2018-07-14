@@ -69,7 +69,7 @@ func TxListProcess() {
 			timeoutflag = false
 		}
 	}
-	fmt.Println("TxDec of Round", thisround, "total txdec: ", gVar.ShardSize-1-uint32(cnt))
+	fmt.Println("TxDec of Round", thisround, "total txdec: ", uint32(cnt))
 	tmpflag := false
 	CacheDbRef.Mu.Lock()
 
