@@ -119,7 +119,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	}
 	fmt.Println("Sent CoSi Challenage")
 	//handle response
-	sigParts = make([]cosi.SignaturePart, shard.NumMems)
+	sigParts = make([]cosi.SignaturePart, int(gVar.ShardSize))
 
 	responseCount := 1
 	//timeoutflag = true
@@ -186,8 +186,8 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	CoSiFlag = true
 	fmt.Println("Member CoSi")
 	//generate pubKeys
-	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
-	for i := 0; i < shard.NumMems; i++ {
+	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
+	for i := 0; i < int(gVar.ShardSize); i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		pubKeys[it.InShardId] = it.CosiPub
 	}
