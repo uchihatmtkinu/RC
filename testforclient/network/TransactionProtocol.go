@@ -229,7 +229,7 @@ func HandleTxMM(data []byte) error {
 		return err
 	}
 	xxx := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
-	fmt.Println("Get TxBatchMM, Round", tmp.Round, "from", tmp.ID, "Shard", shard.GlobalGroupMems[tmp.ID].Shard)
+	//fmt.Println("Get TxBatchMM, Round", tmp.Round, "from", tmp.ID, "Shard", shard.GlobalGroupMems[tmp.ID].Shard)
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMMRec", xxx.Encode())
 	HandleTotalTx(tmp.Data)
 	return nil
@@ -277,7 +277,7 @@ func HandleTxLeader() {
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
+				//fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}
