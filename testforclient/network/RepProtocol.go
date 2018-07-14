@@ -112,6 +112,9 @@ func RepProcess(ms *[]shard.MemShard) bool {
 				{
 					if receiveRepBlock.Nonce == correctNonce {
 						Reputation.MyRepBlockChain.AddRepBlockFromOthers(receiveRepBlock)
+						for _, txs:= range receiveRepBlock.RepTransactions{
+							(*ms)[txs.GlobalID].Rep = txs.Rep
+						}
 						receiveflag = false
 					}
 				}

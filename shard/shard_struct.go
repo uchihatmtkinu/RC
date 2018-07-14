@@ -39,11 +39,14 @@ func (ms *MemShard) NewTotalRep() {
 	ms.TotalRep = []int64{}
 }
 
-//CopyTotalRepFromSB copy total rep from sync bock
-func (ms *MemShard) CopyTotalRepFromSB(value []int64) {
+
+
+//CopyTotalRepFromRB copy  rep from rep bock
+func (ms *MemShard) CopyRepFromRB(value []int64) {
 	ms.TotalRep = make([]int64, len(value))
 	copy(ms.TotalRep, value)
 }
+
 
 //SetTotalRep set totalrep
 func (ms *MemShard) SetTotalRep(value int64) {

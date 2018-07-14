@@ -85,12 +85,12 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 		IPAddr1 := IPAddr + ":" + strconv.Itoa(3000+i)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1)
 		shard.GlobalGroupMems[i].NewTotalRep()
-		shard.GlobalGroupMems[i].AddRep(int64(i))
+		//shard.GlobalGroupMems[i].AddRep(int64(i))
 		if initType != 0 {
 			IPAddr2 := IPAddr + ":" + strconv.Itoa(3000+i+IPCnt)
 			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr2)
 			shard.GlobalGroupMems[i+IPCnt].NewTotalRep()
-			shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
+			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}
 		//map ip+port -> global ID
 		//GlobalAddrMapToInd[IPAddr] = i

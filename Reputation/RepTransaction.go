@@ -8,7 +8,7 @@ type RepTransaction struct {
 
 //new reputation transaction
 func NewRepTransaction(globalID int, rep int64) *RepTransaction{
-	tx := RepTransaction{globalID,rep}
+	tx := RepTransaction{globalID,rep/10}
 	return &tx
 }
 
