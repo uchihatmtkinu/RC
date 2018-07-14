@@ -36,6 +36,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	var item Reputation.RepPowInfo
 	Reputation.IDToNonce = make([]int, int(gVar.ShardSize))
 	Reputation.NonceMap = make(map[int]int)
+	Reputation.StartCalPoWAnnounce = make(chan bool)
 	res := <-startRep
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
@@ -65,9 +66,9 @@ func RepProcess(ms *[]shard.MemShard) bool {
 						//fmt.Println("have sent " + it.Address)
 						go SendRepPowMessage(it.Address, "RepPowAnnou", powInfo{MyGlobalID, validateBlock.Round, validateBlock.Hash, validateBlock.Nonce})
 					}
-					fmt.Println("add pow rep block from others")
-					flag = false
 				}
+				flag = false
+				fmt.Println("add pow rep block from others")
 			}
 		}
 	}
@@ -82,11 +83,14 @@ func RepProcess(ms *[]shard.MemShard) bool {
 			halfflag = false
 		}
 	}
+	fmt.Println(Reputation.NonceMap)
+	<-Reputation.StartCalPoWAnnounce
 	for halfflag {
 		item = <-Reputation.RepPowRxCh
 		Reputation.CurrentRepBlock.Mu.RLock()
 		if item.Round == Reputation.CurrentRepBlock.Round{
 			Reputation.NonceMap[item.Nonce]++
+			fmt.Println("Nonce:",item.Nonce," value:",Reputation.NonceMap[item.Nonce])
 			if Reputation.NonceMap[item.Nonce] >= int(gVar.ShardSize/2){
 					Reputation.IDToNonce[shard.GlobalGroupMems[item.ID].InShardId] = item.Nonce
 					correctNonce = item.Nonce
@@ -120,10 +124,12 @@ func RepProcess(ms *[]shard.MemShard) bool {
 				}
 			case <-time.After(timeoutSync):
 				{
+
 					askrep = (askrep + 1) % int(gVar.ShardSize)
 					for Reputation.IDToNonce[askrep] != correctNonce {
 						askrep = (askrep + 1) % int(gVar.ShardSize)
 					}
+					fmt.Println("Request RB from ID:", shard.ShardToGlobal[shard.MyMenShard.Shard][askrep])
 					SendRepPowMessage((*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][askrep]].Address, "RequestRep", requetRepInfo{MyGlobalID, Reputation.CurrentRepBlock.Round})
 				}
 			}

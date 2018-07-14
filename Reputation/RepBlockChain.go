@@ -77,6 +77,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, I
 	if err != nil {
 		log.Panic(err)
 	}
+	StartCalPoWAnnounce <- true
 }
 
 func (bc*RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock){
