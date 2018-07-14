@@ -52,6 +52,7 @@ func TxListProcess() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 	//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
 	data1 := new([]byte)
+	thisround := TLG.TLS[CacheDbRef.ShardNum].Round
 	TLG.TLS[CacheDbRef.ShardNum].Encode(data1)
 	go SendTxList(*data1)
 	CacheDbRef.NewTxList()
@@ -62,12 +63,13 @@ func TxListProcess() {
 		select {
 		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round]:
 			cnt++
-			fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
+			//fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):
 			fmt.Println("TxDecSet is not full, someone doesn't send in time")
 			timeoutflag = false
 		}
 	}
+	fmt.Println("TxDec of Round", thisround, "total txdec: ", gVar.ShardSize-1-uint32(cnt))
 	tmpflag := false
 	CacheDbRef.Mu.Lock()
 
@@ -227,7 +229,7 @@ func HandleTxMM(data []byte) error {
 		return err
 	}
 	xxx := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
-	fmt.Println("Get TxBatchMM, Round", tmp.Round, "from", tmp.ID)
+	fmt.Println("Get TxBatchMM, Round", tmp.Round, "from", tmp.ID, "Shard", shard.GlobalGroupMems[tmp.ID].Shard)
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMMRec", xxx.Encode())
 	HandleTotalTx(tmp.Data)
 	return nil
@@ -259,7 +261,7 @@ func HandleTxLeader() {
 			if err == nil {
 				TBCache = append(TBCache, tmp)
 			}
-		case <-time.After(time.Second):
+		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
@@ -295,25 +297,25 @@ func HandleTxDecLeader(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 		return err
 	}
-	fmt.Println("Into TxDecLeader func")
+	//fmt.Println("Into TxDecLeader func")
 	CacheDbRef.Mu.Lock()
-	fmt.Println("Ready to preprocess TxDec")
+	//fmt.Println("Ready to preprocess TxDec")
 	err = CacheDbRef.PreTxDecision(tmp, tmp.HashID)
-	fmt.Println("Preprocess TxDec done")
+	//fmt.Println("Preprocess TxDec done")
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	//tmp.Print()
-	fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
+	//fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
 	var x uint32
 	err = CacheDbRef.UpdateTXCache(tmp, &x)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
 	}
 	CacheDbRef.Mu.Unlock()
-	fmt.Println("TxDecRound:", x)
+	//fmt.Println("TxDecRound:", x)
 	TLChan[x] <- tmp.ID
-	fmt.Println("TxDecSignal sent")
+	//fmt.Println("TxDecSignal sent")
 	return nil
 }
 
@@ -342,7 +344,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	flag := true
-	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
 	if s.Stat == 0 {

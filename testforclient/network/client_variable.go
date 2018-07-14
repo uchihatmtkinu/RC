@@ -22,6 +22,8 @@ const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
 const timeoutTL = 30 * time.Second
 const timeoutTxDecRev = 5 * time.Second
+const timeoutResentTxmm = 2 * time.Second
+const timeoutGetTx = time.Microsecond * 100
 
 //CurrentEpoch epoch now
 var CurrentEpoch int

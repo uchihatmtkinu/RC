@@ -31,7 +31,7 @@ func HandleTx() {
 				StartSendingTx <- true
 				sendFlag = true
 			}
-		case <-time.After(time.Microsecond * 100):
+		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
 				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
@@ -133,7 +133,7 @@ func HandleTxList(data []byte) error {
 				mask[shard.GlobalGroupMems[nowInfo.ID].Shard] = true
 			}
 			cnt--
-		case <-time.After(timeoutSync):
+		case <-time.After(timeoutResentTxmm):
 			fmt.Println("Resend TxDec", cnt)
 			for i := 0; i < len(mask); i++ {
 				if !mask[i] {
@@ -201,7 +201,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	}
 
 	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs")
+	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	err = CacheDbRef.GetTDS(tmp)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
