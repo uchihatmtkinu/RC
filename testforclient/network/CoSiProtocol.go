@@ -73,6 +73,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	//handle members' commits
 	signCount := 1
 	timeoutflag := true
+	cnt := 0
 	for timeoutflag && signCount < int(gVar.ShardSize) {
 		select {
 		case commitMessage := <-cosiCommitCh:
@@ -84,9 +85,14 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+				fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 				if maskBit(it.InShardId, &cosimask) == cosi.Disabled {
 					SendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 				}
+			}
+			cnt++
+			if cnt == 10 {
+				timeoutflag = false
 			}
 		case <-time.After(timeoutResponse):
 			timeoutflag = false
@@ -220,7 +226,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	valid := cosi.Verify(pubKeys, nil, sbMessage, cosiSigMessage)
 	//add sync block
 	//if valid {
-		Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
 
 	//}
 	//close cosi
