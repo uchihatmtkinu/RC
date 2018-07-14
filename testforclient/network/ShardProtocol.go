@@ -80,6 +80,10 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	}
 	//fmt.Println("wait for ready")
 	//TODO modify int(gVar.ShardSize)/2
+
+	close(Reputation.RepPowRxCh)
+	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
+
 	for readyMember < int(gVar.ShardSize) {
 		select {
 		case readyMessage = <-readyMemberCh:

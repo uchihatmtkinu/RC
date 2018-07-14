@@ -80,20 +80,19 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			commits[(*ms)[commitMessage.ID].InShardId] = commitMessage.Commit
 			setMaskBit((*ms)[commitMessage.ID].InShardId, cosi.Enabled, &cosimask)
 			signCount++
-			//fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
+			fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+				fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 				if maskBit(it.InShardId, &cosimask) == cosi.Disabled {
-					fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 				}
 			}
 			cnt++
 			if cnt == 10 {
 				timeoutflag = false
-				fmt.Println("Cosi sync time out")
 			}
 		case <-time.After(timeoutResponse):
 			timeoutflag = false
@@ -185,7 +184,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	//cosiAnnounceCh = make(chan []byte)
 	cosiChallengeCh = make(chan challengeInfo)
 	cosiSigCh = make(chan cosi.SignaturePart)
-
+	CoSiFlag = true
 	fmt.Println("Member CoSi")
 	//generate pubKeys
 	pubKeys = make([]ed25519.PublicKey, shard.NumMems)
@@ -200,7 +199,6 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 
 	leaderSBMessage := <-cosiAnnounceCh
-	CoSiFlag = true
 	//close(cosiAnnounceCh)
 	fmt.Println("Leader SBM:", base58.Encode(leaderSBMessage))
 	fmt.Println("Myself SBM:", base58.Encode(sbMessage))
