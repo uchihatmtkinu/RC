@@ -124,7 +124,6 @@ func TxLastBlock() {
 	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
-	close(StopGetTx)
 	go SendFinalBlock(&shard.GlobalGroupMems)
 }
 

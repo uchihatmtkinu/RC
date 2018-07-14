@@ -169,7 +169,7 @@ func HandleRequestSync(request []byte) {
 	}
 	if payload.Epoch == Reputation.CurrentSyncBlock.Epoch {
 		//TODO test
-		tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.ShardNum])}
+		tmp := syncTBInfo{MyGlobalID, *(CacheDbRef.FB[CacheDbRef.HistoryShard[payload.Epoch]])}
 		sendTxMessage(addr, "syncTB", tmp.Encode())
 		SendSyncMessage(addr, "syncSB", syncSBInfo{MyGlobalID, *Reputation.CurrentSyncBlock.Block})
 		return

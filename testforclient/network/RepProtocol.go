@@ -88,13 +88,13 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	for halfflag {
 		item = <-Reputation.RepPowRxCh
 		Reputation.CurrentRepBlock.Mu.RLock()
-		if item.Round == Reputation.CurrentRepBlock.Round{
+		if item.Round == Reputation.CurrentRepBlock.Round {
 			Reputation.NonceMap[item.Nonce]++
-			fmt.Println("Nonce:",item.Nonce," value:",Reputation.NonceMap[item.Nonce])
-			if Reputation.NonceMap[item.Nonce] >= int(gVar.ShardSize/2){
-					Reputation.IDToNonce[shard.GlobalGroupMems[item.ID].InShardId] = item.Nonce
-					correctNonce = item.Nonce
-					halfflag = false
+			//fmt.Println("Nonce:",item.Nonce," value:",Reputation.NonceMap[item.Nonce])
+			if Reputation.NonceMap[item.Nonce] >= int(gVar.ShardSize/2) {
+				Reputation.IDToNonce[shard.GlobalGroupMems[item.ID].InShardId] = item.Nonce
+				correctNonce = item.Nonce
+				halfflag = false
 			}
 		}
 		Reputation.CurrentRepBlock.Mu.RUnlock()
@@ -116,7 +116,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 				{
 					if receiveRepBlock.Nonce == correctNonce {
 						Reputation.MyRepBlockChain.AddRepBlockFromOthers(receiveRepBlock)
-						for _, txs:= range receiveRepBlock.RepTransactions{
+						for _, txs := range receiveRepBlock.RepTransactions {
 							(*ms)[txs.GlobalID].Rep = txs.Rep
 						}
 						receiveflag = false

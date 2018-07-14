@@ -82,6 +82,7 @@ type DbRef struct {
 	Leader        uint32
 	UnderSharding bool
 	StartTxDone   bool
+	HistoryShard  []uint32
 }
 
 //TLGroup is the group of TL
@@ -137,6 +138,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	}
 	d.TDSCnt = make([]int, gVar.ShardCnt)
 	d.TDSNotReady = int(gVar.ShardCnt)
+	d.HistoryShard = nil
 	//d.TL = nil
 	//d.TLCache = nil
 	//d.TLS = new([gVar.ShardCnt]basic.TxList)

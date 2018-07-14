@@ -45,6 +45,7 @@ func ShardProcess() {
 	StopGetTx = make(chan bool, 1)
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
+	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
 	TxBatchCache = make(chan []byte, 1000)
 	if shard.MyMenShard.Role == 1 {
