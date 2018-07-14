@@ -50,9 +50,9 @@ func Sign(message []byte, pubKeys []ed25519.PublicKey,
 	// Each cosigner first needs to produce a per-message commit.
 	s1 := [64]byte{1}
 	commit1, secret1, _ := cosi.Commit(bytes.NewReader(s1[:]))
-	s2 := [64]byte{2}
-	commit2, secret2, _ := cosi.Commit(bytes.NewReader(s2[:]))
-	commits := []cosi.Commitment{commit1, commit2}
+	//s2 := [64]byte{2}
+	//commit2, secret2, _ := cosi.Commit(bytes.NewReader(s2[:]))
+	commits := []cosi.Commitment{commit1}
 
 	// The leader then combines these into an aggregate commit.
 	cosigners := cosi.NewCosigners(pubKeys, cosimask)
@@ -62,8 +62,8 @@ func Sign(message []byte, pubKeys []ed25519.PublicKey,
 
 	// The cosigners now produce their parts of the collective signature.
 	sigPart1 := cosi.Cosign(priKey1, secret1, message, aggregatePublicKey, aggregateCommit)
-	sigPart2 := cosi.Cosign(priKey2, secret2, message, aggregatePublicKey, aggregateCommit)
-	fmt.Println("no use", sigPart2)
+	//sigPart2 := cosi.Cosign(priKey2, secret2, message, aggregatePublicKey, aggregateCommit)
+	//fmt.Println("no use", sigPart2)
 	sigParts := []cosi.SignaturePart{sigPart1}
 
 	// Finally, the leader combines the two signature parts

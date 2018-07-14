@@ -48,6 +48,8 @@ func ShardProcess() {
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
 	TxBatchCache = make(chan []byte, 1000)
+	close(Reputation.RepPowRxCh)
+	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	if shard.MyMenShard.Role == 1 {
 		MinerReadyProcess()
 	} else {
@@ -82,8 +84,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	//fmt.Println("wait for ready")
 	//TODO modify int(gVar.ShardSize)/2
 
-	close(Reputation.RepPowRxCh)
-	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
+
 
 	for readyMember < int(gVar.ShardSize) {
 		select {
