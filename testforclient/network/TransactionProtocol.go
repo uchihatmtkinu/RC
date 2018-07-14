@@ -361,6 +361,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	CacheDbRef.ProcessTDS(tmp)
+	fmt.Println(time.Now(), "TDS from", tmp.ID, "Done")
 	CacheDbRef.TDSCnt[tmp.ShardIndex]++
 	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {
 		CacheDbRef.TDSNotReady--
