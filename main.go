@@ -77,7 +77,7 @@ func main() {
 			}
 			j := rand.Int() % numCnt
 			k := uint32(rand.Int()%5 + 1)
-			tmptx[l] = *rccache.GenerateTx(i, j, k, int64(rand.Int()%3000+3000*int(network.CacheDbRef.ID)), network.CacheDbRef.ID)
+			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(i*10000))
 			//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 		}
 		gVar.T1 = time.Now()
