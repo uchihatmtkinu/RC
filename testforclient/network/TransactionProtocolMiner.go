@@ -108,9 +108,11 @@ func HandleTxList(data []byte) error {
 		data2[i].ShardID = CacheDbRef.ShardNum
 		data2[i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
+			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", data2[i].Encode())
 			if xx == int(i+1) {
 				yy = int(i)
+				fmt.Println("Send TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[i][0], "Shard", i)
 				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", data2[i].Encode())
 			}
 		}
@@ -136,8 +138,10 @@ func HandleTxList(data []byte) error {
 			for i := 0; i < len(mask); i++ {
 				if !mask[i] {
 					if i == int(CacheDbRef.ShardNum) {
+						fmt.Println("Resend TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[yy][0], "Shard", yy)
 						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", data2[i].Encode())
 					} else {
+						fmt.Println("Reend TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
 						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", data2[i].Encode())
 					}
 				}
@@ -191,7 +195,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 		case <-s.Channel:
 			cnt--
 		case <-time.After(timeoutTL):
-			fmt.Println("TDS:", base58.Encode(tmp.HashID[:]), "time out")
+			fmt.Println("TDS of", tmp.ID, "Round", tmp.Round, "time out")
 			timeoutFlag = false
 		}
 	}
