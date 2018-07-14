@@ -50,7 +50,7 @@ func main() {
 	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
-	totalepoch := 1
+	totalepoch := 3
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
 	fmt.Println("test begin")
 	go network.StartServer(ID)
@@ -104,7 +104,7 @@ func main() {
 
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)
-
+		fmt.Println("Epoch", k, "finished")
 	}
 
 	fmt.Println(network.CacheDbRef.ID, ": All finished")

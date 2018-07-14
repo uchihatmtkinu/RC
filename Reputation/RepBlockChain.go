@@ -79,7 +79,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, I
 	}
 }
 
-func (bc*RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock){
+func (bc *RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock) {
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
 	CurrentRepBlock.Block = repBlock
@@ -104,6 +104,7 @@ func (bc*RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock){
 		log.Panic(err)
 	}
 }
+
 // add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
