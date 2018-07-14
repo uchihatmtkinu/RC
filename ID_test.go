@@ -11,7 +11,11 @@ import (
 
 func TestID(t *testing.T) {
 	fileIP, err := os.Open("IpAddr.txt")
+<<<<<<< HEAD
 	ID := 185
+=======
+	ID := 201
+>>>>>>> 6b23e472c30382f8d8540afe668eabc8ee8d2f33
 
 	defer fileIP.Close()
 	if err != nil {

@@ -55,3 +55,5 @@ var CurrentCoSignature	cosi.SignaturePart
 var NonceMap map[int]int
 //IDToNonce InShardID to nonce
 var IDToNonce []int
+//StartCalPoWAnnounce start flag
+var StartCalPoWAnnounce chan bool
