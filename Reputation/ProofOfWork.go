@@ -56,7 +56,7 @@ func (pow *ProofOfWork) Run() (int, [32]byte, bool) {
 		case candidateRepBlock = <-RepPowRxCh:
 			{
 				if candidateRepBlock.Round > CurrentRepBlock.Round {
-					//NonceMap[candidateRepBlock.Nonce]++//Change
+					NonceMap[candidateRepBlock.Nonce]++//Change
 					IDToNonce[shard.GlobalGroupMems[candidateRepBlock.ID].InShardId] = candidateRepBlock.Nonce
 					if pow.Validate(candidateRepBlock.Nonce) {
 						nonce = candidateRepBlock.Nonce
