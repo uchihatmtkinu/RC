@@ -124,12 +124,10 @@ func RepProcess(ms *[]shard.MemShard) bool {
 				}
 			case <-time.After(timeoutSync):
 				{
-
 					askrep = (askrep + 1) % int(gVar.ShardSize)
 					for Reputation.IDToNonce[askrep] != correctNonce {
 						askrep = (askrep + 1) % int(gVar.ShardSize)
 					}
-					fmt.Println("Request RB from ID:", shard.ShardToGlobal[shard.MyMenShard.Shard][askrep])
 					SendRepPowMessage((*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][askrep]].Address, "RequestRep", requetRepInfo{MyGlobalID, Reputation.CurrentRepBlock.Round})
 				}
 			}
