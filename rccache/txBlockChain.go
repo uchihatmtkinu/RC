@@ -541,7 +541,7 @@ func (a *TxBlockChain) MakeFinalTx(shard uint32) *[]basic.Transaction {
 			var tmpOut basic.OutType
 			tmpOut.Value = v
 			tmpOut.Address = k
-			tmpTx.New(1, rand.Int63())
+			tmpTx.New(1, rand.Int63(), 0)
 			tmpTx.AddIn(tmpIn)
 			tmpTx.AddOut(tmpOut)
 			tmpTx.Hash = tmpTx.HashTx()
