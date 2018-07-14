@@ -66,7 +66,7 @@ func main() {
 		//test shard
 		fmt.Println("Current time: ", time.Now())
 		network.ShardProcess()
-		rand.Seed(int64(network.CacheDbRef.ID) * time.Now().Unix())
+		rand.Seed(int64(network.CacheDbRef.ID*3000) + time.Now().Unix()%3000)
 		for l := 0; l < len(tmptx); l++ {
 			i := rand.Int() % numCnt
 			for true {
@@ -77,7 +77,7 @@ func main() {
 			}
 			j := rand.Int() % numCnt
 			k := uint32(rand.Int()%5 + 1)
-			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63())
+			tmptx[l] = *rccache.GenerateTx(i, j, k, int64(rand.Int()%3000+3000*int(network.CacheDbRef.ID)), network.CacheDbRef.ID)
 			//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 		}
 		gVar.T1 = time.Now()
