@@ -36,7 +36,7 @@ func HandleTx() {
 				CacheDbRef.Mu.Lock()
 				tmpCnt := 0
 				bad := 0
-				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				//fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				for j := 0; j < len(TBCache); j++ {
 					tmpCnt += int(TBCache[j].TxCnt)
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
