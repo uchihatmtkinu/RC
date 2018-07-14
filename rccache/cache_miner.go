@@ -110,8 +110,8 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 		tmpHash[i] = byteSlice(a.Round)
 		tmpDecision[i].Set(d.ID, i, 1)
 	}
-	fmt.Println(d.ID, "Process TList:")
-	a.Print()
+	//fmt.Println(d.ID, "Process TList:")
+	//a.Print()
 	d.TLSCacheMiner[a.HashID] = a
 	*tmpBatch = make([]basic.TransactionBatch, gVar.ShardCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {

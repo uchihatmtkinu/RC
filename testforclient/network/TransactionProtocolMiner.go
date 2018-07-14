@@ -36,8 +36,9 @@ func HandleTx() {
 				CacheDbRef.Mu.Lock()
 				tmpCnt := 0
 				bad := 0
-				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				//fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				for j := 0; j < len(TBCache); j++ {
+					tmpCnt += int(TBCache[j].TxCnt)
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
 						err := CacheDbRef.GetTx(&TBCache[j].TxArray[i])
 						if err != nil {
@@ -46,7 +47,7 @@ func HandleTx() {
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
+				//fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}
@@ -72,9 +73,9 @@ func HandleTxList(data []byte) error {
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round, base58.Encode(tmp.HashID[:]))
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
+	//fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.PreTxList(tmp, &s)
-	fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
+	//fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
 	CacheDbRef.Mu.Unlock()
 	if s.Stat != 0 {
 		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting")
@@ -90,7 +91,7 @@ func HandleTxList(data []byte) error {
 			timeoutFlag = false
 		}
 	}
-	fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
+	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
 	err = CacheDbRef.ProcessTL(tmp, tmpBatch)
@@ -111,11 +112,11 @@ func HandleTxList(data []byte) error {
 		data2[i].ShardID = CacheDbRef.ShardNum
 		data2[i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
-			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
+			//fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", data2[i].Encode())
 			if xx == int(i+1) {
 				yy = int(i)
-				fmt.Println("Send TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[i][0], "Shard", i)
+				//fmt.Println("Send TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[i][0], "Shard", i)
 				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", data2[i].Encode())
 			}
 		}
@@ -234,7 +235,6 @@ func HandleTxBlock(data []byte) error {
 	copy(data1, data)
 	tmp := new(basic.TxBlock)
 	err := tmp.Decode(&data1, 0)
-	fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]))
 	if err != nil {
 		return err
 	}
@@ -255,9 +255,9 @@ func HandleTxBlock(data []byte) error {
 		}
 	}
 	if cnt == 0 {
-		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess done")
+		//fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess done")
 	} else {
-		fmt.Println("Block", base58.Encode(tmp.HashID[:]), "preprocess timeout")
+		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
 	flag := true
 	for flag {
