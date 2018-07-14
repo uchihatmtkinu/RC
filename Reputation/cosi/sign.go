@@ -206,6 +206,7 @@ func (cos *Cosigners) AggregateSignature(aggregateR Commitment, sigParts []Signa
 	copy(signature[:], aggregateR)
 	copy(signature[32:64], aggS[:])
 	copy(signature[64:], mask)
+
 	return signature
 }
 
