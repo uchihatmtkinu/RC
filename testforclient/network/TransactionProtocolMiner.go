@@ -286,7 +286,6 @@ func HandleTxBlock(data []byte) error {
 		CacheDbRef.StartTxDone = false
 		StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
-		close(StopGetTx)
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
 	CacheDbRef.Mu.Unlock()
@@ -297,6 +296,7 @@ func HandleTxBlock(data []byte) error {
 //Encode is encode
 func (a *TxBatchInfo) Encode() []byte {
 	var tmp []byte
+	basic.Encode(&tmp, a.ID)
 	basic.Encode(&tmp, a.ShardID)
 	basic.Encode(&tmp, a.Round)
 	basic.Encode(&tmp, &a.Data)
