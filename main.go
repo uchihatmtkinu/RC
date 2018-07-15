@@ -52,7 +52,8 @@ func main() {
 	ID := 0
 	totalepoch := 5
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
-	fmt.Println("test begin")
+	timestart := time.Now()
+	fmt.Println(time.Now(), "test begin")
 	go network.StartServer(ID)
 	<-network.IntialReadyCh
 	close(network.IntialReadyCh)
@@ -104,9 +105,9 @@ func main() {
 
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)
-		fmt.Println("Epoch", k, "finished")
+		fmt.Println(time.Now(), "Epoch", k, "finished")
 	}
-
+	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest/gVar.NumTxListPerEpoch)/time.Since(timestart).Seconds())
 	fmt.Println(network.CacheDbRef.ID, ": All finished")
 
 	time.Sleep(20 * time.Second)
