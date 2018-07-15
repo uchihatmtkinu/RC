@@ -68,6 +68,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 		log.Panic(err)
 	}
 	defer conn.Close()
+	fmt.Println("Packet:", request)
 	requestChannel <- request
 
 }
@@ -76,7 +77,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 func StartServer(ID int) {
 
 	//ln, err := net.Listen(protocol, shard.MyMenShard.Address)
-	ln, err := net.Listen(protocol, "0.0.0.0:0")
+	ln, err := net.Listen(protocol, "*")
 	fmt.Println("My IP+Port: ", shard.MyMenShard.Address)
 	if err != nil {
 		log.Panic(err)
@@ -89,6 +90,7 @@ func StartServer(ID int) {
 	fmt.Println("intial ready")
 	for {
 		conn, err := ln.Accept()
+
 		if err != nil {
 			log.Panic(err)
 		}
