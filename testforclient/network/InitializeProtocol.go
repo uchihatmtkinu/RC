@@ -18,11 +18,11 @@ import (
 )
 
 //IntilizeProcess is init
-func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
+func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, initType int) {
 
 	// IP + port
-	var IPAddr string
-	fmt.Println("Initlization:", input, IpFile, initType)
+	var IPAddrPri, IPAddrPub string
+	fmt.Println("Initlization:", input, PriIPFile, initType)
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
 
@@ -36,14 +36,22 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fileIP, err := os.Open(IpFile)
-	defer fileIP.Close()
+	PubfileIP, err := os.Open(PubIPFile)
+	defer PubfileIP.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	scanner := bufio.NewScanner(fileIP)
-	scanner.Split(bufio.ScanWords)
+	PrifileIP, err := os.Open(PriIPFile)
+	defer PrifileIP.Close()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	scannerPub := bufio.NewScanner(PubfileIP)
+	scannerPub.Split(bufio.ScanWords)
+	scannerPri := bufio.NewScanner(PrifileIP)
+	scannerPri.Split(bufio.ScanWords)
 
 	accWallet := make([]basic.AccCache, numCnt)
 	for i := 0; i < int(numCnt); i++ {
@@ -71,9 +79,11 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 	//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 	//TODO need modify
 	for i := 0; i < int(IPCnt); i++ {
-		scanner.Scan()
-		IPAddr = scanner.Text()
-		if IPAddr == input {
+		scannerPri.Scan()
+		scannerPub.Scan()
+		IPAddrPri = scannerPri.Text()
+		IPAddrPub = scannerPub.Text()
+		if IPAddrPri == input {
 
 			MyGlobalID = i
 			*ID = i
@@ -82,12 +92,12 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 				*ID += IPCnt
 			}
 		}
-		IPAddr1 := IPAddr + ":" + strconv.Itoa(3000+i)
+		IPAddr1 := IPAddrPub + ":" + strconv.Itoa(3000+i)
 		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//shard.GlobalGroupMems[i].AddRep(int64(i))
 		if initType != 0 {
-			IPAddr2 := IPAddr + ":" + strconv.Itoa(3000+i+IPCnt)
+			IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i+IPCnt)
 			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr2)
 			shard.GlobalGroupMems[i+IPCnt].NewTotalRep()
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))

@@ -24,7 +24,7 @@ func main() {
 	}*/
 	fmt.Println("Get the local ip from", os.Args[1])
 	file, err := os.Open(os.Args[1])
-	initType, initErr := strconv.Atoi(os.Args[3])
+	initType, initErr := strconv.Atoi(os.Args[4])
 	if initErr != nil {
 		log.Panic(initErr)
 		os.Exit(1)
@@ -51,7 +51,7 @@ func main() {
 
 	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
+	network.IntilizeProcess(string(buffer), &ID, os.Args[2], os.Args[3], initType)
 	timestart := time.Now()
 	fmt.Println(time.Now(), "test begin")
 	go network.StartServer(ID)
