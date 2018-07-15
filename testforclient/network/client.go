@@ -76,6 +76,7 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 func StartServer(ID int) {
 
 	//ln, err := net.Listen(protocol, shard.MyMenShard.Address)
+	fmt.Println("bindAddress")
 	ln, err := net.Listen(protocol, bindAddress)
 	fmt.Println("My IP+Port: ", shard.MyMenShard.Address)
 	if err != nil {
