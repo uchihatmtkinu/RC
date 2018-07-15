@@ -209,4 +209,4 @@ var StopGetTx chan bool
 
 var txMCh [gVar.NumTxListPerEpoch]chan txDecRev
 
-var PublicAddress string
+var bindAddress string

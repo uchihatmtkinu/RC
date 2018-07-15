@@ -75,8 +75,8 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 //StartServer start a server
 func StartServer(ID int) {
 
-	ln, err := net.Listen(protocol, shard.MyMenShard.Address)
-	//ln, err := net.Listen(protocol, ":3001")
+	//ln, err := net.Listen(protocol, shard.MyMenShard.Address)
+	ln, err := net.Listen(protocol, bindAddress)
 	fmt.Println("My IP+Port: ", shard.MyMenShard.Address)
 	if err != nil {
 		log.Panic(err)

@@ -102,7 +102,8 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 				MyGlobalID += IPCnt
 				*ID += IPCnt
 			}
-			IPtmp := ":" + strconv.Itoa(3000+MyGlobalID)
+			IPtmp := IPAddrPri + ":" + strconv.Itoa(3000+MyGlobalID)
+			bindAddress = ":" + strconv.Itoa(3000+MyGlobalID)
 			shard.GlobalGroupMems[MyGlobalID].NewMemShard(&acc[MyGlobalID], IPtmp)
 		}
 		//map ip+port -> global ID
