@@ -103,13 +103,13 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				fmt.Println("FinalTxBlock verify failed: ", err)
 			}
 		case <-syncNotReadyCh[k]:
-			fmt.Println("sleep for not ready")
+			fmt.Println(time.Now(), "sleep for not ready")
 			time.Sleep(timeSyncNotReadySleep)
 			go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 		case <-time.After(timeoutSync):
 			{
 				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
-				fmt.Println("wait for shard", k, " from user", shard.ShardToGlobal[k][aski[k]])
+				fmt.Println(time.Now(), "wait for shard", k, " from user", shard.ShardToGlobal[k][aski[k]])
 				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 			}
 		}
