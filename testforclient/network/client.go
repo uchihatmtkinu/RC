@@ -68,7 +68,6 @@ func handleConnection(conn net.Conn, requestChannel chan []byte) {
 		log.Panic(err)
 	}
 	defer conn.Close()
-	fmt.Println("packet", request)
 	requestChannel <- request
 
 }
