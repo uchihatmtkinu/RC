@@ -109,6 +109,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
+	fmt.Println("Check")
 	for i := 0; i < int(numCnt); i++ {
 		fmt.Println(shard.GlobalGroupMems[i].Address)
 	}
