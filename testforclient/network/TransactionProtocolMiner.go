@@ -285,7 +285,7 @@ func HandleTxBlock(data []byte) error {
 		CacheDbRef.UnderSharding = true
 		CacheDbRef.StartTxDone = false
 		StopGetTx <- true
-		fmt.Println(CacheDbRef.ID, "waits for FB")
+		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
 	CacheDbRef.Mu.Unlock()

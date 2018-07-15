@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
@@ -27,7 +28,7 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 	copy(tmp, *CacheDbRef.TBCache)
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
 	startRep <- repInfo{Last: false, Hash: tmp}
-	fmt.Println(CacheDbRef.ID, "start to make last repBlock")
+	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock")
 }
 
 //SendStartBlock is to send start block
@@ -66,7 +67,7 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	copy(tmp, *CacheDbRef.TBCache)
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
 	startRep <- repInfo{Last: false, Hash: tmp}
-	fmt.Println(CacheDbRef.ID, "start to make last repBlock")
+	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock")
 	close(StopGetTx)
 	return nil
 }

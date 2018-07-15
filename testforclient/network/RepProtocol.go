@@ -83,14 +83,14 @@ func RepProcess(ms *[]shard.MemShard) bool {
 			halfflag = false
 		}
 	}
-	fmt.Println(Reputation.NonceMap)
+	fmt.Println(Reputation.NonceMap, halfflag)
 	<-Reputation.StartCalPoWAnnounce
 	for halfflag {
 		item = <-Reputation.RepPowRxCh
 		Reputation.CurrentRepBlock.Mu.RLock()
 		if item.Round == Reputation.CurrentRepBlock.Round {
 			Reputation.NonceMap[item.Nonce]++
-			//fmt.Println("Nonce:",item.Nonce," value:",Reputation.NonceMap[item.Nonce])
+			fmt.Println(time.Now(), "Nonce:", item.Nonce, " value:", Reputation.NonceMap[item.Nonce])
 			if Reputation.NonceMap[item.Nonce] >= int(gVar.ShardSize/2) {
 				Reputation.IDToNonce[shard.GlobalGroupMems[item.ID].InShardId] = item.Nonce
 				correctNonce = item.Nonce
@@ -162,7 +162,7 @@ func HandleRepPowRx(request []byte) {
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Round >= Reputation.CurrentRepBlock.Round {
 		Reputation.RepPowRxCh <- Reputation.RepPowInfo{payload.ID, payload.Round, payload.Nonce, payload.Hash}
-		fmt.Println("Received PoW from others")
+		fmt.Println(time.Now(), "Received PoW from others", payload.ID, payload.Round, payload.Nonce)
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
 
