@@ -47,6 +47,7 @@ func ShardProcess() {
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
 	TxBatchCache = make(chan []byte, 1000)
+	StopGetTx = make(chan bool, 1)
 	close(Reputation.RepPowRxCh)
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	if shard.MyMenShard.Role == 1 {

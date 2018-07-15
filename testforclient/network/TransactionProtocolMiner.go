@@ -273,7 +273,7 @@ func HandleTxBlock(data []byte) error {
 	}
 
 	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID)
+	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
@@ -281,14 +281,16 @@ func HandleTxBlock(data []byte) error {
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
 		startRep <- repInfo{Last: true, Hash: tmp}
 	}
-	if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
+	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
 		CacheDbRef.UnderSharding = true
 		CacheDbRef.StartTxDone = false
 		StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
+		close(StopGetTx)
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
 	CacheDbRef.Mu.Unlock()
+
 	return nil
 }
 

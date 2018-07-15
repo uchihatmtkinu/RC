@@ -109,7 +109,7 @@ func TxLastBlock() {
 	<-StartLastTxBlock
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateTxBlock()
-	fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
+	fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]), "Height", CacheDbRef.TxB.Height)
 	data3 := new([]byte)
 	CacheDbRef.TxB.Encode(data3, 0)
 	go SendTxBlock(data3)
@@ -124,6 +124,7 @@ func TxLastBlock() {
 	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
+	close(StopGetTx)
 	go SendFinalBlock(&shard.GlobalGroupMems)
 }
 
