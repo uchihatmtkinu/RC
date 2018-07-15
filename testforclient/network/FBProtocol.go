@@ -23,7 +23,6 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 		}
 	}
 	CacheDbRef.Mu.Unlock()
-	close(StopGetTx)
 	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
 	copy(tmp, *CacheDbRef.TBCache)
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
@@ -68,7 +67,6 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
 	startRep <- repInfo{Last: false, Hash: tmp}
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock")
-	close(StopGetTx)
 	return nil
 }
 

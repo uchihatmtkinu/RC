@@ -42,7 +42,6 @@ func ShardProcess() {
 	CacheDbRef.DB.ClearTx()
 	CacheDbRef.TDSCnt = make([]int, gVar.ShardCnt)
 	CacheDbRef.TDSNotReady = int(gVar.ShardCnt)
-	StopGetTx = make(chan bool, 1)
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
@@ -83,8 +82,6 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	}
 	//fmt.Println("wait for ready")
 	//TODO modify int(gVar.ShardSize)/2
-
-
 
 	for readyMember < int(gVar.ShardSize) {
 		select {

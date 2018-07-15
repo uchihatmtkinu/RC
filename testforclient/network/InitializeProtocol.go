@@ -140,4 +140,5 @@ func IntilizeProcess(input string, ID *int, IpFile string, initType int) {
 		TLChan[i] = make(chan uint32, gVar.ShardSize)
 		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
 	}
+	StopGetTx = make(chan bool, 1)
 }
