@@ -121,7 +121,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			}
 		case <-time.After(timeoutSync):
 			for i := 1; i < int(gVar.ShardCnt); i++ {
-				if maskBit(i, &leadermask) == cosi.Disabled && i != int(CacheDbRef.ShardNum) {
+				if maskBit(i, &leadermask) == cosi.Disabled {
 					fmt.Println(time.Now(), "Send ReadyLeader to Shard", i, "ID", shard.ShardToGlobal[i][0])
 					it = &(*ms)[shard.ShardToGlobal[i][0]]
 					SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
