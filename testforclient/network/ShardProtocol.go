@@ -84,8 +84,9 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	}
 	//fmt.Println("wait for ready")
 	//TODO modify int(gVar.ShardSize)/2
-
-	for readyMember < int(gVar.ShardSize) {
+	cnt := 0
+	timeoutflag := true
+	for readyMember < int(gVar.ShardSize) && timeoutflag{
 		select {
 		case readyMessage = <-readyMemberCh:
 			if readyMessage.Epoch == CurrentEpoch {
@@ -93,12 +94,17 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 				setMaskBit((*ms)[readyMessage.ID].InShardId, cosi.Enabled, &membermask)
 				//fmt.Println("ReadyCount: ", readyCount)
 			}
-		case <-time.After(timeoutSync):
+		case <-time.After(timeoutSync*2):
 			//fmt.Println("Wait shard signal time out")
 			for i := 1; i < int(gVar.ShardSize); i++ {
 				if maskBit(i, &membermask) == cosi.Disabled {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 					SendShardReadyMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
+				}
+				cnt++
+				if cnt > 5 && readyMember >= int(gVar.ShardSize*2/3){
+					timeoutflag = false
+					fmt.Println("Timeout! Ready Member: ", readyMember,"/", gVar.ShardSize)
 				}
 			}
 		}
@@ -111,7 +117,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 		}
 	}
 
-	for readyLeader < int(gVar.ShardCnt) {
+	for readyLeader < int(gVar.ShardCnt) && timeoutflag{
 		select {
 		case readyMessage = <-readyLeaderCh:
 			if readyMessage.Epoch == CurrentEpoch {
@@ -120,13 +126,14 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 				fmt.Println(time.Now(), "ReadyLeaderCount: ", readyLeader)
 			}
 		case <-time.After(timeoutSync):
-			for i := 1; i < int(gVar.ShardCnt); i++ {
-				if maskBit(i, &leadermask) == cosi.Disabled {
+			for i := 0; i < int(gVar.ShardCnt); i++ {
+				if maskBit(i, &leadermask) == cosi.Disabled && i!=shard.MyMenShard.Shard {
 					fmt.Println(time.Now(), "Send ReadyLeader to Shard", i, "ID", shard.ShardToGlobal[i][0])
 					it = &(*ms)[shard.ShardToGlobal[i][0]]
 					SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
 				}
 			}
+
 		}
 
 	}
