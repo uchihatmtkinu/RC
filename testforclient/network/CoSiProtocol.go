@@ -85,8 +85,8 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-				fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 				if maskBit(it.InShardId, &cosimask) == cosi.Disabled {
+					fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 				}
 			}
