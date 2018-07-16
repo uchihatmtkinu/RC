@@ -302,14 +302,14 @@ func HandleTxDecLeader(data []byte) error {
 	err = CacheDbRef.PreTxDecision(tmp, tmp.HashID)
 	//fmt.Println("Preprocess TxDec done")
 	if err != nil {
-		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
+		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err, "from", tmp.ID)
 	}
 	//tmp.Print()
 	//fmt.Println(time.Now(), CacheDbRef.ID, "(Leader) get TxDec From", tmp.ID, "Hash: ", base58.Encode(tmp.HashID[:]))
 	var x uint32
 	err = CacheDbRef.UpdateTXCache(tmp, &x)
 	if err != nil {
-		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err)
+		fmt.Println(CacheDbRef.ID, "has a error(TxDec)", err, "from", tmp.ID)
 	}
 	CacheDbRef.Mu.Unlock()
 	//fmt.Println("TxDecRound:", x)
