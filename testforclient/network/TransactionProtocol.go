@@ -65,7 +65,7 @@ func TxListProcess() {
 			cnt++
 			//fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):
-			fmt.Println("TxDecSet is not full, someone doesn't send in time")
+			fmt.Println("TxDecSet is not full", cnt, "in total")
 			timeoutflag = false
 		}
 	}
