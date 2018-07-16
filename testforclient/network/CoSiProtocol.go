@@ -212,9 +212,20 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	SendCosiMessage(LeaderAddr, "cosiCommit", commitInfo{MyGlobalID, myCommit})
 	fmt.Println("sent cosi commit")
 	//receive challenge
-	currentChaMessage := <-cosiChallengeCh
+	//currentChaMessage := <-cosiChallengeCh
+	var currentChaMessage challengeInfo
+	syncFlag := true
+	for syncFlag {
+		select {
+		case <-cosiAnnounceCh:
+			fmt.Println("Resend cosi commit")
+			SendCosiMessage(LeaderAddr, "cosiCommit", commitInfo{MyGlobalID, myCommit})
+		case currentChaMessage = <-cosiChallengeCh:
+			fmt.Println("received cosi challenge from leader")
+			syncFlag = false
+		}
+	}
 
-	fmt.Println("received cosi challenge from leader")
 	//send signature
 
 	sigPart := cosi.Cosign(shard.MyMenShard.RealAccount.CosiPri, mySecret, sbMessage, currentChaMessage.AggregatePublicKey, currentChaMessage.AggregateCommit)

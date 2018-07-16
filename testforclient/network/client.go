@@ -118,6 +118,8 @@ func StartServer(ID int) {
 			go HandleTxMM(request)
 		case "TxMMRec":
 			go HandleTxMMRec(request)
+		case "RequestTxMM":
+			go HandleRequestTxMM(request)
 		case "TxList":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxList(request)
@@ -147,6 +149,8 @@ func StartServer(ID int) {
 		//shard
 		case "shardReady":
 			go HandleShardReady(request)
+		case "requestleaderReady":
+			go HandleRequestShardLeaderReady(request)
 		case "readyAnnoun":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleShardReady(request)

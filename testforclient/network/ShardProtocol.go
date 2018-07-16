@@ -47,6 +47,9 @@ func ShardProcess() {
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
+	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
+		BatchCache[i] = nil
+	}
 	TxBatchCache = make(chan []byte, 1000)
 	StopGetTx = make(chan bool, 1)
 	close(Reputation.RepPowRxCh)
@@ -86,7 +89,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	//TODO modify int(gVar.ShardSize)/2
 	cnt := 0
 	timeoutflag := true
-	for readyMember < int(gVar.ShardSize) && timeoutflag{
+	for readyMember < int(gVar.ShardSize) && timeoutflag {
 		select {
 		case readyMessage = <-readyMemberCh:
 			if readyMessage.Epoch == CurrentEpoch {
@@ -94,7 +97,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 				setMaskBit((*ms)[readyMessage.ID].InShardId, cosi.Enabled, &membermask)
 				//fmt.Println("ReadyCount: ", readyCount)
 			}
-		case <-time.After(timeoutSync*2):
+		case <-time.After(timeoutSync * 2):
 			//fmt.Println("Wait shard signal time out")
 			for i := 1; i < int(gVar.ShardSize); i++ {
 				if maskBit(i, &membermask) == cosi.Disabled {
@@ -102,9 +105,9 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 					SendShardReadyMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 				}
 				cnt++
-				if cnt > 5 && readyMember >= int(gVar.ShardSize*2/3){
+				if cnt > 5 && readyMember >= int(gVar.ShardSize*2/3) {
 					timeoutflag = false
-					fmt.Println("Timeout! Ready Member: ", readyMember,"/", gVar.ShardSize)
+					fmt.Println("Timeout! Ready Member: ", readyMember, "/", gVar.ShardSize)
 				}
 			}
 		}
@@ -117,20 +120,22 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 		}
 	}
 
-	for readyLeader < int(gVar.ShardCnt) && timeoutflag{
+	for readyLeader < int(gVar.ShardCnt) && timeoutflag {
 		select {
 		case readyMessage = <-readyLeaderCh:
 			if readyMessage.Epoch == CurrentEpoch {
-				readyLeader++
-				setMaskBit(readyMessage.ID, cosi.Enabled, &leadermask)
-				fmt.Println(time.Now(), "ReadyLeaderCount: ", readyLeader)
+				if maskBit(readyMessage.ID, &leadermask) == cosi.Disabled {
+					readyLeader++
+					setMaskBit(readyMessage.ID, cosi.Enabled, &leadermask)
+					fmt.Println(time.Now(), "ReadyLeaderCount: ", readyLeader)
+				}
 			}
-		case <-time.After(timeoutSync*5):
+		case <-time.After(timeoutSync * 5):
 			for i := 0; i < int(gVar.ShardCnt); i++ {
-				if maskBit(i, &leadermask) == cosi.Disabled && i!=shard.MyMenShard.Shard {
+				if maskBit(i, &leadermask) == cosi.Disabled && i != shard.MyMenShard.Shard {
 					fmt.Println(time.Now(), "Send ReadyLeader to Shard", i, "ID", shard.ShardToGlobal[i][0])
 					it = &(*ms)[shard.ShardToGlobal[i][0]]
-					SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+					SendShardReadyMessage(it.Address, "requestleaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
 				}
 			}
 
@@ -138,6 +143,24 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 
 	}
 	fmt.Println("All shards are ready.")
+}
+
+//HandleRequestShardLeaderReady handle the request from other leader
+func HandleRequestShardLeaderReady(data []byte) {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	var buff bytes.Buffer
+	var payload readyInfo
+	buff.Write(data1)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	if CurrentEpoch == payload.Epoch {
+		it := shard.GlobalGroupMems[shard.ShardToGlobal[payload.ID][0]]
+		SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+	}
 }
 
 //MinerReadyProcess member use this

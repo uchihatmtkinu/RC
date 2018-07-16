@@ -20,7 +20,7 @@ const timeoutCosi = 10 * time.Second //10seconds for timeout
 const timeoutSync = 10 * time.Second
 const timeSyncNotReadySleep = 5 * time.Second
 const timeoutResponse = 120 * time.Second
-const timeoutTL = 30 * time.Second
+const timeoutTL = 15 * time.Second
 const timeoutTxDecRev = 5 * time.Second
 const timeoutResentTxmm = 2 * time.Second
 const timeoutGetTx = time.Microsecond * 100
@@ -210,3 +210,5 @@ var StopGetTx chan bool
 var txMCh [gVar.NumTxListPerEpoch]chan txDecRev
 
 var bindAddress string
+
+var BatchCache [gVar.NumTxListPerEpoch][]TxBatchInfo

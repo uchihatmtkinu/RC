@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/base58"
@@ -104,23 +105,24 @@ func HandleTxList(data []byte) error {
 	fmt.Println(time.Now(), "Start Sending TxBatch to other shards", base58.Encode(tmp.HashID[:]))
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDec", sent)
 	xx := shard.MyMenShard.InShardId
-	data2 := make([]TxBatchInfo, gVar.ShardCnt)
+	BatchCache[tmp.Round] = make([]TxBatchInfo, gVar.ShardCnt)
 	yy := -1
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		data2[i].Data = (*tmpBatch)[i].Encode()
-		data2[i].ID = CacheDbRef.ID
-		data2[i].ShardID = CacheDbRef.ShardNum
-		data2[i].Round = tmp.Round
+		BatchCache[tmp.Round][i].Data = (*tmpBatch)[i].Encode()
+		BatchCache[tmp.Round][i].ID = CacheDbRef.ID
+		BatchCache[tmp.Round][i].ShardID = CacheDbRef.ShardNum
+		BatchCache[tmp.Round][i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
 			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
-			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", data2[i].Encode())
+			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
 			if xx == int(i+1) {
 				yy = int(i)
 				fmt.Println("Send TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[i][0], "Shard", i)
-				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", data2[i].Encode())
+				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
 			}
 		}
 	}
+
 	mask := make([]bool, gVar.ShardCnt)
 	cnt = int(gVar.ShardCnt)
 	if yy == -1 {
@@ -143,30 +145,15 @@ func HandleTxList(data []byte) error {
 				if !mask[i] {
 					if i == int(CacheDbRef.ShardNum) {
 						fmt.Println("Resend TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[yy][0], "Shard", yy)
-						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", data2[i].Encode())
+						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
 					} else {
 						fmt.Println("Reend TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
-						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", data2[i].Encode())
+						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
 					}
 				}
 			}
 		}
 	}
-	return nil
-}
-
-//HandleTxMMRec is handle request
-func HandleTxMMRec(data []byte) error {
-	data1 := make([]byte, len(data))
-	copy(data1, data)
-	var tmp txDecRev
-	err := tmp.Decode(&data1)
-	if err != nil {
-		fmt.Println("TxMMRec decoding error")
-		return err
-	}
-	xx := tmp.Round
-	txMCh[xx] <- tmp
 	return nil
 }
 
@@ -191,16 +178,29 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
 	CacheDbRef.Mu.Unlock()
-
+	if s.Stat > 0 {
+		xx := shard.ShardToGlobal[tmp.ShardIndex][rand.Int()%int(gVar.ShardSize-1)+1]
+		yy := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
+		go sendTxMessage(shard.GlobalGroupMems[xx].Address, "RequestTxMM", yy.Encode())
+	}
 	timeoutFlag := true
 	cnt := s.Stat
+	cntTimeout := 0
 	for timeoutFlag && cnt > 0 {
 		select {
 		case <-s.Channel:
 			cnt--
-		case <-time.After(timeoutTL):
-			fmt.Println("TDS of", tmp.ID, "Round", tmp.Round, "time out")
-			timeoutFlag = false
+		case <-time.After(timeoutResentTxmm):
+			if cntTimeout == 8 {
+				fmt.Println("TDS of", tmp.ID, "Round", tmp.Round, "time out")
+				timeoutFlag = false
+			} else {
+				xx := shard.ShardToGlobal[tmp.ShardIndex][rand.Int()%int(gVar.ShardSize-1)+1]
+				yy := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
+				fmt.Println("Request TDS of", tmp.ID, "Round", tmp.Round, "from", xx)
+				go sendTxMessage(shard.GlobalGroupMems[xx].Address, "RequestTxMM", yy.Encode())
+				cntTimeout++
+			}
 		}
 	}
 
@@ -290,38 +290,5 @@ func HandleTxBlock(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 
-	return nil
-}
-
-//Encode is encode
-func (a *TxBatchInfo) Encode() []byte {
-	var tmp []byte
-	basic.Encode(&tmp, a.ID)
-	basic.Encode(&tmp, a.ShardID)
-	basic.Encode(&tmp, a.Round)
-	basic.Encode(&tmp, &a.Data)
-	return tmp
-}
-
-//Decode is decode
-func (a *TxBatchInfo) Decode(data *[]byte) error {
-	data1 := make([]byte, len(*data))
-	copy(data1, *data)
-	err := basic.Decode(&data1, &a.ID)
-	if err != nil {
-		return err
-	}
-	err = basic.Decode(&data1, &a.ShardID)
-	if err != nil {
-		return err
-	}
-	err = basic.Decode(&data1, &a.Round)
-	if err != nil {
-		return err
-	}
-	err = basic.Decode(&data1, &a.Data)
-	if err != nil {
-		return err
-	}
 	return nil
 }
