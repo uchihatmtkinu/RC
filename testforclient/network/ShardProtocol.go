@@ -15,6 +15,7 @@ import (
 
 var readymask []byte
 
+//ShardProcess is the process of sharding
 func ShardProcess() {
 	var beginShard shard.Instance
 
@@ -120,7 +121,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			}
 		case <-time.After(timeoutSync):
 			for i := 1; i < int(gVar.ShardCnt); i++ {
-				if maskBit(i, &leadermask) == cosi.Disabled {
+				if maskBit(i, &leadermask) == cosi.Disabled && i != int(CacheDbRef.ShardNum) {
 					fmt.Println(time.Now(), "Send ReadyLeader to Shard", i, "ID", shard.ShardToGlobal[i][0])
 					it = &(*ms)[shard.ShardToGlobal[i][0]]
 					SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
@@ -136,6 +137,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 func MinerReadyProcess() {
 	var readyMessage readyInfo
 	readyMessage = <-readyMemberCh
+	fmt.Println("Miner waits for leader shard ready")
 	for !(readyMessage.Epoch == CurrentEpoch && shard.ShardToGlobal[shard.MyMenShard.Shard][0] == readyMessage.ID) {
 		readyMessage = <-readyMemberCh
 	}
@@ -143,6 +145,7 @@ func MinerReadyProcess() {
 	fmt.Println("Sent Ready")
 }
 
+//SendShardReadyMessage is to send shardready message
 func SendShardReadyMessage(addr string, command string, message interface{}) {
 	payload := gobEncode(message)
 	request := append(commandToBytes(command), payload...)
