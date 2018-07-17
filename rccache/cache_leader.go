@@ -279,6 +279,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		//fmt.Println(tmp.InCheck, " ", tmp.InCheckSum)
 		if !ok {
 			tmp = new(CrossShardDec)
+
 			tmp.NewFromOther(b.ShardIndex, b.Result(i))
 			d.TXCache[tmpHash] = tmp
 		} else {

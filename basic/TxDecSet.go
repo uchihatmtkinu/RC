@@ -91,8 +91,8 @@ func (a *TxDecSet) Result(index uint32) bool {
 	if ans > (gVar.ShardSize-1)/2 {
 		return true
 	}
-
-	return false
+	return true
+	//return false
 }
 
 //Encode encode the TxDecSet into []byte

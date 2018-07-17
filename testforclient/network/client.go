@@ -151,7 +151,7 @@ func StartServer(ID int) {
 		//shard
 		case "shardReady":
 			go HandleShardReady(request)
-		case "requestleaderReady":
+		case "reqLeaReady":
 			go HandleRequestShardLeaderReady(request)
 		case "readyAnnoun":
 			//fmt.Printf("%d Received %s command\n", ID, command)

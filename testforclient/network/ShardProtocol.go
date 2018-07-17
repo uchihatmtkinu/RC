@@ -145,7 +145,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 				if maskBit(i, &leadermask) == cosi.Disabled && i != shard.MyMenShard.Shard {
 					fmt.Println(time.Now(), "Send ReadyLeader to Shard", i, "ID", shard.ShardToGlobal[i][0])
 					it = &(*ms)[shard.ShardToGlobal[i][0]]
-					SendShardReadyMessage(it.Address, "requestleaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
+					SendShardReadyMessage(it.Address, "reqLeaReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
 				}
 			}
 

@@ -204,7 +204,6 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			for j := uint32(0); j < b.MemCnt; j++ {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
-			tmpRes = true
 			tmp.Value = 1
 			if tmpRes == false {
 
