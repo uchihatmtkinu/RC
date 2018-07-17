@@ -264,9 +264,9 @@ func HandleTxLeader() {
 			copy(data1, data)
 			tmp := new(basic.TransactionBatch)
 			err := tmp.Decode(&data1)
-			fmt.Println("Get a batch")
+			//fmt.Println("Get a batch")
 			if err == nil {
-				fmt.Println("Batch is good")
+				//fmt.Println("Batch is good")
 				TBCache = append(TBCache, tmp)
 			}
 		case <-time.After(timeoutGetTx):
