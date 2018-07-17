@@ -20,8 +20,7 @@ func StartLocalServer() {
 	defer ln.Close()
 
 	requestChannel := make(chan []byte, bufferSize)
-	flag := true
-	IntialReadyCh <- flag
+
 	fmt.Println("intial ready")
 	for {
 		conn, err := ln.Accept()
