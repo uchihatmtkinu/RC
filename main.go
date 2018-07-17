@@ -50,7 +50,7 @@ func main() {
 	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
-	totalepoch := 1
+	totalepoch := 5
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], os.Args[3], initType)
 	timestart := time.Now()
 	fmt.Println(time.Now(), "test begin")
