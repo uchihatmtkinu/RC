@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte("Test"))
 	//arg, err := strconv.Atoi(os.Args[1])
 	/*if err != nil {
 		log.Panic(err)
