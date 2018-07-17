@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 
 	"encoding/gob"
 	"io/ioutil"
@@ -107,7 +108,8 @@ func StartServer(ID int) {
 		//fmt.Println(time.Now(), ID, "Received", command, "command")
 
 		switch command {
-
+		case "shutDown":
+			go HandleShutDown()
 		case "requestTxB":
 			go HandleRequestTxB(request)
 		case "Tx":
@@ -204,6 +206,11 @@ func StartServer(ID int) {
 			fmt.Println("Unknown command!")
 		}
 	}
+}
+
+//HandleShutDown is to shut down the system
+func HandleShutDown() {
+	os.Exit(0)
 }
 
 //encode
