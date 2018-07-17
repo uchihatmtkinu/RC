@@ -50,7 +50,7 @@ func main() {
 	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
-	totalepoch := 5
+	totalepoch := 2
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], os.Args[3], initType)
 
 	go network.StartServer(ID)
@@ -59,7 +59,7 @@ func main() {
 
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
 	numCnt := int(gVar.ShardCnt * gVar.ShardSize)
-	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest)
+	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest*gVar.NumTxListPerEpoch)
 	//cnt := 0
 	rand.Seed(int64(network.CacheDbRef.ID*3000) + time.Now().Unix()%3000)
 	for l := 0; l < len(tmptx); l++ {
@@ -109,7 +109,7 @@ func main() {
 		network.SyncProcess(&shard.GlobalGroupMems)
 		fmt.Println(time.Now(), "Epoch", k, "finished")
 	}
-	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest/gVar.NumTxListPerEpoch)/time.Since(timestart).Seconds())
+	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest)/time.Since(timestart).Seconds())
 	fmt.Println(network.CacheDbRef.ID, ": All finished")
 
 	time.Sleep(20 * time.Second)
