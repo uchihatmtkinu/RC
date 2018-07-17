@@ -115,10 +115,11 @@ func TxLastBlock() {
 	go SendTxBlock(data3)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
+		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp}
+		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	CacheDbRef.StartTxDone = false
 	StopGetTx <- true
@@ -134,10 +135,11 @@ func TxNormalBlock() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
+		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp}
+		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	data3 := new([]byte)
 	CacheDbRef.TxB.Encode(data3, 0)

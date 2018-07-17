@@ -42,7 +42,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan Reputation.RepPowInfo)
 	tmp := res.Hash
-	go Reputation.MyRepBlockChain.MineRepBlock(ms, &tmp, MyGlobalID)
+	go Reputation.MyRepBlockChain.MineRepBlock(res.Rep, &tmp, MyGlobalID)
 	for flag {
 		select {
 		case item = <-Reputation.RepPowTxCh:

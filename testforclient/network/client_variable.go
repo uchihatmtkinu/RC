@@ -119,6 +119,7 @@ var startSync chan bool
 type repInfo struct {
 	Last bool
 	Hash [][32]byte
+	Rep  *[]int64
 }
 
 //---------------------- sync process -------------

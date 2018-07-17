@@ -15,7 +15,7 @@ import (
 const dbFile = "RepBlockchain"
 const blocksBucket = "blocks"
 
-//reputation block chain
+//RepBlockchain reputation block chain
 type RepBlockchain struct {
 	Tip [32]byte
 	Db  *bolt.DB
@@ -28,7 +28,7 @@ type RepBlockchainIterator struct {
 }
 
 // MineRepBlock mines a new repblock with the provided transactions
-func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, ID int) {
+func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID int) {
 	var lastHash [32]byte
 	var fromOtherFlag bool
 
@@ -44,14 +44,14 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, I
 	fmt.Println("--------------------")
 	fmt.Println("Rep data, lastHash:", base58.Encode(lastHash[:]))
 	fmt.Print("Rep data:")
-	for i := 0; i < len(*ms); i++ {
-		fmt.Print((*ms)[i].Rep, ' ')
+	for i := 0; i < len(*repData); i++ {
+		fmt.Print((*repData)[i], ' ')
 	}
 	fmt.Println()
 	fmt.Println(shard.PreviousSyncBlockHash)
 	fmt.Println(*cache)
 	fmt.Println("--------------------")
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(ms, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
+	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(repData, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
 	if fromOtherFlag {
 		RepPowTxCh <- RepPowInfo{ID, CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
@@ -80,6 +80,7 @@ func (bc *RepBlockchain) MineRepBlock(ms *[]shard.MemShard, cache *[][32]byte, I
 	StartCalPoWAnnounce <- true
 }
 
+//AddRepBlockFromOthers adds a reputation block
 func (bc *RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock) {
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
@@ -106,7 +107,7 @@ func (bc *RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock) {
 	}
 }
 
-// add a new syncBlock on RepBlockChain
+//AddSyncBlock add a new syncBlock on RepBlockChain
 func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, CoSignature []byte) {
 	var lastRepBlockHash [32]byte
 	tmpCoSignature := make([]byte, len(CoSignature))
@@ -168,7 +169,7 @@ func (bc *RepBlockchain) AddSyncBlockFromOtherShards(syncBlock *SyncBlock, k int
 	}
 }
 
-// NewBlockchain creates a new Blockchain with genesis Block
+// NewRepBlockchain creates a new Blockchain with genesis Block
 func NewRepBlockchain(nodeAdd string) *RepBlockchain {
 	dbFile := dbFile + nodeAdd + ".db"
 	if dbExists(dbFile) == false {
@@ -265,7 +266,7 @@ func CreateRepBlockchain(nodeAdd string) *RepBlockchain {
 	return &bc
 }
 
-//iterator
+//Iterator is do loop
 func (bc *RepBlockchain) Iterator() *RepBlockchainIterator {
 	bci := &RepBlockchainIterator{bc.Tip, bc.Db}
 
@@ -291,7 +292,7 @@ func (i *RepBlockchainIterator) Next() *RepBlock {
 	return block
 }
 
-// NextSB returns next block starting from the tip
+// NextFromSB returns next block starting from the tip
 func (i *RepBlockchainIterator) NextFromSB() *SyncBlock {
 	var block *SyncBlock
 
@@ -310,6 +311,7 @@ func (i *RepBlockchainIterator) NextFromSB() *SyncBlock {
 	return block
 }
 
+//NextToStart is the next
 func (i *RepBlockchainIterator) NextToStart() *RepBlock {
 	var block *RepBlock
 	var flag bool

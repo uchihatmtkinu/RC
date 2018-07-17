@@ -25,9 +25,9 @@ type RepBlock struct {
 	Nonce             int
 }
 
-// NewBlock creates and returns Block
-func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
-	var item *shard.MemShard
+//NewRepBlock creates and returns Block
+func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
+	//var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	tmpprevSyncRepBlockHash := make([][32]byte, len(prevSyncRepBlockHash))
 	copy(tmpprevSyncRepBlockHash, prevSyncRepBlockHash)
@@ -35,8 +35,8 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][
 	tmpprevTxBlockHashes := make([][32]byte, len(prevTxBlockHashes))
 	copy(tmpprevTxBlockHashes, prevTxBlockHashes)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
-		item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], item.Rep))
+		//item = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+		repTransactions = append(repTransactions, NewRepTransaction(shard.ShardToGlobal[shard.MyMenShard.Shard][i], (*repData)[i]))
 	}
 	var block *RepBlock
 	//generate new block
@@ -53,7 +53,7 @@ func NewRepBlock(ms *[]shard.MemShard, startBlock bool, prevSyncRepBlockHash [][
 	return block, flag
 }
 
-// NewGenesisBlock creates and returns genesis Block
+// NewGenesisRepBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
 	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber}, [32]byte{gVar.MagicNumber}, int(gVar.MagicNumber)}
 	return block
@@ -94,6 +94,7 @@ func (b *RepBlock) Serialize() []byte {
 	return result.Bytes()
 }
 
+//Print is output
 func (b *RepBlock) Print() {
 	fmt.Println("RepBlock:")
 	fmt.Println("RepTransactions:")

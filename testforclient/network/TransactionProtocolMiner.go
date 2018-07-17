@@ -278,8 +278,9 @@ func HandleTxBlock(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp}
+		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
 		CacheDbRef.UnderSharding = true

@@ -155,3 +155,12 @@ func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 		}
 	}
 }
+
+//ReturnRepData gets the rep data of a specific shard
+func ReturnRepData(shardID uint32) *[]int64 {
+	tmp := make([]int64, gVar.ShardSize)
+	for i := uint32(0); i < gVar.ShardSize; i++ {
+		tmp[i] = GlobalGroupMems[ShardToGlobal[shardID][i]].Rep
+	}
+	return &tmp
+}
