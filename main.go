@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte("Test"))
+	//network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte("Test"))
 	//arg, err := strconv.Atoi(os.Args[1])
 	/*if err != nil {
 		log.Panic(err)
@@ -79,6 +79,7 @@ func main() {
 	time.Sleep(time.Second * 20)
 	timestart := time.Now()
 	fmt.Println(time.Now(), "test begin")
+	//network.StopChan = make(chan os.Signal, 1)
 	for k := 1; k <= totalepoch; k++ {
 		//test shard
 		fmt.Println("Current time: ", time.Now())
