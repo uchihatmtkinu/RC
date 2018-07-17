@@ -129,24 +129,23 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 			//fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
 			d.TLNow.Add(0)
 		} else {
-			if !tmp.Visible {
-				d.TLNow.Add(0)
-			} else {
-				var res byte
-				if tmp.InCheck[d.ShardNum] == 3 {
-					if d.VerifyTx(tmp.Data) {
-
-						res = byte(1)
-						d.LockTx(tmp.Data)
-					}
-					d.TLNow.Add(res)
-					for j := 0; j < len(tmp.ShardRelated); j++ {
-						(*tmpBatch)[tmp.ShardRelated[j]].Add(tmp.Data)
-						tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
-						tmpDecision[tmp.ShardRelated[j]].Add(res)
-					}
+			var res byte
+			if tmp.InCheck[d.ShardNum] == 3 {
+				if d.VerifyTx(tmp.Data) {
+					res = byte(1)
+					d.LockTx(tmp.Data)
+				}
+				if !tmp.Visible {
+					res = byte(0)
+				}
+				d.TLNow.Add(res)
+				for j := 0; j < len(tmp.ShardRelated); j++ {
+					(*tmpBatch)[tmp.ShardRelated[j]].Add(tmp.Data)
+					tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
+					tmpDecision[tmp.ShardRelated[j]].Add(res)
 				}
 			}
+
 		}
 	}
 	//fmt.Println("--------TxDecision from miner: ", d.ID, ":    ")
@@ -205,6 +204,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			for j := uint32(0); j < b.MemCnt; j++ {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
+			tmpRes = true
 			tmp.Value = 1
 			if tmpRes == false {
 

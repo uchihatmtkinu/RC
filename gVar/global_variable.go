@@ -14,8 +14,8 @@ const ShardCnt uint32 = 8
 //used in rep calculation, scaling factor
 const RepTP = 1
 const RepTN = 1
-const RepFP = 1
-const RepFN = 1
+const RepFP = 0
+const RepFN = 0
 
 //channel
 
