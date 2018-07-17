@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
@@ -65,12 +64,17 @@ func ShardProcess() {
 	}
 	fmt.Println("shard finished")
 	if CacheDbRef.ID == 0 {
-		var tmpStr []byte
-		x := 0
+		var tmpStr string
+
 		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
-			x += copy(tmpStr[x:], strconv.FormatInt(shard.GlobalGroupMems[i].Rep, 10)+" ")
+			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Rep, " ")
 		}
-		sendTxMessage(gVar.MyAddress, "LogInfo", tmpStr)
+		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+		tmpStr = ""
+		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
+			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Bandwidth, " ")
+		}
+		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	}
 	if CurrentEpoch != -1 {
 		CacheDbRef.Clear()
