@@ -102,13 +102,15 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			for i := 1; i < int(gVar.ShardSize); i++ {
 				if maskBit(i, &membermask) == cosi.Disabled {
 					it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
+					fmt.Println("Resend shard ready to Member: ", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendShardReadyMessage(it.Address, "readyAnnoun", readyInfo{MyGlobalID, CurrentEpoch})
 				}
-				cnt++
-				if cnt > 5 && readyMember >= int(gVar.ShardSize*2/3) {
-					timeoutflag = false
-					fmt.Println("Timeout! Ready Member: ", readyMember, "/", gVar.ShardSize)
-				}
+
+			}
+			cnt++
+			if cnt > 5 && readyMember >= int(gVar.ShardSize*2/3) {
+				timeoutflag = false
+				fmt.Println("Timeout! Ready Member: ", readyMember, "/", gVar.ShardSize)
 			}
 		}
 	}

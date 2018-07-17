@@ -38,6 +38,7 @@ func RepProcess(ms *[]shard.MemShard) bool {
 	Reputation.NonceMap = make(map[int]int)
 	Reputation.StartCalPoWAnnounce = make(chan bool)
 	res := <-startRep
+	fmt.Println(time.Now(), "Do reputation block")
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)
 	Reputation.RepPowRxValidate = make(chan Reputation.RepPowInfo)
