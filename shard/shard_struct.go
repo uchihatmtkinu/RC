@@ -23,10 +23,11 @@ type MemShard struct {
 	Legal          byte //0 - legal,  1 - kickout
 	RealAccount    *account.RcAcc
 	PreShard       int
+	Bandwidth      int
 }
 
 //NewMemShard new a mem shard, addr - ip + port
-func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, addr2 string) {
+func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, addr2 string, band int) {
 	ms.Address = addr2
 	ms.PrivateAddress = addr
 	ms.PublicAddress = addr2
@@ -36,6 +37,7 @@ func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, addr2 string) {
 	ms.Legal = 0
 	ms.Role = 1
 	ms.Rep = 0
+	ms.Bandwidth = band
 }
 
 //NewTotalRep set a new total rep to 0

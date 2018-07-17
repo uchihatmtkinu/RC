@@ -61,10 +61,14 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 		d.NewTxList()
 	}
 	if tmp.InCheck[d.ShardNum] != -1 {
-		for i := uint32(0); i < gVar.ShardCnt; i++ {
-			if tmp.InCheck[i] != 0 {
-				d.Now.TLS[i].AddTx(b)
+		d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
+		if d.BandCnt >= gVar.MaxBand {
+			for i := uint32(0); i < gVar.ShardCnt; i++ {
+				if tmp.InCheck[i] != 0 {
+					d.Now.TLS[i].AddTx(b)
+				}
 			}
+			d.BandCnt -= gVar.MaxBand
 		}
 	}
 	return nil
@@ -74,6 +78,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 //Must after SignTXL
 func (d *DbRef) BuildTDS() {
 	d.Now.TLS[d.ShardNum].Sign(&d.prk)
+	d.TxCnt += d.Now.TLS[d.ShardNum].TxCnt
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		if d.ShardNum != i {
 			d.Now.TLS[i].HashID = d.Now.TLS[i].Hash()
@@ -104,6 +109,7 @@ func (d *DbRef) NewTxList() error {
 		d.TLIndex[d.Now.TLS[d.ShardNum].Hash()] = d.Now
 		d.TLRound++
 	}
+	d.BandCnt = 0
 	d.Now = new(TLGroup)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.Now.TLS[i].ID = d.ID
@@ -124,7 +130,7 @@ func (d *DbRef) GenerateTxBlock() error {
 	}
 	d.Ready = nil
 	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
-	d.TxCnt += d.TxB.TxCnt
+
 	d.DB.AddBlock(d.TxB)
 	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	//d.DB.ShowAccount()
@@ -229,6 +235,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			for j := uint32(0); j < b.MemCnt; j++ {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
+			tmp.Value = 1
 			tmpRes := b.Result(i)
 			if tmpRes == false {
 				if !ok2 {
@@ -240,6 +247,15 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTN * int64(tmp.Value)
 					} else if tmp.Decision[j] == 2 {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFP * int64(tmp.Value)
+					}
+				}
+			} else {
+				tmp.Decision[0] = 2
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					if tmp.Decision[j] == 1 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
+					} else if tmp.Decision[j] == 2 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
 					}
 				}
 			}
@@ -269,16 +285,6 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			//fmt.Println(base58.Encode(tmp.Data.Hash[:]), "result is", tmp.Res)
 			if tmp.Res == 1 {
 				d.Ready = append(d.Ready, *(tmp.Data))
-				if tmp.InCheck[d.ShardNum] == 1 {
-					tmp.Decision[0] = 2
-					for j := uint32(0); j < gVar.ShardSize; j++ {
-						if tmp.Decision[j] == 1 {
-							shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
-						} else if tmp.Decision[j] == 2 {
-							shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
-						}
-					}
-				}
 			}
 			if tmp.Total == 0 {
 				delete(d.HashCache, basic.HashCut(tmpHash))

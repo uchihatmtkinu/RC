@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
@@ -50,7 +51,7 @@ func ShardProcess() {
 	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
 		BatchCache[i] = nil
 	}
-	TxBatchCache = make(chan []byte, 1000)
+
 	StopGetTx = make(chan bool, 1)
 	close(Reputation.RepPowRxCh)
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
@@ -62,8 +63,15 @@ func ShardProcess() {
 		}
 		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
-
 	fmt.Println("shard finished")
+	if CacheDbRef.ID == 0 {
+		var tmpStr []byte
+		x := 0
+		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
+			x += copy(tmpStr[x:], strconv.FormatInt(shard.GlobalGroupMems[i].Rep, 10)+" ")
+		}
+		sendTxMessage(gVar.MyAddress, "LogInfo", tmpStr)
+	}
 	if CurrentEpoch != -1 {
 		CacheDbRef.Clear()
 		FinalTxReadyCh <- true

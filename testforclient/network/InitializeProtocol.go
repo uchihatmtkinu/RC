@@ -87,13 +87,24 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 
 		IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i)
 		IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i)
-		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1, IPAddr2)
+		var band int
+		if gVar.BandDiverse {
+			band = 2048 + 1024*(i+1)*2/100
+		} else {
+			band = 1024 * 38
+		}
+		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1, IPAddr2, band)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//shard.GlobalGroupMems[i].AddRep(int64(i))
 		if initType != 0 {
 			IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i+IPCnt)
 			IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i+IPCnt)
-			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr1, IPAddr2)
+			if gVar.BandDiverse {
+				band = gVar.MinBand + (gVar.MaxBand-gVar.MinBand)*(i+1)/int(numCnt)
+			} else {
+				band = gVar.MaxBand
+			}
+			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr1, IPAddr2, band)
 			shard.GlobalGroupMems[i+IPCnt].NewTotalRep()
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}

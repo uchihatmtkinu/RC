@@ -83,6 +83,7 @@ type DbRef struct {
 	UnderSharding bool
 	StartTxDone   bool
 	HistoryShard  []uint32
+	BandCnt       uint32
 }
 
 //TLGroup is the group of TL
@@ -171,6 +172,7 @@ type CrossShardDec struct {
 	InCheckSum   int
 	Total        int
 	Value        uint32
+	Visible      bool
 }
 
 //Print output the crossshard information

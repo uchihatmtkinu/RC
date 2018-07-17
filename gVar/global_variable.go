@@ -38,3 +38,10 @@ const NumOfTxForTest = 100
 const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
+
+const BandDiverse = true
+
+const MyAddress = "175.159.120.147:9999"
+
+const MaxBand = 38 * 1024
+const MinBand = 2 * 1024

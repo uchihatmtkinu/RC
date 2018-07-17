@@ -306,6 +306,7 @@ func (a *TxBlockChain) AddFinalBlock(x *basic.TxBlock) error {
 		b = tx.Bucket([]byte(ACCBucket))
 		for i := uint32(0); i < x.TxCnt; i++ {
 			var tmp []byte
+			a.AccData[x.TxArray[i].Out[0].Address] = x.TxArray[i].Out[0].Value
 			basic.EncodeInt(&tmp, x.TxArray[i].Out[0].Value)
 			b.Put(x.TxArray[i].Out[0].Address[:], tmp)
 		}

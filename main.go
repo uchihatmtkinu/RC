@@ -71,7 +71,7 @@ func main() {
 			i = rand.Int() % numCnt
 		}
 		j := rand.Int() % numCnt
-		k := uint32(rand.Int()%5 + 1)
+		k := uint32(1)
 		tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(i*10000))
 		//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 	}

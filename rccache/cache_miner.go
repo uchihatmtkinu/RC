@@ -94,6 +94,13 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 		return fmt.Errorf("Not related TX")
 	}
 	//d.DB.AddTx(a)
+	d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
+	if d.BandCnt >= gVar.MaxBand {
+		tmp.Visible = true
+		d.BandCnt -= gVar.MaxBand
+	} else {
+		tmp.Visible = false
+	}
 	d.TXCache[a.Hash] = tmp
 	return nil
 }
@@ -104,6 +111,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
 	d.TLNow.Single = 0
+	d.TxCnt += a.TxCnt
 	var tmpHash [gVar.ShardCnt][]byte
 	var tmpDecision [gVar.ShardCnt]basic.TxDecision
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
@@ -114,25 +122,29 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	//a.Print()
 	d.TLSCacheMiner[a.HashID] = a
 	*tmpBatch = make([]basic.TransactionBatch, gVar.ShardCnt)
+	//tmpCnt := 0
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
 			//fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
 			d.TLNow.Add(0)
 		} else {
-			var res byte
-			//tmp.Print()
-			if tmp.InCheck[d.ShardNum] == 3 {
-				if d.VerifyTx(tmp.Data) {
-					//fmt.Println(d.ID, "Process TList: Tx ", i, " is ok")
-					res = byte(1)
-					d.LockTx(tmp.Data)
-				}
-				d.TLNow.Add(res)
-				for j := 0; j < len(tmp.ShardRelated); j++ {
-					(*tmpBatch)[tmp.ShardRelated[j]].Add(tmp.Data)
-					tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
-					tmpDecision[tmp.ShardRelated[j]].Add(res)
+			if !tmp.Visible {
+				d.TLNow.Add(0)
+			} else {
+				var res byte
+				if tmp.InCheck[d.ShardNum] == 3 {
+					if d.VerifyTx(tmp.Data) {
+
+						res = byte(1)
+						d.LockTx(tmp.Data)
+					}
+					d.TLNow.Add(res)
+					for j := 0; j < len(tmp.ShardRelated); j++ {
+						(*tmpBatch)[tmp.ShardRelated[j]].Add(tmp.Data)
+						tmpHash[tmp.ShardRelated[j]] = append(tmpHash[tmp.ShardRelated[j]], a.TxArray[i][:]...)
+						tmpDecision[tmp.ShardRelated[j]].Add(res)
+					}
 				}
 			}
 		}
@@ -193,13 +205,24 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet) error {
 			for j := uint32(0); j < b.MemCnt; j++ {
 				tmp.Decision[shard.GlobalGroupMems[b.MemD[j].ID].InShardId] = (b.MemD[j].Decision[index]>>shift)&1 + 1
 			}
+			tmp.Value = 1
 			if tmpRes == false {
+
 				tmp.Decision[0] = 1
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					if tmp.Decision[j] == 1 {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTN * int64(tmp.Value)
 					} else if tmp.Decision[j] == 2 {
 						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFP * int64(tmp.Value)
+					}
+				}
+			} else {
+				tmp.Decision[0] = 2
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					if tmp.Decision[j] == 1 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
+					} else if tmp.Decision[j] == 2 {
+						shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
 					}
 				}
 			}
@@ -234,33 +257,19 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {
-			return fmt.Errorf("Verify txblock; No tx in cache")
+			//return fmt.Errorf("Verify txblock; No tx in cache")
 		}
 		if tmp.InCheckSum != 0 {
 			//fmt.Println("Error in crossShard")
 			//tmp.Print()
-			return fmt.Errorf("Not be fully recognized %d", i)
+			//return fmt.Errorf("Not be fully recognized %d", i)
 		}
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i].Hash]
-		if !ok {
-			continue
-		}
-		if tmp.InCheck[d.ShardNum] == 1 {
-			tmp.Decision[0] = 2
-			for j := uint32(0); j < gVar.ShardSize; j++ {
-				if tmp.Decision[j] == 1 {
-					shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep -= gVar.RepFN * int64(tmp.Value)
-				} else if tmp.Decision[j] == 2 {
-					shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][j]].Rep += gVar.RepTP * int64(tmp.Value)
-				}
-			}
-		}
 		d.ClearCache(a.TxArray[i].Hash)
 	}
 	*(d.TBCache) = append(*(d.TBCache), a.HashID)
-	d.TxCnt += a.TxCnt
+
 	d.TxB = a
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
