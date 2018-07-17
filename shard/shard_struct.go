@@ -11,21 +11,25 @@ import (
 //MemShard is the struct of miners for sharding and leader selection
 type MemShard struct {
 	//TCPAddress  *net.TCPAddr
-	Address     string  //ip+port
-	Rep         int64   //rep this epoch
-	TotalRep    []int64 //rep over several epoch
-	CosiPub     ed25519.PublicKey
-	Shard       int
-	InShardId   int
-	Role        byte //1 - member, 0 - leader
-	Legal       byte //0 - legal,  1 - kickout
-	RealAccount *account.RcAcc
-	PreShard    int
+	Address        string //ip+port
+	PrivateAddress string
+	PublicAddress  string
+	Rep            int64   //rep this epoch
+	TotalRep       []int64 //rep over several epoch
+	CosiPub        ed25519.PublicKey
+	Shard          int
+	InShardId      int
+	Role           byte //1 - member, 0 - leader
+	Legal          byte //0 - legal,  1 - kickout
+	RealAccount    *account.RcAcc
+	PreShard       int
 }
 
 //NewMemShard new a mem shard, addr - ip + port
-func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string) {
-	ms.Address = addr
+func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, addr2 string) {
+	ms.Address = addr2
+	ms.PrivateAddress = addr
+	ms.PublicAddress = addr2
 	//ms.TCPAddress,_ = net.ResolveTCPAddr("tcp", addr)
 	ms.RealAccount = acc
 	ms.CosiPub = acc.CosiPuk

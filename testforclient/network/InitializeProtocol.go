@@ -78,24 +78,29 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 	}
 	//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 	//TODO need modify
+	shardRegion := 1
 	for i := 0; i < int(IPCnt); i++ {
 		scannerPri.Scan()
 		scannerPub.Scan()
 		IPAddrPri = scannerPri.Text()
 		IPAddrPub = scannerPub.Text()
 
-		IPAddr1 := IPAddrPub + ":" + strconv.Itoa(3000+i)
-		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1)
+		IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i)
+		IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i)
+		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1, IPAddr2)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//shard.GlobalGroupMems[i].AddRep(int64(i))
 		if initType != 0 {
+			IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i+IPCnt)
 			IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i+IPCnt)
-			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr2)
+			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr1, IPAddr2)
 			shard.GlobalGroupMems[i+IPCnt].NewTotalRep()
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}
 		if IPAddrPri == input {
-
+			if i >= IPCnt/2 {
+				shardRegion = 2
+			}
 			MyGlobalID = i
 			*ID = i
 			if initType == 2 {
@@ -107,6 +112,21 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		//map ip+port -> global ID
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
+	}
+	if shardRegion == 1 {
+		for i := 0; i < IPCnt/2; i++ {
+			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
+			if initType != 0 {
+				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
+			}
+		}
+	} else {
+		for i := IPCnt / 2; i < IPCnt; i++ {
+			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
+			if initType != 0 {
+				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
+			}
+		}
 	}
 	CacheDbRef.New(uint32(*ID), acc[*ID].Pri)
 	for i := 0; i < int(numCnt); i++ {
