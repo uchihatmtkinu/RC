@@ -71,11 +71,6 @@ func ShardProcess() {
 			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Rep, " ")
 		}
 		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-		tmpStr = ""
-		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
-			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Bandwidth, " ")
-		}
-		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	}
 	if CurrentEpoch != -1 {
 		CacheDbRef.Clear()
