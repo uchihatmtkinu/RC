@@ -61,11 +61,11 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 		d.NewTxList()
 	}
 	if tmp.InCheck[d.ShardNum] != -1 {
-		fmt.Println("Band:", d.BandCnt)
+		//fmt.Println("Band:", d.BandCnt)
 		d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
-		fmt.Println("Band New:", d.BandCnt)
+		//fmt.Println("Band New:", d.BandCnt)
 		if d.BandCnt >= gVar.MaxBand {
-			fmt.Println("Add new tx")
+			//fmt.Println("Add new tx")
 			for i := uint32(0); i < gVar.ShardCnt; i++ {
 				if tmp.InCheck[i] != 0 {
 					d.Now.TLS[i].AddTx(b)
