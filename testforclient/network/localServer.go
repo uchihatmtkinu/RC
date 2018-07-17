@@ -5,8 +5,6 @@ import (
 	"log"
 	"net"
 	"time"
-
-	"github.com/uchihatmtkinu/RC/gVar"
 )
 
 //StartLocalServer start a server
@@ -14,7 +12,7 @@ func StartLocalServer() {
 
 	//ln, err := net.Listen(protocol, shard.MyMenShard.Address)
 	//fmt.Println(bindAddress)
-	ln, err := net.Listen(protocol, gVar.MyAddress)
+	ln, err := net.Listen(protocol, ":9999")
 	//fmt.Println("My IP+Port: ", shard.MyMenShard.Address)
 	if err != nil {
 		log.Panic(err)
