@@ -33,7 +33,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	<-startSync
 	elapsed := time.Since(gVar.T1)
 	fmt.Println(time.Now(), "App elapsed: ", elapsed)
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Time", elapsed, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	fmt.Println("Leader CoSi")
 
