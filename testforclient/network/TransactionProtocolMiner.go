@@ -208,17 +208,18 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 		}
 	}
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
-		CacheDbRef.TDSCnt[tmp.ShardIndex]++
+
 		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- true
 	}
 	tmpflag := false
 	CacheDbRef.Mu.Lock()
+	CacheDbRef.TDSCnt[tmp.ShardIndex]++
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	err = CacheDbRef.GetTDS(tmp)
+	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
 	}
-
 	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {
 		CacheDbRef.TDSNotReady--
 		fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)

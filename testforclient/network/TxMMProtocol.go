@@ -3,6 +3,8 @@ package network
 import (
 	"fmt"
 
+	"github.com/uchihatmtkinu/RC/gVar"
+
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/shard"
 )
@@ -17,9 +19,11 @@ func HandleRequestTxMM(data []byte) error {
 		fmt.Println("RequestTxMM decoding error")
 		return err
 	}
-	if BatchCache[tmp.Round] != nil {
-		xx := shard.GlobalGroupMems[tmp.ID].Shard
-		go sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMM", BatchCache[tmp.Round][xx].Encode())
+	if tmp.Round >= CacheDbRef.PrevHeight && tmp.Round < CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+		if BatchCache[tmp.Round-CacheDbRef.PrevHeight] != nil {
+			xx := shard.GlobalGroupMems[tmp.ID].Shard
+			go sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMM", BatchCache[tmp.Round][xx].Encode())
+		}
 	}
 	return nil
 }
@@ -35,7 +39,10 @@ func HandleTxMMRec(data []byte) error {
 		return err
 	}
 	xx := tmp.Round
-	txMCh[xx] <- tmp
+	if xx < CacheDbRef.PrevHeight || xx >= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+		return fmt.Errorf("TxMMRec epoch not match")
+	}
+	txMCh[xx-CacheDbRef.PrevHeight] <- tmp
 	return nil
 }
 
