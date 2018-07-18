@@ -52,6 +52,7 @@ func SendStartBlock(ms *[]shard.MemShard) {
 
 //WaitForFinalBlock is wait for final block
 func WaitForFinalBlock(ms *[]shard.MemShard) error {
+	<-StartLastTxBlock
 	data := <-finalSignal
 	data1 := make([]byte, len(data))
 	copy(data1, data)

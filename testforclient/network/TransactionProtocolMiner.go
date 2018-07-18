@@ -210,20 +210,34 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
 		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- true
 	}
+	tmpflag := false
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	err = CacheDbRef.GetTDS(tmp)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
 	}
+	CacheDbRef.TDSCnt[CacheDbRef.ShardNum]++
+	if CacheDbRef.TDSCnt[CacheDbRef.ShardNum] == gVar.NumTxListPerEpoch {
+		CacheDbRef.TDSNotReady--
+		fmt.Println("Decrease the TDSCnt to", CacheDbRef.TDSNotReady)
+		if CacheDbRef.TDSNotReady == 0 {
+			tmpflag = true
+		}
+	}
 	CacheDbRef.Mu.Unlock()
+	if tmpflag {
+		StartLastTxBlock <- true
+	}
 	return nil
 }
 
 //HandleAndSentTxDecSet when receives a txdecset
 func HandleAndSentTxDecSet(data []byte) error {
-	HandleTxDecSet(data, 1)
-
+	err := HandleTxDecSet(data, 1)
+	if err != nil {
+		return err
+	}
 	fmt.Println(CacheDbRef.ID, "Get TDS and send")
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
