@@ -49,6 +49,7 @@ func SendStartBlock(ms *[]shard.MemShard) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "StartTxB", data)
 		}
 	}
+	StartSendTx <- true
 }
 
 //WaitForFinalBlock is wait for final block

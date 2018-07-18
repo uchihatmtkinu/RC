@@ -254,15 +254,15 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 		return fmt.Errorf("Signature not valid")
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i].Hash]
+		_, ok := d.TXCache[a.TxArray[i].Hash]
 		if !ok {
 			//return fmt.Errorf("Verify txblock; No tx in cache")
 		}
-		if tmp.InCheckSum != 0 {
-			//fmt.Println("Error in crossShard")
-			//tmp.Print()
-			//return fmt.Errorf("Not be fully recognized %d", i)
-		}
+		//if tmp.InCheckSum != 0 {
+		//fmt.Println("Error in crossShard")
+		//tmp.Print()
+		//return fmt.Errorf("Not be fully recognized %d", i)
+		//}
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		d.ClearCache(a.TxArray[i].Hash)

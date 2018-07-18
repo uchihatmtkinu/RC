@@ -215,3 +215,5 @@ var bindAddress string
 var BatchCache [gVar.NumTxListPerEpoch][]TxBatchInfo
 
 var TDSChan [gVar.NumTxListPerEpoch]chan bool
+
+var StartSendTx chan bool

@@ -58,10 +58,10 @@ func ShardProcess() {
 	if shard.MyMenShard.Role == 1 {
 		MinerReadyProcess()
 	} else {
+		LeaderReadyProcess(&shard.GlobalGroupMems)
 		if CurrentEpoch != -1 {
 			go SendStartBlock(&shard.GlobalGroupMems)
 		}
-		LeaderReadyProcess(&shard.GlobalGroupMems)
 	}
 	fmt.Println("shard finished")
 	if CacheDbRef.ID == 0 {
@@ -152,6 +152,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 
 	}
 	fmt.Println("All shards are ready.")
+	StartSendTx = make(chan bool, 1)
 }
 
 //HandleRequestShardLeaderReady handle the request from other leader
