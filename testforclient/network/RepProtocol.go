@@ -43,6 +43,10 @@ func RepProcess(ms *[]shard.MemShard) bool {
 		fmt.Print((*x)[i], " ")
 	}
 	fmt.Println()
+	for i := 0; i < len(*x); i++ {
+		fmt.Print((*res.Rep)[i], " ")
+	}
+	fmt.Println()
 	fmt.Println(time.Now(), "Do reputation block")
 	flag := true
 	Reputation.RepPowTxCh = make(chan Reputation.RepPowInfo)

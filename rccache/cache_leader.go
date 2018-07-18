@@ -275,11 +275,6 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			}
 			d.TXCache[b.TxArray[i]] = tmp
 		}
-		x = shard.ReturnRepData(0)
-		for i := 0; i < len(*x); i++ {
-			fmt.Print((*x)[i], " ")
-		}
-		fmt.Println()
 	}
 
 	for i := uint32(0); i < b.TxCnt; i++ {
@@ -311,11 +306,6 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		b.TxCnt = 0
 		b.TxArray = nil
 	}
-	x := shard.ReturnRepData(0)
-	for i := 0; i < len(*x); i++ {
-		fmt.Print((*x)[i], " ")
-	}
-	fmt.Println()
 }
 
 //Release delete the first element of the cache

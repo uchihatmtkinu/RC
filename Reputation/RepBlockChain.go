@@ -38,7 +38,11 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 
 	//tmp := [][32]byte{{0}}
 	//cache.TBCache = &tmp
-
+	x := shard.ReturnRepData(0)
+	for i := 0; i < len(*x); i++ {
+		fmt.Print((*x)[i], " ")
+	}
+	fmt.Println()
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
 	fmt.Println("--------------------")
