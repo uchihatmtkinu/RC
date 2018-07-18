@@ -115,6 +115,7 @@ type WaitProcess struct {
 //Clear refresh the data for next epoch
 func (d *DbRef) Clear() {
 	d.TLRound = 0
+	d.Now = nil
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
 	d.TxCnt = 0
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
