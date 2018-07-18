@@ -35,7 +35,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-	fmt.Println("Leader CoSi")
+	fmt.Println(time.Now(), "Leader CoSi")
 
 	CoSiFlag = true
 	//To simplify the problem, we just validate the previous repblock hash
@@ -70,7 +70,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			SendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 		}
 	}
-	fmt.Println("sent CoSi announce")
+	fmt.Println(time.Now(), "sent CoSi announce")
 
 	//handle members' commits
 	signCount := 1
@@ -82,13 +82,13 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			commits[(*ms)[commitMessage.ID].InShardId] = commitMessage.Commit
 			setMaskBit((*ms)[commitMessage.ID].InShardId, cosi.Enabled, &cosimask)
 			signCount++
-			fmt.Println("Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
+			fmt.Println(time.Now(), "Received commit from Global ID: ", commitMessage.ID, ", commits count:", signCount, "/", int(gVar.ShardSize))
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 				if maskBit(it.InShardId, &cosimask) == cosi.Disabled {
-					fmt.Println("Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
+					fmt.Println(time.Now(), "Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendCosiMessage(it.Address, "cosiAnnoun", sbMessage)
 				}
 			}
@@ -100,7 +100,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			timeoutflag = false
 		}
 	}
-	fmt.Println("Recived CoSi comit")
+	fmt.Println(time.Now(), "Recived CoSi comit")
 
 	//fmt.Println((*ms)[GlobalAddrMapToInd[shard.MyMenShard.Address]].InShardId)
 
@@ -119,7 +119,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			SendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 		}
 	}
-	fmt.Println("Sent CoSi Challenage")
+	fmt.Println(time.Now(), "Sent CoSi Challenage")
 	//handle response
 	sigParts = make([]cosi.SignaturePart, int(gVar.ShardSize))
 
@@ -161,7 +161,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 
 	//Add sync block
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSig)
-	fmt.Println("Add a new sync block.")
+	fmt.Println(time.Now(), "Add a new sync block.")
 	//close CoSi
 	CoSiFlag = false
 	close(cosiCommitCh)
@@ -186,7 +186,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	cosiChallengeCh = make(chan challengeInfo)
 	cosiSigCh = make(chan cosi.SignaturePart)
 	CoSiFlag = true
-	fmt.Println("Member CoSi")
+	fmt.Println(time.Now(), "Member CoSi")
 	//generate pubKeys
 	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
 	for i := 0; i < int(gVar.ShardSize); i++ {
@@ -201,18 +201,18 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	leaderSBMessage := <-cosiAnnounceCh
 	//close(cosiAnnounceCh)
-	fmt.Println("Leader SBM:", base58.Encode(leaderSBMessage))
-	fmt.Println("Myself SBM:", base58.Encode(sbMessage))
+	fmt.Println(time.Now(), "Leader SBM:", base58.Encode(leaderSBMessage))
+	fmt.Println(time.Now(), "Myself SBM:", base58.Encode(sbMessage))
 	if !verifySBMessage(sbMessage, leaderSBMessage) {
 		fmt.Println("Sync Block from leader is wrong!")
 		//TODO send warning
 	}
-	fmt.Println("received cosi announce")
+	fmt.Println(time.Now(), "received cosi announce")
 
 	//send commit
 	myCommit, mySecret, _ = cosi.Commit(nil)
 	SendCosiMessage(LeaderAddr, "cosiCommit", commitInfo{MyGlobalID, myCommit})
-	fmt.Println("sent cosi commit")
+	fmt.Println(time.Now(), "sent cosi commit")
 	//receive challenge
 	//currentChaMessage := <-cosiChallengeCh
 	var currentChaMessage challengeInfo
@@ -220,10 +220,10 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	for syncFlag {
 		select {
 		case <-cosiAnnounceCh:
-			fmt.Println("Resend cosi commit")
+			fmt.Println(time.Now(), "Resend cosi commit")
 			SendCosiMessage(LeaderAddr, "cosiCommit", commitInfo{MyGlobalID, myCommit})
 		case currentChaMessage = <-cosiChallengeCh:
-			fmt.Println("received cosi challenge from leader")
+			fmt.Println(time.Now(), "received cosi challenge from leader")
 			syncFlag = false
 		}
 	}
@@ -245,7 +245,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	CoSiFlag = false
 	close(cosiChallengeCh)
 	close(cosiSigCh)
-	fmt.Println("Member CoSi finished, result is ", valid)
+	fmt.Println(time.Now(), "Member CoSi finished, result is ", valid)
 	return valid, cosiSigMessage
 }
 
