@@ -22,7 +22,7 @@ func HandleRequestTxMM(data []byte) error {
 	if tmp.Round >= CacheDbRef.PrevHeight && tmp.Round < CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
 		if BatchCache[tmp.Round-CacheDbRef.PrevHeight] != nil {
 			xx := shard.GlobalGroupMems[tmp.ID].Shard
-			go sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMM", BatchCache[tmp.Round][xx].Encode())
+			go sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMM", BatchCache[tmp.Round-CacheDbRef.PrevHeight][xx].Encode())
 		}
 	}
 	return nil
