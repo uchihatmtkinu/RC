@@ -123,7 +123,6 @@ func TxLastBlock() {
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
 		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
-	CacheDbRef.StartTxDone = false
 	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 	CacheDbRef.Mu.Unlock()
@@ -135,7 +134,7 @@ func TxNormalBlock() {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateTxBlock()
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs")
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")

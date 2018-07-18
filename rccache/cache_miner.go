@@ -159,7 +159,6 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	}
 	//fmt.Println(d.TLNow.Sig)
 	//fmt.Println("--------TxDecision from miner: ", d.ID, " end-------------")
-	d.TLSent = d.TLNow
 	d.TLRound++
 
 	return nil

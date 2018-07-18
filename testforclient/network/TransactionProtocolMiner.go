@@ -100,7 +100,7 @@ func HandleTxList(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
 	}
 	var sent []byte
-	CacheDbRef.TLSent.Encode(&sent)
+	CacheDbRef.TLNow.Encode(&sent)
 	CacheDbRef.Mu.Unlock()
 	fmt.Println(time.Now(), "Start Sending TxBatch to other shards", base58.Encode(tmp.HashID[:]))
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDec", sent)
@@ -164,6 +164,9 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	tmp := new(basic.TxDecSet)
 	err := tmp.Decode(&data1)
 	fmt.Println("Get the tds from leader:", tmp.ID, "Round:", tmp.Round)
+	if tmp.Round < CacheDbRef.PrevHeight {
+		return fmt.Errorf("Previous epoch packet")
+	}
 	if typeInput == 1 {
 		var tmp1 txDecRev
 		tmp1.ID = CacheDbRef.ShardNum
@@ -204,8 +207,8 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 			}
 		}
 	}
-	if tmp.Round < gVar.NumTxListPerEpoch && tmp.ShardIndex == CacheDbRef.ShardNum {
-		TDSChan[tmp.Round] <- true
+	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
+		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- true
 	}
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
@@ -289,8 +292,6 @@ func HandleTxBlock(data []byte) error {
 		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
-		CacheDbRef.UnderSharding = true
-		CacheDbRef.StartTxDone = false
 		StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)

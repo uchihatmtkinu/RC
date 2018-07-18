@@ -41,9 +41,6 @@ func ShardProcess() {
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.DB.ClearTx()
-	CacheDbRef.BandCnt = 0
-	CacheDbRef.TDSCnt = make([]int, gVar.ShardCnt)
-	CacheDbRef.TDSNotReady = int(gVar.ShardCnt)
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)

@@ -71,22 +71,22 @@ func main() {
 		//test shard
 		fmt.Println("Current time: ", time.Now())
 		network.ShardProcess()
-		if k == 1 {
-			rand.Seed(int64(network.CacheDbRef.ID*3000) + time.Now().Unix()%3000)
-			for l := 0; l < len(tmptx); l++ {
-				i := rand.Int() % numCnt
-				for true {
-					if basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal) == network.CacheDbRef.ShardNum {
-						break
-					}
-					i = rand.Int() % numCnt
+
+		rand.Seed(int64(network.CacheDbRef.ID*3000) + time.Now().Unix()%3000)
+		for l := 0; l < len(tmptx); l++ {
+			i := rand.Int() % numCnt
+			for true {
+				if basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal) == network.CacheDbRef.ShardNum {
+					break
 				}
-				j := rand.Int() % numCnt
-				k := uint32(1)
-				tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(l*10000))
-				//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
+				i = rand.Int() % numCnt
 			}
+			j := rand.Int() % numCnt
+			k := uint32(1)
+			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(l*10000))
+			//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 		}
+
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())
 

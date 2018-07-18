@@ -46,9 +46,14 @@ func byteCompare(a, b interface{}) int {
 
 //DbRef is the structure stores the cache of a miner for the database
 type DbRef struct {
-	Mu            sync.RWMutex
-	ID            uint32
-	DB            TxBlockChain
+	//const value
+	Mu           sync.RWMutex
+	ID           uint32
+	DB           TxBlockChain
+	HistoryShard []uint32
+	prk          ecdsa.PrivateKey
+	BandCnt      uint32
+
 	TXCache       map[[32]byte]*CrossShardDec
 	HashCache     map[[basic.SHash]byte][][32]byte
 	WaitHashCache map[[basic.SHash]byte]WaitProcess
@@ -56,34 +61,27 @@ type DbRef struct {
 	ShardNum uint32
 
 	//Leader
-	//TLCache  []basic.TxList
 	TLSCacheMiner map[[32]byte]*basic.TxList
-	TLChannel     []*chan bool
 	TLIndex       map[[32]byte]*TLGroup
 	Now           *TLGroup
 	Ready         []basic.Transaction
 	TxB           *basic.TxBlock
 	FB            [gVar.ShardCnt]*basic.TxBlock
-	prk           ecdsa.PrivateKey
-	TxCnt         uint32
-	TDSCnt        []int
-	TDSNotReady   int
+
+	TDSCnt      []int
+	TDSNotReady int
 
 	//Miner
-	TLNow      *basic.TxDecision
-	TLSent     *basic.TxDecision
-	StartIndex int
-	LastIndex  int
+	TLNow *basic.TxDecision
+
 	TLRound    uint32
 	PrevHeight uint32
 
 	TBCache *[][32]byte
 
-	Leader        uint32
-	UnderSharding bool
-	StartTxDone   bool
-	HistoryShard  []uint32
-	BandCnt       uint32
+	Leader uint32
+	//Statistic function
+	TxCnt uint32
 }
 
 //TLGroup is the group of TL
@@ -114,11 +112,18 @@ type WaitProcess struct {
 
 //Clear refresh the data for next epoch
 func (d *DbRef) Clear() {
-	d.TLRound = 0
 	d.Now = nil
+	d.TLRound += 2
+	d.BandCnt = 0
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
-	d.TxCnt = 0
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
+	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
+	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
+	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
+	d.TxCnt = 0
+	d.TDSCnt = make([]int, gVar.ShardCnt)
+	d.TDSNotReady = int(gVar.ShardCnt)
+	d.Ready = nil
 	if len(*d.TBCache) != 0 {
 		fmt.Println("Miner", d.ID, "Cache clear: TBCache is not empty")
 		for i := 0; i < len(*d.TBCache); i++ {
@@ -132,6 +137,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
 	d.prk = prk
 	d.TxCnt = 0
+	d.BandCnt = 0
 	d.DB.CreateNewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
 	d.TxB = d.DB.LatestTxBlock()
@@ -141,23 +147,11 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.TDSCnt = make([]int, gVar.ShardCnt)
 	d.TDSNotReady = int(gVar.ShardCnt)
 	d.HistoryShard = nil
-	//d.TL = nil
-	//d.TLCache = nil
-	//d.TLS = new([gVar.ShardCnt]basic.TxList)
-	//d.TLS = nil
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
-	//d.TDS = new([gVar.ShardCnt]basic.TxDecSet)
-	//d.TLSCache = nil
-	//d.TLTDSLabel = nil
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
-	//d.TDSCache = nil
-	d.StartIndex = 0
-	d.LastIndex = -1
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
 	d.TBCache = new([][32]byte)
-	d.UnderSharding = true
-	d.StartTxDone = true
 	d.PrevHeight = 0
 
 }
@@ -188,17 +182,6 @@ func (c *CrossShardDec) Print() {
 //ClearCache is to handle the TxCache of hash
 func (d *DbRef) ClearCache(HashID [32]byte) error {
 	tmp := basic.HashCut(HashID)
-	//xxx := d.HashCache[tmp]
-	/*if len(xxx) == 1 && xxx[0] == HashID {
-		delete(d.HashCache, tmp)
-	} else {
-		for i := 0; i < len(xxx); i++ {
-			if xxx[i] == HashID {
-				xxx = append(xxx[:i], xxx[i+1:]...)
-				d.HashCache[tmp] = xxx
-			}
-		}
-	}*/
 	delete(d.HashCache, tmp)
 	delete(d.TXCache, HashID)
 	return nil
