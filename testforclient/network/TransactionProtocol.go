@@ -50,7 +50,7 @@ func TxListProcess() {
 	CacheDbRef.BuildTDS()
 	TLG := CacheDbRef.Now
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]), "Round", TLG.TLS[CacheDbRef.ShardNum].Round)
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs Round", TLG.TLS[CacheDbRef.ShardNum].Round)
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
 	data1 := new([]byte)
@@ -135,7 +135,7 @@ func TxNormalBlock() {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateTxBlock()
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs")
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
