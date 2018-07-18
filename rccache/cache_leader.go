@@ -235,7 +235,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		shift := byte(0)
 		x := shard.ReturnRepData(0)
 		for i := 0; i < len(*x); i++ {
-			fmt.Print((*x)[i])
+			fmt.Print((*x)[i], " ")
 		}
 		fmt.Println()
 		for i := uint32(0); i < b.TxCnt; i++ {
@@ -277,7 +277,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		}
 		x = shard.ReturnRepData(0)
 		for i := 0; i < len(*x); i++ {
-			fmt.Print((*x)[i])
+			fmt.Print((*x)[i], " ")
 		}
 		fmt.Println()
 	}
