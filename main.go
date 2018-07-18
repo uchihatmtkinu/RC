@@ -115,7 +115,10 @@ func main() {
 	}
 	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest)/time.Since(timestart).Seconds())
 	fmt.Println(network.CacheDbRef.ID, ": All finished")
-
+	if network.CacheDbRef.ID == 0 {
+		tmpStr := fmt.Sprint("All finished")
+		network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+	}
 	time.Sleep(20 * time.Second)
 
 }
