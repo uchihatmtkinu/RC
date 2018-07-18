@@ -47,6 +47,10 @@ func ShardProcess() {
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
+	if CurrentEpoch != -1 {
+		CacheDbRef.Clear()
+
+	}
 	CacheDbRef.Mu.Unlock()
 	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
 		BatchCache[i] = nil
@@ -72,9 +76,9 @@ func ShardProcess() {
 		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	}
 	if CurrentEpoch != -1 {
-		CacheDbRef.Clear()
 		FinalTxReadyCh <- true
 	}
+
 }
 
 //LeaderReadyProcess leader use this
