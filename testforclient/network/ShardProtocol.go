@@ -65,8 +65,7 @@ func ShardProcess() {
 	}
 	fmt.Println("shard finished")
 	if CacheDbRef.ID == 0 {
-		var tmpStr string
-
+		tmpStr := fmt.Sprint("Epoch", CurrentEpoch, ":")
 		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
 			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].CalTotalRep(), " ")
 		}
