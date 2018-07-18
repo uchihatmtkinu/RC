@@ -114,6 +114,7 @@ var finalSignal chan []byte
 var startRep chan repInfo
 var startTx chan int
 var startSync chan bool
+var CosiData map[int]cosi.SignaturePart
 
 //syncSBInfo sync block info
 type repInfo struct {

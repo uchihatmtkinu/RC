@@ -152,6 +152,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSig = cosigners.AggregateSignature(aggregateCommit, sigParts)
+	CosiData[CurrentEpoch] = cosiSig
 	//currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
 	for i := uint32(1); i < gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
@@ -235,7 +236,18 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	SendCosiMessage(LeaderAddr, "cosiRespon", responseInfo{MyGlobalID, sigPart})
 
 	//receive cosisig and verify
-	cosiSigMessage := <-cosiSigCh
+	var cosiSigMessage cosi.SignaturePart
+	syncFlag = true
+	for syncFlag {
+		select {
+		case cosiSigMessage = <-cosiSigCh:
+			syncFlag = false
+		case <-time.After(timeoutCosi):
+			fmt.Println("Re-request cosi Sig")
+			SendCosiMessage(LeaderAddr, "reqCosiSig", syncRequestInfo{ID: MyGlobalID, Epoch: CurrentEpoch})
+		}
+	}
+
 	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), sbMessage, cosiSigMessage)
 	//add sync block
 	//if valid {
@@ -304,6 +316,22 @@ func HandleCoSiResponse(request []byte) {
 		log.Panic(err)
 	}
 	cosiResponseCh <- payload
+}
+
+//HandleReqCosiSig handles the request from miner
+func HandleReqCosiSig(request []byte) {
+	var buff bytes.Buffer
+	var payload syncRequestInfo
+	buff.Write(request)
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+	tmp, ok := CosiData[payload.Epoch]
+	if ok {
+		SendCosiMessage(shard.GlobalGroupMems[payload.ID].Address, "cosiSig", tmp)
+	}
 }
 
 //------------------------member------------------//

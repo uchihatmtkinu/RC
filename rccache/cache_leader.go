@@ -184,7 +184,7 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *uint32) error {
 		index = nil
 		return fmt.Errorf("TxDecision Hash error, wrong or time out")
 	}
-	*index = tmp.TLS[d.ShardNum].Round
+	*index = tmp.TLS[d.ShardNum].Round - d.PrevHeight
 	var x, y uint32 = 0, 0
 	tmpTD := make([]basic.TxDecision, gVar.ShardCnt)
 	for i := uint32(0); i < gVar.ShardCnt; i++ {

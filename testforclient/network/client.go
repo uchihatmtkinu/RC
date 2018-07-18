@@ -179,6 +179,8 @@ func StartServer(ID int) {
 			if CoSiFlag {
 				go HandleCoSiSig(request)
 			}
+		case "reqCosiSig":
+			go HandleReqCosiSig(request)
 		case "cosiCommit":
 			if CoSiFlag {
 				go HandleCoSiCommit(request)

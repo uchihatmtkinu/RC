@@ -63,7 +63,7 @@ func TxListProcess() {
 	timeoutflag := true
 	for timeoutflag && cnt < int(gVar.ShardSize) {
 		select {
-		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round]:
+		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight]:
 			cnt++
 			//fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):

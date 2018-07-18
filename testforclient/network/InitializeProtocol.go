@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+
 	"bufio"
 
 	"github.com/uchihatmtkinu/RC/Reputation"
@@ -189,5 +191,5 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
 		TDSChan[i] = make(chan bool, 1)
 	}
-
+	CosiData = make(map[int]cosi.SignaturePart, 1000)
 }
