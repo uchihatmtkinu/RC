@@ -49,7 +49,7 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	fmt.Println("Rep data, lastHash:", base58.Encode(lastHash[:]))
 	fmt.Print("Rep data:")
 	for i := 0; i < len(*repData); i++ {
-		fmt.Print((*repData)[i], ' ')
+		fmt.Print((*repData)[i], " ")
 	}
 	fmt.Println()
 	fmt.Println(shard.PreviousSyncBlockHash)
