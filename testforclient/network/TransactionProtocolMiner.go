@@ -163,6 +163,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	copy(data1, data)
 	tmp := new(basic.TxDecSet)
 	err := tmp.Decode(&data1)
+	fmt.Println("Get the tds from leader:", tmp.ID, "Round:", tmp.Round)
 	if typeInput == 1 {
 		var tmp1 txDecRev
 		tmp1.ID = CacheDbRef.ShardNum
@@ -203,7 +204,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 			}
 		}
 	}
-	if tmp.Round < gVar.NumTxListPerEpoch {
+	if tmp.Round < gVar.NumTxListPerEpoch && tmp.ShardIndex == CacheDbRef.ShardNum {
 		TDSChan[tmp.Round] <- true
 	}
 	CacheDbRef.Mu.Lock()
