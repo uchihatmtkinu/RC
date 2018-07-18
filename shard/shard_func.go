@@ -140,7 +140,7 @@ func (c *Instance) LeaderSort(a *[]MemShard, b *[][]int, xx uint32) {
 	tmp := make([]float32, len((*b)[xx]))
 	for i := 0; i < len(tmp); i++ {
 		//TODO nagative rep
-		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].Rep+1)
+		tmp[i] = c.rng.Float32() / float32((*a)[(*b)[xx][i]].CalTotalRep()+1)
 	}
 	for i := 0; i < len(tmp); i++ {
 		for j := i + 1; j < len(tmp); j++ {
