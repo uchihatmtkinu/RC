@@ -132,12 +132,13 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 			sigParts[it.InShardId] = reponseMessage.Sig
 			setMaskBit(it.InShardId, cosi.Disabled, &responsemask)
 			responseCount++
-			//fmt.Println("Received response from Global ID: ", reponseMessage.ID, ", reponses count:", responseCount, "/", signCount)
+			fmt.Println("Received response from Global ID: ", reponseMessage.ID, ", reponses count:", responseCount, "/", signCount)
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 				if maskBit(it.InShardId, &responsemask) == cosi.Enabled {
+					fmt.Println(time.Now(), "Resend Cosi Sig to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 				}
 			}
