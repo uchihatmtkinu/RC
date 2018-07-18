@@ -52,6 +52,7 @@ func TxListProcess() {
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs, Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxList with", TLG.TLS[CacheDbRef.ShardNum].TxCnt, "Txs Round", TLG.TLS[CacheDbRef.ShardNum].Round)
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+
 	//CacheDbRef.TLS[CacheDbRef.ShardNum].Print()
 	data1 := new([]byte)
 	thisround := TLG.TLS[CacheDbRef.ShardNum].Round
@@ -63,7 +64,7 @@ func TxListProcess() {
 	timeoutflag := true
 	for timeoutflag && cnt < int(gVar.ShardSize) {
 		select {
-		case <-TLChan[TLG.TLS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight]:
+		case <-TLChan[thisround-CacheDbRef.PrevHeight]:
 			cnt++
 			//fmt.Println("Get TxDec of", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 		case <-time.After(timeoutTL):
@@ -86,7 +87,7 @@ func TxListProcess() {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		TLG.TDS[i].Encode(&(*data2)[i])
 	}
-	go SendTxDecSet(*data2, TLG.TLS[CacheDbRef.ShardNum].Round)
+	go SendTxDecSet(*data2, TLG.TLS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight)
 	go TxNormalBlock()
 
 	CacheDbRef.Release(TLG)
@@ -337,7 +338,7 @@ func HandleTxDecRev(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "has a error(TxDecRev)", err)
 		return err
 	}
-	TxDecRevChan[tmp.Round] <- *tmp
+	TxDecRevChan[tmp.Round-CacheDbRef.PrevHeight] <- *tmp
 	return nil
 }
 
