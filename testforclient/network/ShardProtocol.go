@@ -157,6 +157,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	}
 	fmt.Println("All shards are ready.")
 	StartSendTx = make(chan bool, 1)
+	StartSendTx <- true
 }
 
 //HandleRequestShardLeaderReady handle the request from other leader
