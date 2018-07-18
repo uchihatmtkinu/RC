@@ -233,6 +233,11 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 		b.TxArray = tmp1.TLS[d.ShardNum].TxArray
 		index := 0
 		shift := byte(0)
+		x := shard.ReturnRepData(0)
+		for i := 0; i < len(*x); i++ {
+			fmt.Print((*x)[i])
+		}
+		fmt.Println()
 		for i := uint32(0); i < b.TxCnt; i++ {
 			tmp, ok2 := d.TXCache[b.TxArray[i]]
 			for j := uint32(0); j < b.MemCnt; j++ {
@@ -270,7 +275,11 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet) {
 			}
 			d.TXCache[b.TxArray[i]] = tmp
 		}
-
+		x = shard.ReturnRepData(0)
+		for i := 0; i < len(*x); i++ {
+			fmt.Print((*x)[i])
+		}
+		fmt.Println()
 	}
 
 	for i := uint32(0); i < b.TxCnt; i++ {

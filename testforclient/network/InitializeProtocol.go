@@ -109,7 +109,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}
 		if IPAddrPri == input {
-			if i >= IPCnt/2 {
+			if i >= IPCnt/2 && initType != 0 {
 				shardRegion = 2
 			}
 			MyGlobalID = i
@@ -124,15 +124,19 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
+	RegionCnt := IPCnt
+	if initType != 0 {
+		RegionCnt = IPCnt / 2
+	}
 	if shardRegion == 1 {
-		for i := 0; i < IPCnt/2; i++ {
+		for i := 0; i < RegionCnt; i++ {
 			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
 			if initType != 0 {
 				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
 			}
 		}
 	} else {
-		for i := IPCnt / 2; i < IPCnt; i++ {
+		for i := RegionCnt; i < IPCnt; i++ {
 			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
 			if initType != 0 {
 				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
@@ -183,6 +187,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		TxDecRevChan[i] = make(chan txDecRev, gVar.ShardCnt)
 		TLChan[i] = make(chan uint32, gVar.ShardSize)
 		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
+		TDSChan[i] = make(chan bool, 1)
 	}
 
 }

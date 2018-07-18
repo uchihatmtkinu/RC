@@ -1,7 +1,6 @@
 package network
 
 import (
-	"os"
 	"sync"
 	"time"
 
@@ -215,4 +214,4 @@ var bindAddress string
 
 var BatchCache [gVar.NumTxListPerEpoch][]TxBatchInfo
 
-var StopChan chan os.Signal
+var TDSChan [gVar.NumTxListPerEpoch]chan bool

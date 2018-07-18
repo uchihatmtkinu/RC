@@ -203,7 +203,9 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 			}
 		}
 	}
-
+	if tmp.Round < gVar.NumTxListPerEpoch {
+		TDSChan[tmp.Round] <- true
+	}
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	err = CacheDbRef.GetTDS(tmp)
@@ -258,6 +260,9 @@ func HandleTxBlock(data []byte) error {
 		//fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess done")
 	} else {
 		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess timeout")
+	}
+	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+		<-TDSChan[tmp.Height-CacheDbRef.PrevHeight-1]
 	}
 	flag := true
 	for flag {
