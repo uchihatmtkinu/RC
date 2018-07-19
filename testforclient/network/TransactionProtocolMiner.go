@@ -105,20 +105,21 @@ func HandleTxList(data []byte) error {
 	fmt.Println(time.Now(), "Start Sending TxBatch to other shards", base58.Encode(tmp.HashID[:]))
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDec", sent)
 	xx := shard.MyMenShard.InShardId
-	BatchCache[tmp.Round] = make([]TxBatchInfo, gVar.ShardCnt)
+	thisRound := tmp.Round - CacheDbRef.PrevHeight
+	BatchCache[thisRound] = make([]TxBatchInfo, gVar.ShardCnt)
 	yy := -1
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
-		BatchCache[tmp.Round][i].Data = (*tmpBatch)[i].Encode()
-		BatchCache[tmp.Round][i].ID = CacheDbRef.ID
-		BatchCache[tmp.Round][i].ShardID = CacheDbRef.ShardNum
-		BatchCache[tmp.Round][i].Round = tmp.Round
+		BatchCache[thisRound][i].Data = (*tmpBatch)[i].Encode()
+		BatchCache[thisRound][i].ID = CacheDbRef.ID
+		BatchCache[thisRound][i].ShardID = CacheDbRef.ShardNum
+		BatchCache[thisRound][i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
 			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
-			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
+			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 			if xx == int(i+1) {
 				yy = int(i)
 				fmt.Println("Send TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[i][0], "Shard", i)
-				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
+				sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][0]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 			}
 		}
 	}
@@ -132,7 +133,7 @@ func HandleTxList(data []byte) error {
 
 	for cnt > 0 {
 		select {
-		case nowInfo := <-txMCh[tmp.Round]:
+		case nowInfo := <-txMCh[thisRound]:
 			if shard.GlobalGroupMems[nowInfo.ID].Role == 0 {
 				mask[CacheDbRef.ShardNum] = true
 			} else {
@@ -145,10 +146,10 @@ func HandleTxList(data []byte) error {
 				if !mask[i] {
 					if i == int(CacheDbRef.ShardNum) {
 						fmt.Println("Resend TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[yy][0], "Shard", yy)
-						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
+						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 					} else {
 						fmt.Println("Reend TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
-						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[tmp.Round][i].Encode())
+						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 					}
 				}
 			}
