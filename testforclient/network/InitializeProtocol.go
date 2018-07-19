@@ -20,10 +20,10 @@ import (
 )
 
 //IntilizeProcess is init
-func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, initType int) {
+func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 
 	// IP + port
-	var IPAddrPri, IPAddrPub string
+	var IPAddrPri string
 	fmt.Println("Initlization:", input, PriIPFile, initType)
 
 	numCnt := gVar.ShardCnt * gVar.ShardSize
@@ -38,20 +38,13 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	PubfileIP, err := os.Open(PubIPFile)
-	defer PubfileIP.Close()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+
 	PrifileIP, err := os.Open(PriIPFile)
 	defer PrifileIP.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	scannerPub := bufio.NewScanner(PubfileIP)
-	scannerPub.Split(bufio.ScanWords)
 	scannerPri := bufio.NewScanner(PrifileIP)
 	scannerPri.Split(bufio.ScanWords)
 
@@ -83,30 +76,26 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, PubIPFile string, 
 	shardRegion := 1
 	for i := 0; i < int(IPCnt); i++ {
 		scannerPri.Scan()
-		scannerPub.Scan()
 		IPAddrPri = scannerPri.Text()
-		IPAddrPub = scannerPub.Text()
 
 		IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i)
-		IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i)
 		var band int
 		if gVar.BandDiverse {
 			band = gVar.MinBand + (gVar.MaxBand-gVar.MinBand)*(i+1)/int(numCnt)
 		} else {
 			band = gVar.MaxBand
 		}
-		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1, IPAddr2, band)
+		shard.GlobalGroupMems[i].NewMemShard(&acc[i], IPAddr1, band)
 		shard.GlobalGroupMems[i].NewTotalRep()
 		//shard.GlobalGroupMems[i].AddRep(int64(i))
 		if initType != 0 {
 			IPAddr1 := IPAddrPri + ":" + strconv.Itoa(3000+i+IPCnt)
-			IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i+IPCnt)
 			if gVar.BandDiverse {
 				band = gVar.MinBand + (gVar.MaxBand-gVar.MinBand)*(i+1+IPCnt)/int(numCnt)
 			} else {
 				band = gVar.MaxBand
 			}
-			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr1, IPAddr2, band)
+			shard.GlobalGroupMems[i+IPCnt].NewMemShard(&acc[i+IPCnt], IPAddr1, band)
 			shard.GlobalGroupMems[i+IPCnt].NewTotalRep()
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}

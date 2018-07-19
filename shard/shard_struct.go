@@ -27,10 +27,9 @@ type MemShard struct {
 }
 
 //NewMemShard new a mem shard, addr - ip + port
-func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, addr2 string, band int) {
-	ms.Address = addr2
+func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, band int) {
+	ms.Address = addr
 	ms.PrivateAddress = addr
-	ms.PublicAddress = addr2
 	//ms.TCPAddress,_ = net.ResolveTCPAddr("tcp", addr)
 	ms.RealAccount = acc
 	ms.CosiPub = acc.CosiPuk
