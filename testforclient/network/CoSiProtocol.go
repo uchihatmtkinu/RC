@@ -361,7 +361,8 @@ func HandleCoSiChallenge(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	cosiChallengeCh <- payload
+	//cosiChallengeCh <- payload
+	SafeSendChallenge(cosiChallengeCh, payload)
 
 }
 
@@ -383,6 +384,17 @@ func HandleCoSiSig(request []byte) {
 
 //SafeSendCosiSig the cosi sig data
 func SafeSendCosiSig(ch chan cosi.SignaturePart, value cosi.SignaturePart) (closed bool) {
+	defer func() {
+		if recover() != nil {
+			closed = true
+		}
+	}()
+	ch <- value
+	return false
+}
+
+//SafeSendCosiSig the cosi sig data
+func SafeSendChallenge(ch chan challengeInfo, value challengeInfo) (closed bool) {
 	defer func() {
 		if recover() != nil {
 			closed = true
