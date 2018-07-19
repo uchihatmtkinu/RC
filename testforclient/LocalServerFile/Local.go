@@ -43,10 +43,10 @@ func main() {
 		scannerPub.Scan()
 		IPAddrPub := scannerPub.Text()
 
-		IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i)
+		IPAddr2 := IPAddrPub + ":" + strconv.Itoa(3000+i-int(IPCnt)/2)
 		network.SendTxMessage(IPAddr2, "shutDown", []byte(""))
 		if initType != 0 {
-			IPAddr2 = IPAddrPub + ":" + strconv.Itoa(3000+i+int(IPCnt))
+			IPAddr2 = IPAddrPub + ":" + strconv.Itoa(3000+i+int(IPCnt)/2)
 			network.SendTxMessage(IPAddr2, "shutDown", []byte(""))
 		}
 	}

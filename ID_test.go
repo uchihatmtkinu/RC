@@ -10,8 +10,8 @@ import (
 )
 
 func TestID(t *testing.T) {
-	fileIP, err := os.Open("IpAddr1.txt")
-	ID := 220
+	fileIP, err := os.Open("IpAddr3.txt")
+	ID := 1688
 
 	defer fileIP.Close()
 	if err != nil {
@@ -20,7 +20,7 @@ func TestID(t *testing.T) {
 	}
 	scanner := bufio.NewScanner(fileIP)
 	scanner.Split(bufio.ScanWords)
-	IPCnt := int(gVar.ShardSize * gVar.ShardCnt)
+	IPCnt := int(gVar.ShardSize * gVar.ShardCnt / 2)
 	if ID >= IPCnt {
 		ID -= IPCnt
 	}
