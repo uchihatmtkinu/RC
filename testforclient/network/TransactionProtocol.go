@@ -280,7 +280,7 @@ func HandleTxLeader() {
 		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {
 				CacheDbRef.Mu.Lock()
-				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				//fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				tmpCnt := 0
 				bad := 0
 				for j := 0; j < len(TBCache); j++ {
@@ -293,7 +293,7 @@ func HandleTxLeader() {
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
+				//fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}
