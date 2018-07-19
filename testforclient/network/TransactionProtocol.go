@@ -242,7 +242,7 @@ func HandleTxMM(data []byte) error {
 	xxx := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
 	fmt.Println("Get TxBatchMM, Round", tmp.Round, "from", tmp.ID, "Shard", shard.GlobalGroupMems[tmp.ID].Shard)
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxMMRec", xxx.Encode())
-	HandleTotalTx(tmp.Data)
+	HandleTotalTx(data1)
 	return nil
 }
 
