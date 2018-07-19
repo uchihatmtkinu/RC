@@ -142,6 +142,7 @@ func DecodeInt(d *[]byte, out interface{}) error {
 	var bitlen uint32
 
 	switch out := out.(type) {
+	case *int:
 	case *uint32:
 		bitlen = 4
 		if bitlen > uint32(len(*d)) {
