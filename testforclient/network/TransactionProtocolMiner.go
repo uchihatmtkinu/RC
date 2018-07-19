@@ -20,17 +20,19 @@ func HandleTx() {
 	for flag {
 		select {
 		case data := <-TxBatchCache:
-			data1 := make([]byte, len(data))
-			copy(data1, data)
-			tmp := new(basic.TransactionBatch)
-			err := tmp.Decode(&data1)
-			if err == nil {
-				TBCache = append(TBCache, tmp)
-			}
-			if !sendFlag {
-				fmt.Println("Start sending packets")
-				StartSendingTx <- true
-				sendFlag = true
+			if data.Round == uint32(CurrentEpoch+1) {
+				data1 := make([]byte, len(data.Data))
+				copy(data1, data.Data)
+				tmp := new(basic.TransactionBatch)
+				err := tmp.Decode(&data1)
+				if err == nil {
+					TBCache = append(TBCache, tmp)
+				}
+				if data.ID == CacheDbRef.Leader && !sendFlag {
+					fmt.Println("Start sending packets")
+					StartSendingTx <- true
+					sendFlag = true
+				}
 			}
 		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {

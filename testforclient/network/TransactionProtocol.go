@@ -219,7 +219,12 @@ func SendTxBlock(data *[]byte) {
 func HandleTotalTx(data []byte) error {
 	data1 := make([]byte, len(data))
 	copy(data1, data)
-	TxBatchCache <- data1
+	var tmp TxBatchInfo
+	err := tmp.Decode(&data1)
+	if err != nil {
+		return err
+	}
+	TxBatchCache <- tmp
 	return nil
 }
 
@@ -260,14 +265,16 @@ func HandleTxLeader() {
 	for flag {
 		select {
 		case data := <-TxBatchCache:
-			data1 := make([]byte, len(data))
-			copy(data1, data)
-			tmp := new(basic.TransactionBatch)
-			err := tmp.Decode(&data1)
-			//fmt.Println("Get a batch")
-			if err == nil {
-				//fmt.Println("Batch is good", tmp.TxCnt)
-				TBCache = append(TBCache, tmp)
+			if data.Round == uint32(CurrentEpoch+1) {
+				data1 := make([]byte, len(data.Data))
+				copy(data1, data.Data)
+				tmp := new(basic.TransactionBatch)
+				err := tmp.Decode(&data1)
+				//fmt.Println("Get a batch")
+				if err == nil {
+					//fmt.Println("Batch is good", tmp.TxCnt)
+					TBCache = append(TBCache, tmp)
+				}
 			}
 		case <-time.After(timeoutGetTx):
 			if len(TBCache) > 0 {
