@@ -41,7 +41,7 @@ var T1 time.Time = time.Now()
 
 const BandDiverse = true
 
-const MyAddress = "34.207.92.203:9999"
+const MyAddress = "172.20.33.255:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
