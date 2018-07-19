@@ -20,7 +20,7 @@ func HandleTx() {
 	for flag {
 		select {
 		case data := <-TxBatchCache:
-			if data.Round == uint32(CurrentEpoch+1) {
+			if data.Epoch == CurrentEpoch {
 				data1 := make([]byte, len(data.Data))
 				copy(data1, data.Data)
 				tmp := new(basic.TransactionBatch)
@@ -114,6 +114,7 @@ func HandleTxList(data []byte) error {
 		BatchCache[thisRound][i].Data = (*tmpBatch)[i].Encode()
 		BatchCache[thisRound][i].ID = CacheDbRef.ID
 		BatchCache[thisRound][i].ShardID = CacheDbRef.ShardNum
+		BatchCache[thisRound][i].Epoch = CurrentEpoch
 		BatchCache[thisRound][i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
 			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)

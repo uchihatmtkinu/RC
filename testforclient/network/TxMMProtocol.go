@@ -51,6 +51,7 @@ func (a *TxBatchInfo) Encode() []byte {
 	var tmp []byte
 	basic.Encode(&tmp, a.ID)
 	basic.Encode(&tmp, a.ShardID)
+	basic.Encode(&tmp, a.Epoch)
 	basic.Encode(&tmp, a.Round)
 	basic.Encode(&tmp, &a.Data)
 	return tmp
@@ -65,6 +66,10 @@ func (a *TxBatchInfo) Decode(data *[]byte) error {
 		return err
 	}
 	err = basic.Decode(&data1, &a.ShardID)
+	if err != nil {
+		return err
+	}
+	err = basic.Decode(&data1, &a.Epoch)
 	if err != nil {
 		return err
 	}

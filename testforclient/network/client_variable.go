@@ -162,6 +162,7 @@ type syncNotReadyInfo struct {
 type TxBatchInfo struct {
 	ID      uint32
 	ShardID uint32
+	Epoch   int
 	Round   uint32
 	Data    []byte
 }
