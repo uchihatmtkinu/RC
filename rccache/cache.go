@@ -195,7 +195,7 @@ func (d *DbRef) AddCache(HashID [32]byte) error {
 		d.HashCache[tmp] = [][32]byte{HashID}
 	} else {
 		if xxx[0] == HashID {
-			fmt.Println("Existing:", base58.Encode(HashID[:]))
+			//fmt.Println("Existing:", base58.Encode(HashID[:]))
 			return fmt.Errorf("Existing")
 		}
 		fmt.Println("fuck!!!")

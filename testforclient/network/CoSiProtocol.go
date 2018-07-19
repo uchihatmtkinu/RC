@@ -377,5 +377,17 @@ func HandleCoSiSig(request []byte) {
 		log.Panic(err)
 	}
 
-	cosiSigCh <- payload
+	//cosiSigCh <- payload
+	SafeSendCosiSig(cosiSigCh, payload)
+}
+
+//SafeSendCosiSig the cosi sig data
+func SafeSendCosiSig(ch chan cosi.SignaturePart, value cosi.SignaturePart) (closed bool) {
+	defer func() {
+		if recover() != nil {
+			closed = true
+		}
+	}()
+	ch <- value
+	return false
 }
