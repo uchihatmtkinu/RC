@@ -234,6 +234,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Unlock()
 	if tmpflag {
 		StartLastTxBlock <- true
+		StopGetTx <- true
 	}
 	return nil
 }
@@ -312,7 +313,6 @@ func HandleTxBlock(data []byte) error {
 		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
-		StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
