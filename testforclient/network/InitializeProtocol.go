@@ -73,7 +73,6 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 	}
 	//tmp, _ := x509.MarshalECPrivateKey(&acc[i].Pri)
 	//TODO need modify
-	shardRegion := 1
 	for i := 0; i < int(IPCnt); i++ {
 		scannerPri.Scan()
 		IPAddrPri = scannerPri.Text()
@@ -100,39 +99,17 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 			//shard.GlobalGroupMems[i+IPCnt].AddRep(int64(i + IPCnt))
 		}
 		if IPAddrPri == input {
-			if i >= IPCnt/2 && initType != 0 {
-				shardRegion = 2
-			}
 			MyGlobalID = i
 			*ID = i
 			if initType == 2 {
 				MyGlobalID += IPCnt
 				*ID += IPCnt
 			}
-			bindAddress = ":" + strconv.Itoa(3000+MyGlobalID)
+			bindAddress = IPAddrPri + ":" + strconv.Itoa(3000+MyGlobalID)
 		}
 		//map ip+port -> global ID
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
-	}
-	RegionCnt := IPCnt
-	if initType != 0 {
-		RegionCnt = IPCnt / 2
-	}
-	if shardRegion == 1 {
-		for i := 0; i < RegionCnt; i++ {
-			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
-			if initType != 0 {
-				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
-			}
-		}
-	} else {
-		for i := RegionCnt; i < IPCnt; i++ {
-			shard.GlobalGroupMems[i].Address = shard.GlobalGroupMems[i].PrivateAddress
-			if initType != 0 {
-				shard.GlobalGroupMems[i+IPCnt].Address = shard.GlobalGroupMems[i+IPCnt].PrivateAddress
-			}
-		}
 	}
 	CacheDbRef.New(uint32(*ID), acc[*ID].Pri)
 	for i := 0; i < int(numCnt); i++ {
