@@ -21,7 +21,7 @@ func SendTx(x *[]byte) {
 
 	}
 
-	HandleTotalTx(*x)
+	HandleTotalTx(tmp.Encode())
 }
 
 //SendLoopMiner is the protocol for sending

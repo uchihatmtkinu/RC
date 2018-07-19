@@ -222,6 +222,7 @@ func HandleTotalTx(data []byte) error {
 	var tmp TxBatchInfo
 	err := tmp.Decode(&data1)
 	if err != nil {
+		fmt.Println("Decode tx batch error")
 		return err
 	}
 	TxBatchCache <- tmp
