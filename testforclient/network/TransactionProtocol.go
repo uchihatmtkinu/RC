@@ -266,7 +266,7 @@ func HandleTxLeader() {
 	for flag {
 		select {
 		case data := <-TxBatchCache:
-			if data.Epoch == CurrentEpoch {
+			if data.Epoch == uint32(CurrentEpoch+1) {
 				data1 := make([]byte, len(data.Data))
 				copy(data1, data.Data)
 				tmp := new(basic.TransactionBatch)
