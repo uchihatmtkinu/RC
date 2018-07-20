@@ -85,11 +85,12 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				if syncBlockMessage.Block.VerifyCoSignature(ms) {
 					sbrxflag = false
 				} else {
-					aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
+					//aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					fmt.Println("Verifyied cosi falied")
+					sbrxflag = false
 					//TODO test
 					//tbrxflag = true
-					go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
+					//go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
 				}
 			}
 		//TODO test

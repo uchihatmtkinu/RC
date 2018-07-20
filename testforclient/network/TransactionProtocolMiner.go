@@ -20,7 +20,7 @@ func HandleTx() {
 	for flag {
 		select {
 		case data := <-TxBatchCache:
-			if data.Round == uint32(CurrentEpoch+1) {
+			if data.Epoch == uint32(CurrentEpoch+1) {
 				data1 := make([]byte, len(data.Data))
 				copy(data1, data.Data)
 				tmp := new(basic.TransactionBatch)
@@ -39,7 +39,7 @@ func HandleTx() {
 				CacheDbRef.Mu.Lock()
 				tmpCnt := 0
 				bad := 0
-				fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
+				//fmt.Println(time.Now(), "TxBatch Started", len(TBCache), "in total")
 				for j := 0; j < len(TBCache); j++ {
 					tmpCnt += int(TBCache[j].TxCnt)
 					for i := uint32(0); i < TBCache[j].TxCnt; i++ {
@@ -50,7 +50,7 @@ func HandleTx() {
 						}
 					}
 				}
-				fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
+				//fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}
@@ -114,6 +114,7 @@ func HandleTxList(data []byte) error {
 		BatchCache[thisRound][i].Data = (*tmpBatch)[i].Encode()
 		BatchCache[thisRound][i].ID = CacheDbRef.ID
 		BatchCache[thisRound][i].ShardID = CacheDbRef.ShardNum
+		BatchCache[thisRound][i].Epoch = uint32(CurrentEpoch + 1)
 		BatchCache[thisRound][i].Round = tmp.Round
 		if i != CacheDbRef.ShardNum {
 			fmt.Println("Send TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
@@ -150,7 +151,7 @@ func HandleTxList(data []byte) error {
 						fmt.Println("Resend TxBatch, Round", tmp.Round, "to Leader", shard.ShardToGlobal[yy][0], "Shard", yy)
 						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[yy][0]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 					} else {
-						fmt.Println("Reend TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
+						fmt.Println("Resend TxBatch, Round", tmp.Round, "to", shard.ShardToGlobal[i][xx], "Shard", i)
 						sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[i][xx]].Address, "TxMM", BatchCache[thisRound][i].Encode())
 					}
 				}
@@ -233,6 +234,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Unlock()
 	if tmpflag {
 		StartLastTxBlock <- true
+		StopGetTx <- true
 	}
 	return nil
 }
@@ -311,7 +313,6 @@ func HandleTxBlock(data []byte) error {
 		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
-		StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}

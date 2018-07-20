@@ -14,6 +14,7 @@ import (
 )
 
 var readymask []byte
+var SentLeaderReadyFlag = true
 
 //ShardProcess is the process of sharding
 func ShardProcess() {
@@ -97,6 +98,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 	//TODO modify int(gVar.ShardSize)/2
 	cnt := 0
 	timeoutflag := true
+	SentLeaderReadyFlag = false
 	for readyMember < int(gVar.ShardSize) && timeoutflag {
 		select {
 		case readyMessage = <-readyMemberCh:
@@ -129,7 +131,7 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 			SendShardReadyMessage(it.Address, "leaderReady", readyInfo{shard.MyMenShard.Shard, CurrentEpoch})
 		}
 	}
-
+	SentLeaderReadyFlag = true
 	for readyLeader < int(gVar.ShardCnt) && timeoutflag {
 		select {
 		case readyMessage = <-readyLeaderCh:
@@ -159,6 +161,9 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 
 //HandleRequestShardLeaderReady handle the request from other leader
 func HandleRequestShardLeaderReady(data []byte) {
+	if !SentLeaderReadyFlag {
+		return
+	}
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	var buff bytes.Buffer
@@ -184,7 +189,7 @@ func MinerReadyProcess() {
 		readyMessage = <-readyMemberCh
 	}
 	SendShardReadyMessage(LeaderAddr, "shardReady", readyInfo{MyGlobalID, CurrentEpoch})
-	fmt.Println("Sent Ready")
+	fmt.Println(time.Now(), "Sent Ready")
 }
 
 //SendShardReadyMessage is to send shardready message

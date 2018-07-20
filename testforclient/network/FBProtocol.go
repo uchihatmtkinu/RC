@@ -39,7 +39,7 @@ func SendStartBlock(ms *[]shard.MemShard) {
 	CacheDbRef.GenerateStartBlock()
 	var data []byte
 	CacheDbRef.TxB.Encode(&data, 1)
-	fmt.Println(CacheDbRef.ID, "startBlock done")
+	fmt.Println(time.Now(), CacheDbRef.ID, "startBlock done")
 	CacheDbRef.PrevHeight = CacheDbRef.TxB.Height
 	fmt.Println("PrevHeight:", CacheDbRef.PrevHeight)
 	CacheDbRef.Mu.Unlock()

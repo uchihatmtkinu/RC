@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"encoding/gob"
 	"io/ioutil"
@@ -48,7 +49,7 @@ func sendData(addr string, data []byte) {
 	for true {
 		conn, err := net.Dial(protocol, addr)
 		if err != nil {
-			fmt.Printf("%s is not available\n", addr)
+			fmt.Println(time.Now(), addr, "is not available")
 			return
 		}
 		defer conn.Close()
@@ -105,7 +106,7 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		//fmt.Println(time.Now(), ID, "Received", command, "command")
+		fmt.Println(time.Now(), "Received", command, "command")
 
 		switch command {
 		case "shutDown":

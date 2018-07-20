@@ -41,7 +41,7 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
 	fmt.Println("--------------------")
-	fmt.Println("Rep data, lastHash:", base58.Encode(lastHash[:]))
+	fmt.Println("Rep data, lastHash:", base58.Encode(lastHash[:]), shard.StartFlag)
 	fmt.Print("Rep data:")
 	for i := 0; i < len(*repData); i++ {
 		fmt.Print((*repData)[i], " ")
