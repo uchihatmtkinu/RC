@@ -32,7 +32,6 @@ func sendTxMessage(addr string, command string, message []byte) {
 func TxGeneralLoop() {
 	rand.Seed(time.Now().Unix() * int64(CacheDbRef.ID))
 
-	fmt.Println(time.Now())
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to process Tx:")
 	if CacheDbRef.Now == nil {
 		CacheDbRef.NewTxList()
