@@ -30,7 +30,6 @@ type RepBlockchainIterator struct {
 // MineRepBlock mines a new repblock with the provided transactions
 func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID int) {
 	var lastHash [32]byte
-	var fromOtherFlag bool
 
 	CurrentRepBlock.Mu.RLock()
 	lastHash = CurrentRepBlock.Block.Hash
@@ -50,11 +49,8 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	fmt.Println(shard.PreviousSyncBlockHash)
 	fmt.Println(*cache)
 	fmt.Println("--------------------")
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(repData, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
+	CurrentRepBlock.Block = NewRepBlock(repData, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
-	if fromOtherFlag {
-		RepPowTxCh <- RepPowInfo{ID, CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
-	}
 	shard.StartFlag = false
 
 	err := bc.Db.Update(func(tx *bolt.Tx) error {

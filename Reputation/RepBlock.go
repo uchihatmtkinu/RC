@@ -26,7 +26,7 @@ type RepBlock struct {
 }
 
 //NewRepBlock creates and returns Block
-func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
+func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) *RepBlock {
 	//var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	tmpprevSyncRepBlockHash := make([][32]byte, len(prevSyncRepBlockHash))
@@ -45,12 +45,13 @@ func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]b
 	} else {
 		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
 	}
-	pow := NewProofOfWork(block)
-	nonce, hash, flag := pow.Run()
+	block.Nonce = 0
+	data := block.prepareData()
+	hash := sha256.Sum256(data)
 	block.Hash = hash
-	block.Nonce = nonce
 
-	return block, flag
+
+	return block
 }
 
 // NewGenesisRepBlock creates and returns genesis Block
@@ -109,6 +110,25 @@ func (b *RepBlock) Print() {
 	fmt.Println("Hash:", b.Hash)
 
 }
+
+
+func (b *RepBlock) prepareData() []byte {
+	data := bytes.Join(
+		[][]byte{
+			b.HashRep(),
+			b.HashPrevTxBlockHashes(),
+			BoolToHex(b.StartBlock),
+			b.PrevRepBlockHash[:],
+			//IntToHex(pow.RepBlock.Timestamp),
+			IntToHex(int64(b.Nonce)),
+		},
+		[]byte{},
+	)
+
+	return data
+}
+
+
 
 // DeserializeRepBlock decode Repblock
 func DeserializeRepBlock(d []byte) *RepBlock {
