@@ -11,6 +11,7 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 
 	"fmt"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 // RepBlock reputation block
@@ -23,6 +24,7 @@ type RepBlock struct {
 	PrevRepBlockHash  [32]byte
 	Hash              [32]byte
 	Nonce             int
+	Cosig			  cosi.SignaturePart
 }
 
 //NewRepBlock creates and returns Block
@@ -41,9 +43,9 @@ func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]b
 	var block *RepBlock
 	//generate new block
 	if startBlock {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0,[]byte{0}}
 	} else {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0,[]byte{0}}
 	}
 	block.Nonce = 0
 	data := block.prepareData()
@@ -56,7 +58,7 @@ func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]b
 
 // NewGenesisRepBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber}, [32]byte{gVar.MagicNumber}, int(gVar.MagicNumber)}
+	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber}, [32]byte{gVar.MagicNumber}, int(gVar.MagicNumber), []byte{gVar.MagicNumber}}
 	return block
 }
 

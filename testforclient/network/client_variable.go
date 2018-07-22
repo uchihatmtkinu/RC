@@ -79,33 +79,48 @@ type RepBlockRxInfo struct {
 var RxRepBlockCh chan *Reputation.RepBlock
 
 //------------------- cosi process -------------------------
+//announceInfo used in cosi announce
+type announceInfo struct {
+	ID     	int
+	Message []byte
+	Round 	int
+	Epoch	int
+}
+
+
 //commitInfo used in commitCh
 type commitInfo struct {
 	ID     int
 	Commit cosi.Commitment
+	Round 	int
+	Epoch	int
 }
 
 // challengeInfo challenge info
 type challengeInfo struct {
 	AggregatePublicKey ed25519.PublicKey
 	AggregateCommit    cosi.Commitment
+	Round 	int
+	Epoch	int
 }
 
 //responseInfo response info
 type responseInfo struct {
 	ID  int
 	Sig cosi.SignaturePart
+	Round 	int
+	Epoch	int
 }
 
 //channel used in cosi
 //cosiAnnounceCh cosi announcement channel
-var cosiAnnounceCh chan []byte
+var cosiAnnounceCh chan announceInfo
 
 //cosiCommitCh		cosi commitment channel
 var cosiCommitCh chan commitInfo
 var cosiChallengeCh chan challengeInfo
 var cosiResponseCh chan responseInfo
-var cosiSigCh chan cosi.SignaturePart
+var cosiSigCh chan responseInfo
 
 //finalSignal
 var finalSignal chan []byte
@@ -138,6 +153,7 @@ type syncTBInfo struct {
 //syncRequestInfo request sync
 type syncRequestInfo struct {
 	ID    int
+	Round int
 	Epoch int
 }
 
