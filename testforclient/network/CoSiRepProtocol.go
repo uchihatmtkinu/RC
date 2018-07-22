@@ -24,7 +24,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard) (bool,cosi.SignaturePart) {
 	var commits []cosi.Commitment
 	var pubKeys []ed25519.PublicKey
 	var sigParts []cosi.SignaturePart
-	var cosiSig cosi.SignaturePart
+
 	// cosi begin
 	//elapsed := time.Since(gVar.T1)
 	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
@@ -159,7 +159,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard) (bool,cosi.SignaturePart) {
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSigMessage := responseInfo{MyGlobalID, cosigners.AggregateSignature(aggregateCommit, sigParts), currentRepRound, CurrentEpoch}
-	CosiData[currentRepRound*100+CurrentEpoch] = cosiSig
+	CosiData[currentRepRound+CurrentEpoch*100] = cosiSigMessage.Sig
 
 
 	//currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
@@ -178,7 +178,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard) (bool,cosi.SignaturePart) {
 	CoSiFlag = false
 	close(cosiCommitCh)
 	close(cosiResponseCh)
-	return res.Last, cosiSig
+	return res.Last, cosiSigMessage.Sig
 }
 
 
@@ -372,7 +372,7 @@ func HandleReqCosiSig(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-	tmp, ok := CosiData[payload.Epoch]
+	tmp, ok := CosiData[payload.Round+payload.Epoch*100]
 	if ok {
 		SendCosiMessage(shard.GlobalGroupMems[payload.ID].Address, "cosiSig", tmp)
 	}
