@@ -147,7 +147,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 			for i := uint32(1); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 				if maskBit(it.InShardId, &responsemask) == cosi.Disabled {
-					fmt.Println(time.Now(), "Resend Cosi Sig to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
+					fmt.Println(time.Now(), "Resend Cosi Challenge to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
 					SendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 				}
 			}
@@ -338,11 +338,15 @@ func HandleCoSiCommit(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
+	sentFlag := false
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Epoch == CurrentEpoch && payload.Round >= Reputation.CurrentRepBlock.Round {
-		cosiCommitCh <- payload
+		sentFlag = true
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
+	if sentFlag {
+		cosiCommitCh <- payload
+	}
 }
 
 // HandleCoSiResponse rx response
@@ -356,11 +360,15 @@ func HandleCoSiResponse(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
+	sentFlag := false
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Epoch == CurrentEpoch && payload.Round >= Reputation.CurrentRepBlock.Round {
-		cosiResponseCh <- payload
+		sentFlag = true
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
+	if sentFlag {
+		cosiResponseCh <- payload
+	}
 }
 
 //HandleReqCosiSig handles the request from miner
@@ -391,11 +399,15 @@ func HandleCoSiAnnounce(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
+	sentflag := false
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if payload.Epoch == CurrentEpoch && payload.Round >= Reputation.CurrentRepBlock.Round {
-		cosiAnnounceCh <- payload
+		sentflag = true
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
+	if sentflag {
+		cosiAnnounceCh <- payload
+	}
 
 }
 
@@ -411,12 +423,15 @@ func HandleCoSiChallenge(request []byte) {
 		log.Panic(err)
 	}
 	//cosiChallengeCh <- payload
+	sentFlag := false
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if Reputation.CurrentRepBlock.Round == payload.Round && payload.Epoch == CurrentEpoch {
-		SafeSendChallenge(cosiChallengeCh, payload)
+		sentFlag = true
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
-
+	if sentFlag {
+		SafeSendChallenge(cosiChallengeCh, payload)
+	}
 }
 
 // HandleCosiSig rx cosisig
@@ -430,13 +445,16 @@ func HandleCoSiSig(request []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-
+	sentFlag := false
 	//cosiSigCh <- payload
 	Reputation.CurrentRepBlock.Mu.RLock()
 	if Reputation.CurrentRepBlock.Round == payload.Round && payload.Epoch == CurrentEpoch {
-		SafeSendCosiSig(cosiSigCh, payload)
+		sentFlag = true
 	}
 	Reputation.CurrentRepBlock.Mu.RUnlock()
+	if sentFlag {
+		SafeSendCosiSig(cosiSigCh, payload)
+	}
 }
 
 //SafeSendCosiSig the cosi sig data
