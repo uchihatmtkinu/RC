@@ -106,7 +106,7 @@ func StartServer(ID int) {
 		if len(request) > commandLength {
 			request = request[commandLength:]
 		}
-		fmt.Println(time.Now(), "Received", command, "command")
+		//fmt.Println(time.Now(), "Received", command, "command")
 
 		switch command {
 		case "shutDown":
