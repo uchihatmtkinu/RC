@@ -12,6 +12,7 @@ import (
 
 	"fmt"
 	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/ed25519"
 )
 
 // RepBlock reputation block
@@ -51,7 +52,6 @@ func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]b
 	data := block.prepareData()
 	hash := sha256.Sum256(data)
 	block.Hash = hash
-
 
 	return block
 }
@@ -113,6 +113,19 @@ func (b *RepBlock) Print() {
 
 }
 
+
+// VerifyCosign verify CoSignature
+func (b *RepBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
+	//verify signature
+	var pubKeys []ed25519.PublicKey
+	sbMessage := b.PrevRepBlockHash[:]
+	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
+	for i,it:= range b.RepTransactions{
+		pubKeys[i] = (*ms)[it.GlobalID].CosiPub
+	}
+	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), sbMessage, b.Cosig)
+	return valid
+}
 
 func (b *RepBlock) prepareData() []byte {
 	data := bytes.Join(
