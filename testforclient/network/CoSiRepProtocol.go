@@ -31,7 +31,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	//sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-	fmt.Println(time.Now(), "Leader CoSi Rep")
+
 	if res.Round != 0 {
 		<-RepFinishChan[res.Round-1]
 	}
@@ -42,7 +42,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 	Reputation.CurrentRepBlock.Mu.RLock()
 	currentRepRound := Reputation.CurrentRepBlock.Round
 	Reputation.CurrentRepBlock.Mu.RUnlock()
-
+	fmt.Println(time.Now(), "Leader CoSi Rep, Round", currentRepRound)
 	CoSiFlag = true
 	//To simplify the problem, we just validate the previous repblock hash
 	Reputation.CurrentRepBlock.Mu.RLock()
@@ -209,7 +209,7 @@ func MemberCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, []byte) {
 	cosiChallengeCh = make(chan challengeInfo)
 	cosiSigCh = make(chan responseInfo)
 	CoSiFlag = true
-	fmt.Println(time.Now(), "Member CoSi")
+	fmt.Println(time.Now(), "Member CoSi Rep, Round:", currentRepRound)
 	//generate pubKeys
 	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
 	for i := 0; i < int(gVar.ShardSize); i++ {

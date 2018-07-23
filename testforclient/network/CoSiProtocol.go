@@ -24,13 +24,13 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	var sigParts []cosi.SignaturePart
 
 	// cosi begin
+	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
 	elapsed := time.Since(gVar.T1)
 	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	fmt.Println(time.Now(), "Leader CoSi")
 
-	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round++
 	currentRepRound := Reputation.CurrentRepBlock.Round
