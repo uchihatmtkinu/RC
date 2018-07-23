@@ -26,6 +26,7 @@ const timeoutGetTx = time.Microsecond * 100
 
 //CurrentEpoch epoch now
 var CurrentEpoch int
+var CurrentRepRound int
 
 //LeaderAddr leader address
 var LeaderAddr string
@@ -81,35 +82,34 @@ var RxRepBlockCh chan *Reputation.RepBlock
 //------------------- cosi process -------------------------
 //announceInfo used in cosi announce
 type announceInfo struct {
-	ID     	int
+	ID      int
 	Message []byte
-	Round 	int
-	Epoch	int
+	Round   int
+	Epoch   int
 }
-
 
 //commitInfo used in commitCh
 type commitInfo struct {
 	ID     int
 	Commit cosi.Commitment
-	Round 	int
-	Epoch	int
+	Round  int
+	Epoch  int
 }
 
 // challengeInfo challenge info
 type challengeInfo struct {
 	AggregatePublicKey ed25519.PublicKey
 	AggregateCommit    cosi.Commitment
-	Round 	int
-	Epoch	int
+	Round              int
+	Epoch              int
 }
 
 //responseInfo response info
 type responseInfo struct {
-	ID  int
-	Sig cosi.SignaturePart
-	Round 	int
-	Epoch	int
+	ID    int
+	Sig   cosi.SignaturePart
+	Round int
+	Epoch int
 }
 
 //channel used in cosi
@@ -132,9 +132,10 @@ var CosiData map[int]cosi.SignaturePart
 
 //syncSBInfo sync block info
 type repInfo struct {
-	Last bool
-	Hash [][32]byte
-	Rep  *[]int64
+	Last  bool
+	Hash  [][32]byte
+	Rep   *[]int64
+	Round int
 }
 
 //---------------------- sync process -------------
@@ -215,6 +216,7 @@ var StartSendingTx chan bool
 
 var TxDecRevChan [gVar.NumTxListPerEpoch]chan txDecRev
 var TLChan [gVar.NumTxListPerEpoch]chan uint32
+var RepFinishChan [gVar.NumberRepPerEpoch]chan bool
 
 var TxBatchCache chan TxBatchInfo
 
