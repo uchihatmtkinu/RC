@@ -246,7 +246,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 			fmt.Println(time.Now(), "Resend cosi commit")
 			SendCosiMessage(LeaderAddr, "cosiCommit", commitMessage)
 		case currentChaMessage = <-cosiChallengeCh:
-			for currentChaMessage.Round == currentRepRound {
+			if currentChaMessage.Round == currentRepRound {
 				fmt.Println(time.Now(), "received cosi challenge from leader")
 				syncFlag = false
 			}
