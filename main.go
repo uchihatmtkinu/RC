@@ -103,11 +103,11 @@ func main() {
 		//go network.RepProcessLoop(&shard.GlobalGroupMems)
 
 		//test cosi
-		/*if shard.MyMenShard.Role == shard.RoleLeader {
+		if shard.MyMenShard.Role == shard.RoleLeader {
 			network.LeaderCosiProcess(&shard.GlobalGroupMems)
 		} else {
 			network.MemberCosiProcess(&shard.GlobalGroupMems)
-		}*/
+		}
 
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)

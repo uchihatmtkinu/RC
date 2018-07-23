@@ -26,7 +26,7 @@ var aski []int
 
 //SyncProcess processing sync after one epoch
 func SyncProcess(ms *[]shard.MemShard) {
-	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
+
 	CurrentEpoch++
 	fmt.Println("Sync Began")
 

@@ -24,13 +24,13 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	var sigParts []cosi.SignaturePart
 
 	// cosi begin
-	//elapsed := time.Since(gVar.T1)
-	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
-	//tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
-	//sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-	//fmt.Println(time.Now(), "Leader CoSi")
-	<-startSync
+	elapsed := time.Since(gVar.T1)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
+	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+	fmt.Println(time.Now(), "Leader CoSi")
 
+	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round++
 	currentRepRound := Reputation.CurrentRepBlock.Round
@@ -182,19 +182,17 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	var mySecret *cosi.Secret
 	var pubKeys []ed25519.PublicKey
 	var it *shard.MemShard
-	Reputation.CurrentRepBlock.Mu.RLock()
+	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
+	Reputation.CurrentRepBlock.Mu.Lock()
+	Reputation.CurrentRepBlock.Round++
 	currentRepRound := Reputation.CurrentRepBlock.Round
-	Reputation.CurrentRepBlock.Mu.RUnlock()
-	res := <-startRep
-	tmp := res.Hash
-	Reputation.MyRepBlockChain.MineRepBlock(res.Rep, &tmp, MyGlobalID)
+	Reputation.CurrentRepBlock.Mu.Unlock()
 
 	//elapsed := time.Since(gVar.T1)
 	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//var timeoutflag bool
 	//timeoutflag = false
 	//cosiAnnounceCh = make(chan []byte)
-	<-startSync
 	//elapsed := time.Since(gVar.T1)
 	//
 	// fmt.Println(time.Now(), "App elapsed: ", elapsed)
