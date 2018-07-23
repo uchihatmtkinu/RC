@@ -11,6 +11,8 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 
 	"fmt"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
+	"github.com/uchihatmtkinu/RC/ed25519"
 )
 
 // RepBlock reputation block
@@ -23,10 +25,11 @@ type RepBlock struct {
 	PrevRepBlockHash  [32]byte
 	Hash              [32]byte
 	Nonce             int
+	Cosig			  cosi.SignaturePart
 }
 
 //NewRepBlock creates and returns Block
-func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) (*RepBlock, bool) {
+func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]byte, prevTxBlockHashes [][32]byte, prevRepBlockHash [32]byte) *RepBlock {
 	//var item *shard.MemShard
 	var repTransactions []*RepTransaction
 	tmpprevSyncRepBlockHash := make([][32]byte, len(prevSyncRepBlockHash))
@@ -41,21 +44,21 @@ func NewRepBlock(repData *[]int64, startBlock bool, prevSyncRepBlockHash [][32]b
 	var block *RepBlock
 	//generate new block
 	if startBlock {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, tmpprevSyncRepBlockHash, tmpprevTxBlockHashes, [32]byte{gVar.MagicNumber}, [32]byte{}, 0,[]byte{0}}
 	} else {
-		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0}
+		block = &RepBlock{time.Now().Unix(), repTransactions, startBlock, nil, tmpprevTxBlockHashes, prevRepBlockHash, [32]byte{}, 0,[]byte{0}}
 	}
-	pow := NewProofOfWork(block)
-	nonce, hash, flag := pow.Run()
+	block.Nonce = 0
+	data := block.prepareData()
+	hash := sha256.Sum256(data)
 	block.Hash = hash
-	block.Nonce = nonce
 
-	return block, flag
+	return block
 }
 
 // NewGenesisRepBlock creates and returns genesis Block
 func NewGenesisRepBlock() *RepBlock {
-	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber}, [32]byte{gVar.MagicNumber}, int(gVar.MagicNumber)}
+	block := &RepBlock{time.Now().Unix(), nil, true, [][32]byte{{gVar.MagicNumber}}, [][32]byte{{gVar.MagicNumber}}, [32]byte{gVar.MagicNumber}, [32]byte{gVar.MagicNumber}, int(gVar.MagicNumber), []byte{gVar.MagicNumber}}
 	return block
 }
 
@@ -109,6 +112,38 @@ func (b *RepBlock) Print() {
 	fmt.Println("Hash:", b.Hash)
 
 }
+
+
+// VerifyCosign verify CoSignature
+func (b *RepBlock) VerifyCoSignature(ms *[]shard.MemShard) bool {
+	//verify signature
+	var pubKeys []ed25519.PublicKey
+	sbMessage := b.PrevRepBlockHash[:]
+	pubKeys = make([]ed25519.PublicKey, int(gVar.ShardSize))
+	for i,it:= range b.RepTransactions{
+		pubKeys[i] = (*ms)[it.GlobalID].CosiPub
+	}
+	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), sbMessage, b.Cosig)
+	return valid
+}
+
+func (b *RepBlock) prepareData() []byte {
+	data := bytes.Join(
+		[][]byte{
+			b.HashRep(),
+			b.HashPrevTxBlockHashes(),
+			BoolToHex(b.StartBlock),
+			b.PrevRepBlockHash[:],
+			//IntToHex(pow.RepBlock.Timestamp),
+			IntToHex(int64(b.Nonce)),
+		},
+		[]byte{},
+	)
+
+	return data
+}
+
+
 
 // DeserializeRepBlock decode Repblock
 func DeserializeRepBlock(d []byte) *RepBlock {

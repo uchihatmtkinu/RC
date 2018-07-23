@@ -121,7 +121,9 @@ func TxLastBlock() {
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
+		CurrentRepRound++
+		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
+		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	StopGetTx <- true
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
@@ -142,7 +144,9 @@ func TxNormalBlock() {
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
+		CurrentRepRound++
+		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
+		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	data3 := new([]byte)
 	CacheDbRef.TxB.Encode(data3, 0)

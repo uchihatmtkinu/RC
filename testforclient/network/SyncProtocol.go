@@ -26,6 +26,7 @@ var aski []int
 
 //SyncProcess processing sync after one epoch
 func SyncProcess(ms *[]shard.MemShard) {
+
 	CurrentEpoch++
 	fmt.Println("Sync Began")
 
@@ -46,7 +47,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 		//if !maskBit(i, &syncmask) {
 		if i != shard.MyMenShard.Shard {
 			wg.Add(1)
-			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
+			go SendSyncMessage((*ms)[shard.ShardToGlobal[i][aski[i]]].Address, "requestSync", syncRequestInfo{ID: MyGlobalID, Epoch: CurrentEpoch})
 			go ReceiveSyncProcess(i, &wg, ms)
 		}
 		//}
@@ -106,12 +107,12 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 		case <-syncNotReadyCh[k]:
 			fmt.Println(time.Now(), "sleep for not ready")
 			time.Sleep(timeSyncNotReadySleep)
-			go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
+			go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{ID: MyGlobalID, Epoch: CurrentEpoch})
 		case <-time.After(timeoutSync):
 			{
 				aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 				fmt.Println(time.Now(), "wait for shard", k, " from user", shard.ShardToGlobal[k][aski[k]])
-				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{MyGlobalID, CurrentEpoch})
+				go SendSyncMessage((*ms)[shard.ShardToGlobal[k][aski[k]]].Address, "requestSync", syncRequestInfo{ID: MyGlobalID, Epoch: CurrentEpoch})
 			}
 		}
 	}

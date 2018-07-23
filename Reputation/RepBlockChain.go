@@ -10,6 +10,7 @@ import (
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 const dbFile = "RepBlockchain"
@@ -30,7 +31,6 @@ type RepBlockchainIterator struct {
 // MineRepBlock mines a new repblock with the provided transactions
 func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID int) {
 	var lastHash [32]byte
-	var fromOtherFlag bool
 
 	CurrentRepBlock.Mu.RLock()
 	lastHash = CurrentRepBlock.Block.Hash
@@ -50,13 +50,18 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	fmt.Println(shard.PreviousSyncBlockHash)
 	fmt.Println(*cache)
 	fmt.Println("--------------------")
-	CurrentRepBlock.Block, fromOtherFlag = NewRepBlock(repData, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
+	CurrentRepBlock.Block = NewRepBlock(repData, shard.StartFlag, shard.PreviousSyncBlockHash, *cache, lastHash)
 	CurrentRepBlock.Round++
-	if fromOtherFlag {
-		RepPowTxCh <- RepPowInfo{ID, CurrentRepBlock.Round, CurrentRepBlock.Block.Nonce, CurrentRepBlock.Block.Hash}
-	}
 	shard.StartFlag = false
 
+	//StartCalPoWAnnounce <- true
+}
+
+
+func (bc *RepBlockchain) AddRepSig(cosig cosi.SignaturePart) {
+	CurrentRepBlock.Mu.Lock()
+	defer CurrentRepBlock.Mu.Unlock()
+	CurrentRepBlock.Block.Cosig = cosig
 	err := bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(CurrentRepBlock.Block.Hash[:], CurrentRepBlock.Block.Serialize())
@@ -76,9 +81,7 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	if err != nil {
 		log.Panic(err)
 	}
-	StartCalPoWAnnounce <- true
 }
-
 //AddRepBlockFromOthers adds a reputation block
 func (bc *RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock) {
 	CurrentRepBlock.Mu.Lock()

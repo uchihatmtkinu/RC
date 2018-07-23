@@ -27,7 +27,8 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
 	copy(tmp, *CacheDbRef.TBCache)
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
-	startRep <- repInfo{Last: false, Hash: tmp, Rep: tmpRep}
+	CurrentRepRound++
+	go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock")
 	close(StopGetTx)
 }
@@ -69,7 +70,8 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
 	copy(tmp, *CacheDbRef.TBCache)
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
-	startRep <- repInfo{Last: false, Hash: tmp, Rep: tmpRep}
+	CurrentRepRound++
+	go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock")
 	close(StopGetTx)
 	return nil

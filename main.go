@@ -100,7 +100,7 @@ func main() {
 			go network.HandleTx()
 		}
 		//test rep
-		go network.RepProcessLoop(&shard.GlobalGroupMems)
+		//go network.RepProcessLoop(&shard.GlobalGroupMems)
 
 		//test cosi
 		if shard.MyMenShard.Role == shard.RoleLeader {

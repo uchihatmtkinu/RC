@@ -310,7 +310,9 @@ func HandleTxBlock(data []byte) error {
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
+		CurrentRepRound++
+		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
+		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
 		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")

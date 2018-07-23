@@ -22,6 +22,7 @@ func ShardProcess() {
 
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round = -1
+	CurrentRepRound = -1
 	Reputation.CurrentRepBlock.Mu.Unlock()
 
 	shard.StartFlag = true
