@@ -194,12 +194,12 @@ func MemberCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, []byte) {
 	if res.Round != 0 {
 		<-RepFinishChan[res.Round-1]
 	}
+
+	tmp := res.Hash
+	Reputation.MyRepBlockChain.MineRepBlock(res.Rep, &tmp, MyGlobalID)
 	Reputation.CurrentRepBlock.Mu.RLock()
 	currentRepRound := Reputation.CurrentRepBlock.Round
 	Reputation.CurrentRepBlock.Mu.RUnlock()
-	tmp := res.Hash
-	Reputation.MyRepBlockChain.MineRepBlock(res.Rep, &tmp, MyGlobalID)
-
 	//elapsed := time.Since(gVar.T1)
 	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//var timeoutflag bool
