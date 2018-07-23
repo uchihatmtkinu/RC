@@ -141,7 +141,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 	readyMemberCh = make(chan readyInfo, bufferSize)
 	readyLeaderCh = make(chan readyInfo, bufferSize)
 	//channel used in CoSi
-	cosiAnnounceCh = make(chan []byte)
+	cosiAnnounceCh = make(chan announceInfo)
 
 	//channel used in final block
 	finalSignal = make(chan []byte)
@@ -156,6 +156,9 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 		TLChan[i] = make(chan uint32, gVar.ShardSize)
 		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
 		TDSChan[i] = make(chan bool, 1)
+	}
+	for i := uint32(0); i < gVar.NumberRepPerEpoch; i++ {
+		RepFinishChan[i] = make(chan bool, 1)
 	}
 	CosiData = make(map[int]cosi.SignaturePart, 1000)
 }
