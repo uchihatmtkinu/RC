@@ -31,7 +31,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 	//fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	//tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	//sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-	//fmt.Println(time.Now(), "Leader CoSi")
+	fmt.Println(time.Now(), "Leader CoSi Rep")
 	if res.Round != 0 {
 		<-RepFinishChan[res.Round-1]
 	}

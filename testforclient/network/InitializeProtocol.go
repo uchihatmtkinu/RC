@@ -155,7 +155,8 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 		TxDecRevChan[i] = make(chan txDecRev, gVar.ShardCnt)
 		TLChan[i] = make(chan uint32, gVar.ShardSize)
 		txMCh[i] = make(chan txDecRev, gVar.ShardCnt)
-		TDSChan[i] = make(chan bool, 1)
+		TDSChan[i] = make(chan int, 1)
+		TBChan[i] = make(chan int, 1)
 	}
 	for i := uint32(0); i < gVar.NumberRepPerEpoch; i++ {
 		RepFinishChan[i] = make(chan bool, 1)

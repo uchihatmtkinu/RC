@@ -213,7 +213,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	}
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
 
-		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- true
+		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- CurrentEpoch
 	}
 	tmpflag := false
 	CacheDbRef.Mu.Lock()
@@ -266,7 +266,9 @@ func HandleTxBlock(data []byte) error {
 		return err
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
-
+	if tmp.Height < CacheDbRef.PrevHeight {
+		return fmt.Errorf("Previous epoch txblock")
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxBlock(tmp, &s)
 	CacheDbRef.Mu.Unlock()
@@ -286,8 +288,24 @@ func HandleTxBlock(data []byte) error {
 	} else {
 		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
+
 	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
-		<-TDSChan[tmp.Height-CacheDbRef.PrevHeight-1]
+		waitFlag := true
+		for waitFlag {
+			tmpInt := <-TDSChan[tmp.Height-CacheDbRef.PrevHeight-1]
+			if tmpInt == CurrentEpoch {
+				waitFlag = false
+			}
+		}
+	}
+	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 && tmp.Height >= CacheDbRef.PrevHeight+2 {
+		waitFlag := true
+		for waitFlag {
+			tmpInt := <-TBChan[tmp.Height-CacheDbRef.PrevHeight-2]
+			if tmpInt == CurrentEpoch {
+				waitFlag = false
+			}
+		}
 	}
 	flag := true
 	for flag {
@@ -319,6 +337,8 @@ func HandleTxBlock(data []byte) error {
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	}
 	CacheDbRef.Mu.Unlock()
-
+	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+		TBChan[tmp.Height-CacheDbRef.PrevHeight-1] <- CurrentEpoch
+	}
 	return nil
 }
