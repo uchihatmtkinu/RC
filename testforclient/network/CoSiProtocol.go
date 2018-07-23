@@ -24,13 +24,13 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	var sigParts []cosi.SignaturePart
 
 	// cosi begin
+	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
 	elapsed := time.Since(gVar.T1)
 	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	fmt.Println(time.Now(), "Leader CoSi")
 
-	<-RepFinishChan[gVar.NumberRepPerEpoch-1]
 	Reputation.CurrentRepBlock.Mu.Lock()
 	Reputation.CurrentRepBlock.Round++
 	currentRepRound := Reputation.CurrentRepBlock.Round
@@ -246,7 +246,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 			fmt.Println(time.Now(), "Resend cosi commit")
 			SendCosiMessage(LeaderAddr, "cosiCommit", commitMessage)
 		case currentChaMessage = <-cosiChallengeCh:
-			for currentChaMessage.Round == currentRepRound {
+			if currentChaMessage.Round == currentRepRound {
 				fmt.Println(time.Now(), "received cosi challenge from leader")
 				syncFlag = false
 			}
@@ -276,11 +276,11 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), announceMessage, cosiSigMessage.Sig)
 	//add rep block sig
-	//if valid {
-	//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
-	//Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+	if valid {
+		//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+		Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 
-	//}
+	}
 	//close cosi
 	CoSiFlag = false
 	close(cosiChallengeCh)
