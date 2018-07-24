@@ -73,12 +73,15 @@ func TxListProcess() {
 	}
 	fmt.Println("TxDec of Round", thisround, "total txdec: ", uint32(cnt))
 	tmpflag := false
+	if thisround-CacheDbRef.PrevHeight != 0 {
+		<-TBChan[thisround-CacheDbRef.PrevHeight-1]
+	}
 	CacheDbRef.Mu.Lock()
 
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 	fmt.Println("TLG TDS length", len(TLG.TDS))
 	CacheDbRef.SignTDS(TLG)
-	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum], &CacheDbRef.RepCache[TLG.TDS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight])
+	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum], &CacheDbRef.RepCache[thisround-CacheDbRef.PrevHeight])
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(TLG.TDS[CacheDbRef.ShardNum].HashID[:]))
 	data2 := new([][]byte)
 	*data2 = make([][]byte, gVar.ShardCnt)
@@ -86,8 +89,8 @@ func TxListProcess() {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		TLG.TDS[i].Encode(&(*data2)[i])
 	}
-	go SendTxDecSet(*data2, TLG.TLS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight)
-	go TxNormalBlock(TLG.TLS[CacheDbRef.ShardNum].Round - CacheDbRef.PrevHeight)
+	go SendTxDecSet(*data2, thisround-CacheDbRef.PrevHeight)
+	go TxNormalBlock(thisround - CacheDbRef.PrevHeight)
 
 	CacheDbRef.Release(TLG)
 
@@ -100,6 +103,9 @@ func TxListProcess() {
 		}
 	}
 	CacheDbRef.Mu.Unlock()
+	if thisround-CacheDbRef.PrevHeight < gVar.NumTxListPerEpoch-1 {
+		TBChan[thisround-CacheDbRef.PrevHeight] <- 1
+	}
 	if tmpflag {
 		StartLastTxBlock <- true
 	}
@@ -138,8 +144,8 @@ func TxLastBlock() {
 
 //TxNormalBlock is the loop of TxBlock
 func TxNormalBlock(round uint32) {
-	if round != 0 {
-		<-TBChan[round-1]
+	if round > 0 {
+		<-TBBChan[round-1]
 	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateTxBlock()
@@ -169,7 +175,7 @@ func TxNormalBlock(round uint32) {
 	}
 	CacheDbRef.Mu.Unlock()
 	if round < gVar.NumTxListPerEpoch-1 {
-		TBChan[round] <- 1
+		TBBChan[round] <- 1
 	}
 }
 
