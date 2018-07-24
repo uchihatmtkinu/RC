@@ -126,7 +126,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
-			//fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
+			fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
 			d.TLNow.Add(0)
 		} else {
 			var res byte
