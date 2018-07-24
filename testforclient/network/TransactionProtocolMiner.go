@@ -85,7 +85,7 @@ func HandleTxList(data []byte) error {
 	}
 	timeoutFlag := true
 	cnt := s.Stat
-	for timeoutFlag && cnt > 0 {
+	for timeoutFlag && s.Stat > 0 {
 		select {
 		case <-s.Channel:
 			cnt--
@@ -195,7 +195,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	timeoutFlag := true
 	cnt := s.Stat
 	cntTimeout := 0
-	for timeoutFlag && cnt > 0 {
+	for timeoutFlag && s.Stat > 0 {
 		select {
 		case <-s.Channel:
 			cnt--
@@ -276,7 +276,7 @@ func HandleTxBlock(data []byte) error {
 
 	timeoutFlag := true
 	cnt := s.Stat
-	for timeoutFlag && cnt > 0 {
+	for timeoutFlag && s.Stat > 0 {
 		select {
 		case <-s.Channel:
 			cnt--
