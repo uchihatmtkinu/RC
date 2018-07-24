@@ -384,8 +384,9 @@ func HandleReqCosiSig(request []byte) {
 		log.Panic(err)
 	}
 	tmp, ok := CosiData[payload.Round+payload.Epoch*100]
+	cosiXX := responseInfo{MyGlobalID, tmp, payload.Round, payload.Epoch}
 	if ok {
-		SendCosiMessage(shard.GlobalGroupMems[payload.ID].Address, "cosiSig", tmp)
+		SendCosiMessage(shard.GlobalGroupMems[payload.ID].Address, "cosiSig", cosiXX)
 	}
 }
 
