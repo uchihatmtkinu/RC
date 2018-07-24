@@ -343,7 +343,7 @@ func HandleTxBlock(data []byte) error {
 		//	fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
 		//}
 		//fmt.Println()
-		for i := tmp.Height - gVar.NumTxBlockForRep; i < tmp.Height; i++ {
+		for i := tmp.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < tmp.Height-CacheDbRef.PrevHeight; i++ {
 			//fmt.Println("Rep prepare: Round", i)
 			//fmt.Println(CacheDbRef.RepCache[i])
 			for j := uint32(0); j < gVar.ShardSize; j++ {
