@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/uchihatmtkinu/RC/base58"
+
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -126,7 +128,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	for i := uint32(0); i < a.TxCnt; i++ {
 		tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
-			fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache")
+			fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache", base58.Encode(a.TxArray[i][:]))
 			d.TLNow.Add(0)
 		} else {
 			var res byte
