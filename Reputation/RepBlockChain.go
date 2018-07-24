@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
+	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
-	"github.com/uchihatmtkinu/RC/Reputation/cosi"
 )
 
 const dbFile = "RepBlockchain"
@@ -57,7 +57,6 @@ func (bc *RepBlockchain) MineRepBlock(repData *[]int64, cache *[][32]byte, ID in
 	//StartCalPoWAnnounce <- true
 }
 
-
 func (bc *RepBlockchain) AddRepSig(cosig cosi.SignaturePart) {
 	CurrentRepBlock.Mu.Lock()
 	defer CurrentRepBlock.Mu.Unlock()
@@ -82,6 +81,7 @@ func (bc *RepBlockchain) AddRepSig(cosig cosi.SignaturePart) {
 		log.Panic(err)
 	}
 }
+
 //AddRepBlockFromOthers adds a reputation block
 func (bc *RepBlockchain) AddRepBlockFromOthers(repBlock *RepBlock) {
 	CurrentRepBlock.Mu.Lock()
