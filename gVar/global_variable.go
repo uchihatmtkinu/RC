@@ -6,7 +6,7 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 50
+const ShardSize uint32 = 225
 
 //ShardCnt is the number of shards
 const ShardCnt uint32 = 8
@@ -22,10 +22,10 @@ const RepFN = 0
 const SlidingWindows = 10
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 4 //60
+const NumTxListPerEpoch = 5 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 3 //10
+const NumTxBlockForRep = 4 //10
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
