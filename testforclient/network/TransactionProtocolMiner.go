@@ -326,21 +326,21 @@ func HandleTxBlock(data []byte) error {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
 		tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
-		for i := uint32(0); i < gVar.ShardSize; i++ {
-			fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
-		}
-		fmt.Println()
+		//for i := uint32(0); i < gVar.ShardSize; i++ {
+		//	fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
+		//}
+		//fmt.Println()
 		for i := tmp.Height - gVar.NumTxBlockForRep; i < tmp.Height; i++ {
-			fmt.Println("Rep prepare: Round", i)
-			fmt.Println(CacheDbRef.RepCache[i])
+			//fmt.Println("Rep prepare: Round", i)
+			//fmt.Println(CacheDbRef.RepCache[i])
 			for j := uint32(0); j < gVar.ShardSize; j++ {
 				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
 			}
 		}
-		for i := uint32(0); i < gVar.ShardSize; i++ {
-			fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
-		}
-		fmt.Println()
+		//for i := uint32(0); i < gVar.ShardSize; i++ {
+		//fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
+		//}
+		//fmt.Println()
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
 		CurrentRepRound++
