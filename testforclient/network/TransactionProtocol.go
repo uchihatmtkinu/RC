@@ -78,7 +78,7 @@ func TxListProcess() {
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "ready to send TDS Hash:", base58.Encode(TLG.TLS[CacheDbRef.ShardNum].HashID[:]))
 	fmt.Println("TLG TDS length", len(TLG.TDS))
 	CacheDbRef.SignTDS(TLG)
-	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum])
+	CacheDbRef.ProcessTDS(&TLG.TDS[CacheDbRef.ShardNum], &CacheDbRef.RepCache[TLG.TDS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight])
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxDecSet with hash:", base58.Encode(TLG.TDS[CacheDbRef.ShardNum].HashID[:]))
 	data2 := new([][]byte)
 	*data2 = make([][]byte, gVar.ShardCnt)
@@ -117,6 +117,11 @@ func TxLastBlock() {
 	go SendTxBlock(data3)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
+		for i := CacheDbRef.TxB.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-CacheDbRef.PrevHeight; i++ {
+			for j := uint32(0); j < gVar.ShardSize; j++ {
+				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
+			}
+		}
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
@@ -140,6 +145,11 @@ func TxNormalBlock() {
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
+		for i := CacheDbRef.TxB.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-CacheDbRef.PrevHeight; i++ {
+			for j := uint32(0); j < gVar.ShardSize; j++ {
+				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
+			}
+		}
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		tmp := make([][32]byte, gVar.NumTxBlockForRep)
 		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
@@ -382,7 +392,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	flag = false
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs")
-	CacheDbRef.ProcessTDS(tmp)
+	CacheDbRef.ProcessTDS(tmp, nil)
 	fmt.Println(time.Now(), "TDS from", tmp.ID, "Done")
 	CacheDbRef.TDSCnt[tmp.ShardIndex]++
 	if CacheDbRef.TDSCnt[tmp.ShardIndex] == gVar.NumTxListPerEpoch {

@@ -22,6 +22,12 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "FinalTxB", data)
 		}
 	}
+	for i := CacheDbRef.TxB.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-2-CacheDbRef.PrevHeight; i++ {
+		fmt.Println("Rep prepare: Round", i)
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.TxB.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
+		}
+	}
 	tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
 	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
