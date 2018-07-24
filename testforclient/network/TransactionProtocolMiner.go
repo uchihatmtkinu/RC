@@ -81,7 +81,7 @@ func HandleTxList(data []byte) error {
 	//fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]), "Done")
 	CacheDbRef.Mu.Unlock()
 	if s.Stat != 0 {
-		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting")
+		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting, remaining:", s.Stat)
 	}
 	timeoutFlag := true
 	cnt := s.Stat
@@ -94,6 +94,7 @@ func HandleTxList(data []byte) error {
 			timeoutFlag = false
 		}
 	}
+	fmt.Println("Cnt: ", cnt, "Stat: ", s.Stat)
 	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
