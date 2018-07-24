@@ -219,7 +219,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.TDSCnt[tmp.ShardIndex]++
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
-	err = CacheDbRef.GetTDS(tmp)
+	err = CacheDbRef.GetTDS(tmp, &CacheDbRef.RepCache[tmp.Round-CacheDbRef.PrevHeight])
 	fmt.Println(time.Now(), "Miner", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs Shard", tmp.ShardIndex, "Round", tmp.Round)
 	if err != nil {
 		fmt.Println(CacheDbRef.ID, "has a error", err)
@@ -324,12 +324,18 @@ func HandleTxBlock(data []byte) error {
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		tmp := make([][32]byte, gVar.NumTxBlockForRep)
-		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+		tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
+		copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+		for i := tmp.Height - gVar.NumTxBlockForRep; i < tmp.Height; i++ {
+			fmt.Println("Rep prepare: Round", i)
+			for j := uint32(0); j < gVar.ShardSize; j++ {
+				shard.GlobalGroupMems[shard.ShardToGlobal[tmp.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
+			}
+		}
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
 		CurrentRepRound++
-		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
+		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
 		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {

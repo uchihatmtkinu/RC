@@ -77,7 +77,8 @@ type DbRef struct {
 	TLRound    uint32
 	PrevHeight uint32
 
-	TBCache *[][32]byte
+	TBCache  *[][32]byte
+	RepCache [gVar.NumTxListPerEpoch][gVar.ShardSize]int64
 
 	Leader uint32
 	//Statistic function

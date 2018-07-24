@@ -50,6 +50,11 @@ func ShardProcess() {
 		CacheDbRef.Clear()
 
 	}
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			CacheDbRef.RepCache[i][j] = 0
+		}
+	}
 	CacheDbRef.Mu.Unlock()
 	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
 		BatchCache[i] = nil

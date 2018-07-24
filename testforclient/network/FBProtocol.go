@@ -65,6 +65,12 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GetFinalTxBlock(tmpTB)
+	for i := tmpTB.Height - uint32(len(*CacheDbRef.TBCache)) - 1; i < tmpTB.Height-2; i++ {
+		fmt.Println("Rep prepare: Round", i)
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			shard.GlobalGroupMems[shard.ShardToGlobal[tmpTB.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
+		}
+	}
 	tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 	CacheDbRef.Mu.Unlock()
 	tmp := make([][32]byte, len(*CacheDbRef.TBCache))
@@ -72,6 +78,7 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
 	CurrentRepRound++
 	fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
+
 	go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
 
 	close(StopGetTx)
