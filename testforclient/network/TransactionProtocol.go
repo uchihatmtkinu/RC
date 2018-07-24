@@ -87,7 +87,7 @@ func TxListProcess() {
 		TLG.TDS[i].Encode(&(*data2)[i])
 	}
 	go SendTxDecSet(*data2, TLG.TLS[CacheDbRef.ShardNum].Round-CacheDbRef.PrevHeight)
-	go TxNormalBlock()
+	go TxNormalBlock(TLG.TLS[CacheDbRef.ShardNum].Round - CacheDbRef.PrevHeight)
 
 	CacheDbRef.Release(TLG)
 
@@ -137,7 +137,10 @@ func TxLastBlock() {
 }
 
 //TxNormalBlock is the loop of TxBlock
-func TxNormalBlock() {
+func TxNormalBlock(round uint32) {
+	if round != 0 {
+		<-TBChan[round-1]
+	}
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GenerateTxBlock()
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
@@ -165,6 +168,9 @@ func TxNormalBlock() {
 		go TxLastBlock()
 	}
 	CacheDbRef.Mu.Unlock()
+	if round < gVar.NumTxListPerEpoch-1 {
+		TBChan[round] <- 1
+	}
 }
 
 //SendTxList is sending txlist
