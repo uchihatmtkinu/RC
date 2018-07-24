@@ -154,7 +154,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	// Finally, the leader combines the two signature parts
 	// into a final collective signature.
 	cosiSigMessage := responseInfo{MyGlobalID, cosigners.AggregateSignature(aggregateCommit, sigParts), currentRepRound, CurrentEpoch}
-	CosiData[currentRepRound*100+CurrentEpoch] = cosiSigMessage.Sig
+	CosiData[currentRepRound+CurrentEpoch*100] = cosiSigMessage.Sig
 
 	//currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
 	for i := uint32(1); i < gVar.ShardSize; i++ {
