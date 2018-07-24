@@ -85,7 +85,7 @@ func HandleTxList(data []byte) error {
 	}
 	timeoutFlag := true
 	cnt := s.Stat
-	for timeoutFlag && s.Stat > 0 {
+	/*for timeoutFlag && s.Stat > 0 {
 		select {
 		case <-s.Channel:
 			cnt--
@@ -93,8 +93,20 @@ func HandleTxList(data []byte) error {
 			fmt.Println(time.Now(), "TxList:", base58.Encode(tmp.HashID[:]), "time out")
 			timeoutFlag = false
 		}
+	}*/
+	if s.Stat == 0 {
+		timeoutFlag = false
 	}
-	fmt.Println("Cnt: ", cnt, "Stat: ", s.Stat)
+	for timeoutFlag {
+		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
+		CacheDbRef.Mu.Lock()
+		if s.Stat == 0 {
+			timeoutFlag = false
+		}
+		CacheDbRef.Mu.Unlock()
+	}
+
+	fmt.Println("Stat: ", s.Stat)
 	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
