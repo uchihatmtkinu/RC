@@ -276,11 +276,11 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 
 	valid := cosi.Verify(pubKeys, cosi.ThresholdPolicy(int(gVar.ShardSize)/2), announceMessage, cosiSigMessage.Sig)
 	//add rep block sig
-	if valid {
-		//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
-		Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
+	//if valid {
+	//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 
-	}
+	//}
 	//close cosi
 	CoSiFlag = false
 	close(cosiChallengeCh)
