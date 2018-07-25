@@ -47,3 +47,5 @@ const MyAddress = "172.20.33.255:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
+
+const ExperimentBadLevel = 0

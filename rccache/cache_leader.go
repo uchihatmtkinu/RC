@@ -62,16 +62,24 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	if tmp.InCheck[d.ShardNum] != -1 {
 		//fmt.Println("Band:", d.BandCnt)
-		d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
-		//fmt.Println("Band New:", d.BandCnt)
-		if d.BandCnt >= gVar.MaxBand {
-			//fmt.Println("Add new tx")
+		if gVar.BandDiverse {
+			d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
+			//fmt.Println("Band New:", d.BandCnt)
+			if d.BandCnt >= gVar.MaxBand {
+				//fmt.Println("Add new tx")
+				for i := uint32(0); i < gVar.ShardCnt; i++ {
+					if tmp.InCheck[i] != 0 {
+						d.Now.TLS[i].AddTx(b)
+					}
+				}
+				d.BandCnt -= gVar.MaxBand
+			}
+		} else {
 			for i := uint32(0); i < gVar.ShardCnt; i++ {
 				if tmp.InCheck[i] != 0 {
 					d.Now.TLS[i].AddTx(b)
 				}
 			}
-			d.BandCnt -= gVar.MaxBand
 		}
 	}
 	return nil
@@ -123,19 +131,22 @@ func (d *DbRef) NewTxList() error {
 }
 
 //GenerateTxBlock makes the TxBlock
-func (d *DbRef) GenerateTxBlock() error {
+func (d *DbRef) GenerateTxBlock(good bool) error {
 	height := d.TxB.Height
 	d.TxB = new(basic.TxBlock)
-	d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
+	if good {
+		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
+		for i := 0; i < len(d.Ready); i++ {
+			d.ClearCache(d.Ready[i].Hash)
+		}
+		d.Ready = nil
+		*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
 
-	for i := 0; i < len(d.Ready); i++ {
-		d.ClearCache(d.Ready[i].Hash)
+		d.DB.AddBlock(d.TxB)
+		d.DB.UpdateUTXO(d.TxB, d.ShardNum)
+	} else {
+		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height, 3, nil, 0)
 	}
-	d.Ready = nil
-	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
-
-	d.DB.AddBlock(d.TxB)
-	d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	//d.DB.ShowAccount()
 
 	return nil

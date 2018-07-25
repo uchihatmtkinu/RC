@@ -112,6 +112,9 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
 	CacheDbRef.New(uint32(*ID), acc[*ID].Pri)
+	if gVar.ExperimentBadLevel != 0 && MyGlobalID < int(numCnt/3) {
+		CacheDbRef.Badness = true
+	}
 	for i := 0; i < int(numCnt); i++ {
 		CacheDbRef.DB.AddAccount(&accWallet[i])
 	}

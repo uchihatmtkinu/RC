@@ -115,31 +115,46 @@ func TxListProcess() {
 //TxLastBlock is the txlastblock
 func TxLastBlock() {
 	<-StartLastTxBlock
-	CacheDbRef.Mu.Lock()
-	CacheDbRef.GenerateTxBlock()
-	fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]), "Height", CacheDbRef.TxB.Height)
-	data3 := new([]byte)
-	CacheDbRef.TxB.Encode(data3, 0)
-	go SendTxBlock(data3)
-	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
-		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		for i := CacheDbRef.TxB.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-CacheDbRef.PrevHeight; i++ {
+	if gVar.ExperimentBadLevel == 0 || !CacheDbRef.Badness {
+		CacheDbRef.Mu.Lock()
+		CacheDbRef.GenerateTxBlock(true)
+		fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height", CacheDbRef.TxB.Height)
+		tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
+		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+		data3 := new([]byte)
+		CacheDbRef.TxB.Encode(data3, 0)
+		go SendTxBlock(data3)
+
+		for i := CacheDbRef.TxB.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-1-CacheDbRef.PrevHeight; i++ {
+			fmt.Println("Rep prepare: Round", i)
 			for j := uint32(0); j < gVar.ShardSize; j++ {
-				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
+				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.TxB.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
 			}
 		}
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
-		tmp := make([][32]byte, gVar.NumTxBlockForRep)
-		copy(tmp, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
-		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
+		CacheDbRef.Mu.Unlock()
+		tmp := make([][32]byte, len(*CacheDbRef.TBCache))
+		copy(tmp, *CacheDbRef.TBCache)
+		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
 		CurrentRepRound++
-		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
-		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
+		fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
+		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
+
+		StopGetTx <- true
+		fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
+		go SendFinalBlock(&shard.GlobalGroupMems)
+	} else {
+		CacheDbRef.Mu.Lock()
+		CacheDbRef.GenerateTxBlock(false)
+		fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height", CacheDbRef.TxB.Height, " Bad")
+		tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends bad last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
+		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
+		data3 := new([]byte)
+		CacheDbRef.TxB.Encode(data3, 0)
+		go SendTxBlock(data3)
+		CacheDbRef.Mu.Unlock()
+		StopGetTx <- true
 	}
-	StopGetTx <- true
-	fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
-	CacheDbRef.Mu.Unlock()
-	go SendFinalBlock(&shard.GlobalGroupMems)
 }
 
 //TxNormalBlock is the loop of TxBlock
@@ -148,8 +163,8 @@ func TxNormalBlock(round uint32) {
 		<-TBBChan[round-1]
 	}
 	CacheDbRef.Mu.Lock()
-	CacheDbRef.GenerateTxBlock()
-	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Hash:", base58.Encode(CacheDbRef.TxB.HashID[:]))
+	CacheDbRef.GenerateTxBlock(true)
+	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
@@ -190,8 +205,8 @@ func SendTxList(data []byte) {
 
 }
 
-//SendTxDecSet is sending txDecSet
-func SendTxDecSet(data [][]byte, round uint32) {
+//SendTxDecSetInShard is sending txDecSet to inshard member
+func SendTxDecSetInShard(data [][]byte, round uint32) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
 		if xx != int(CacheDbRef.ID) {
@@ -199,6 +214,11 @@ func SendTxDecSet(data [][]byte, round uint32) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxDecSetM", data[CacheDbRef.ShardNum])
 		}
 	}
+}
+
+//SendTxDecSet is sending txDecSet
+func SendTxDecSet(data [][]byte, round uint32) {
+	go SendTxDecSetInShard(data, round)
 	rand.Seed(int64(CacheDbRef.ID)*time.Now().Unix() + rand.Int63())
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1

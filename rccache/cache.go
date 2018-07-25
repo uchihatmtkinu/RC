@@ -53,6 +53,7 @@ type DbRef struct {
 	HistoryShard []uint32
 	prk          ecdsa.PrivateKey
 	BandCnt      uint32
+	Badness      bool
 
 	TXCache       map[[32]byte]*CrossShardDec
 	HashCache     map[[basic.SHash]byte][][32]byte
@@ -136,6 +137,7 @@ func (d *DbRef) Clear() {
 //New is the initilization of DbRef
 func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.ID = x
+	d.Badness = false
 	d.prk = prk
 	d.TxCnt = 0
 	d.BandCnt = 0
