@@ -132,10 +132,10 @@ func TxLastBlock() {
 			}
 		}
 		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
-		CacheDbRef.Mu.Unlock()
 		tmp := make([][32]byte, len(*CacheDbRef.TBCache))
 		copy(tmp, *CacheDbRef.TBCache)
 		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
+		CacheDbRef.Mu.Unlock()
 		CurrentRepRound++
 		fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
 		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
@@ -154,6 +154,7 @@ func TxLastBlock() {
 		go SendTxBlock(data3)
 		CacheDbRef.Mu.Unlock()
 		StopGetTx <- true
+		RollingProcess(false, true, CacheDbRef.TxB)
 	}
 }
 

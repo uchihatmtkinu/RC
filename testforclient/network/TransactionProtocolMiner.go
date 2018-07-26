@@ -375,7 +375,7 @@ func HandleTxBlock(data []byte) error {
 			TBChan[tmp.Height-CacheDbRef.PrevHeight-1] <- CurrentEpoch
 		}
 	} else {
-
+		RollingProcess(true, false, tmp)
 	}
 	return nil
 }

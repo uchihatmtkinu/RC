@@ -132,6 +132,12 @@ func StartServer(ID int) {
 		case "TxDecSet":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleAndSentTxDecSet(request)
+		case "RollRequest":
+			go HandleRollingMessage(request)
+		case "VTDS":
+			go HandleVirtualTDS(request)
+		case "TxBR":
+			go HandleTxBlockAfterRolling(request)
 		case "TxDecSetM":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
