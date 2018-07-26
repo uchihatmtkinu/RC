@@ -97,7 +97,13 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			}
 		//TODO test
 		case txBlockMessage = <-syncTBCh[k]:
-			ok, err := txBlockMessage.Block.Verify(&(*ms)[shard.ShardToGlobal[k][0]].RealAccount.Puk)
+			tmpIndex := 0
+			if gVar.ExperimentBadLevel != 0 {
+				for shard.ShardToGlobal[k][tmpIndex] < int(gVar.ShardCnt*gVar.ShardSize/3) {
+					tmpIndex++
+				}
+			}
+			ok, err := txBlockMessage.Block.Verify(&(*ms)[shard.ShardToGlobal[k][tmpIndex]].RealAccount.Puk)
 			if ok {
 				tbrxflag = false
 				tmpBlock := txBlockMessage.Block
