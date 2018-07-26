@@ -117,7 +117,7 @@ func TxLastBlock() {
 	<-StartLastTxBlock
 	if gVar.ExperimentBadLevel == 0 || !CacheDbRef.Badness {
 		CacheDbRef.Mu.Lock()
-		CacheDbRef.GenerateTxBlock(true)
+		CacheDbRef.GenerateTxBlock(1)
 		fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height", CacheDbRef.TxB.Height)
 		tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
@@ -146,7 +146,7 @@ func TxLastBlock() {
 		go SendFinalBlock(&shard.GlobalGroupMems)
 	} else {
 		CacheDbRef.Mu.Lock()
-		CacheDbRef.GenerateTxBlock(false)
+		CacheDbRef.GenerateTxBlock(0)
 		fmt.Println(time.Now(), CacheDbRef.ID, "sends the last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height", CacheDbRef.TxB.Height, " Bad")
 		tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends bad last TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
@@ -165,7 +165,7 @@ func TxNormalBlock(round uint32) {
 		<-TBBChan[round-1]
 	}
 	CacheDbRef.Mu.Lock()
-	CacheDbRef.GenerateTxBlock(true)
+	CacheDbRef.GenerateTxBlock(1)
 	fmt.Println(time.Now(), CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, ":", CacheDbRef.ID, "sends a TxBlock with", CacheDbRef.TxB.TxCnt, "Txs, Height:", CacheDbRef.TxB.Height)
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))

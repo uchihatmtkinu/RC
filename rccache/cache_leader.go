@@ -131,11 +131,14 @@ func (d *DbRef) NewTxList() error {
 }
 
 //GenerateTxBlock makes the TxBlock
-func (d *DbRef) GenerateTxBlock(good bool) error {
+func (d *DbRef) GenerateTxBlock(good int) error {
 	height := d.TxB.Height
 	d.TxB = new(basic.TxBlock)
-	if good {
-		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
+	if good > 0 {
+		if good == 1 {
+			d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
+		}
+		d.TxB.Kind = 0
 		for i := 0; i < len(d.Ready); i++ {
 			d.ClearCache(d.Ready[i].Hash)
 		}
@@ -145,7 +148,7 @@ func (d *DbRef) GenerateTxBlock(good bool) error {
 		d.DB.AddBlock(d.TxB)
 		d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	} else {
-		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height, 3, nil, 0)
+		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 3, nil, 0)
 	}
 	//d.DB.ShowAccount()
 

@@ -79,7 +79,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][LeaderIndex]].Address
 	if FirstLeader {
 		CacheDbRef.Mu.Lock()
-		CacheDbRef.GenerateTxBlock(true)
+		CacheDbRef.GenerateTxBlock(2)
 		fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", TBData.TxCnt, "Txs from", CacheDbRef.Leader, "Height:", TBData.Height)
 		for i := CacheDbRef.TxB.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-1-CacheDbRef.PrevHeight; i++ {
 			fmt.Println("Rep prepare: Round", i)
