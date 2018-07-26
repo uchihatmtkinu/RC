@@ -301,7 +301,7 @@ func (d *DbRef) GetFinalTxBlock(a *basic.TxBlock) error {
 	if !ok {
 		return fmt.Errorf("Signature not valid")
 	}*/
-	*(d.TBCache) = append(*(d.TBCache), a.HashID)
+	//*(d.TBCache) = append(*(d.TBCache), a.HashID)
 	d.FB[a.ShardID] = a
 	d.TxB = a
 	d.DB.AddFinalBlock(a)

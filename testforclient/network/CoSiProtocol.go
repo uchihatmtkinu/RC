@@ -25,10 +25,6 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 
 	// cosi begin
 
-	elapsed := time.Since(gVar.T1)
-	fmt.Println(time.Now(), "App elapsed: ", elapsed)
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
-	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	fmt.Println(time.Now(), "Leader CoSi")
 
 	Reputation.CurrentRepBlock.Mu.Lock()
@@ -165,6 +161,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	}
 
 	//Add sync block
+	<-FBSent
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 	fmt.Println(time.Now(), "Add a new sync block.")
 	//close CoSi
@@ -278,6 +275,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	//add rep block sig
 	//if valid {
 	//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+	<-FBSent
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 
 	//}

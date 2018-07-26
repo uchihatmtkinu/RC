@@ -158,7 +158,7 @@ func (d *DbRef) GenerateFinalBlock() error {
 	height := d.TxB.Height
 	d.TxB = new(basic.TxBlock)
 	d.TxB.MakeTxBlock(d.ID, tmp, d.DB.LastFB[d.ShardNum], &d.prk, height+1, 1, &d.FB[d.ShardNum].HashID, d.ShardNum)
-	*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
+	//*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
 	d.FB[d.ShardNum] = d.TxB
 	err := d.DB.AddFinalBlock(d.TxB)
 	if err != nil {
