@@ -303,7 +303,7 @@ func HandleTxBlock(data []byte) error {
 		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
 
-	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch && tmp.Kind != 3 {
 		waitFlag := true
 		for waitFlag {
 			tmpInt := <-TDSChan[tmp.Height-CacheDbRef.PrevHeight-1]
