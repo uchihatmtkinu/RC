@@ -187,6 +187,7 @@ func HandleSyncSBMessage(request []byte) {
 	buff.Write(request)
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
+	fmt.Println("SyncSBdata:", payload.ID, "Hash:", base58.Encode(payload.Block.Hash[:]))
 	if err != nil {
 		log.Panic(err)
 	}

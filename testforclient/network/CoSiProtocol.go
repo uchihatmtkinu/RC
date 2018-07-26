@@ -161,6 +161,7 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 	}
 
 	//Add sync block
+	<-FBSent
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 	fmt.Println(time.Now(), "Add a new sync block.")
 	//close CoSi
@@ -274,6 +275,7 @@ func MemberCosiProcess(ms *[]shard.MemShard) (bool, []byte) {
 	//add rep block sig
 	//if valid {
 	//Reputation.MyRepBlockChain.MineRepBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage)
+	<-FBSent
 	Reputation.MyRepBlockChain.AddSyncBlock(ms, CacheDbRef.FB[CacheDbRef.ShardNum].HashID, cosiSigMessage.Sig)
 
 	//}
