@@ -98,7 +98,6 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	} else {
-		TBData.Height++
 		TBData.Kind = 0
 		CacheDbRef.Mu.Lock()
 		err := CacheDbRef.GetTxBlock(TBData)
