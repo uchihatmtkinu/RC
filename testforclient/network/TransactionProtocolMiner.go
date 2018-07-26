@@ -298,7 +298,7 @@ func HandleTxBlock(data []byte) error {
 		}
 	}
 	if cnt == 0 {
-		//fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess done")
+		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess done")
 	} else {
 		fmt.Println("Get txBlock from", tmp.ID, "Hash:", base58.Encode(tmp.HashID[:]), "preprocess timeout")
 	}
@@ -322,6 +322,7 @@ func HandleTxBlock(data []byte) error {
 		}
 	}
 	flag := true
+	fmt.Println("TxB Kind", tmp.Kind)
 	if tmp.Kind != 3 {
 		for flag {
 			CacheDbRef.Mu.Lock()
