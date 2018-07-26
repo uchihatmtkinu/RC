@@ -136,7 +136,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 func SendVirtualTDS(data []byte) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		if shard.ShardToGlobal[CacheDbRef.ShardNum][i] != MyGlobalID {
-			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ID][i]].Address, "VTDS", data)
+			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Address, "VTDS", data)
 		}
 	}
 }
