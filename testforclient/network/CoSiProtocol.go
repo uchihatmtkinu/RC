@@ -25,10 +25,6 @@ func LeaderCosiProcess(ms *[]shard.MemShard) cosi.SignaturePart {
 
 	// cosi begin
 
-	elapsed := time.Since(gVar.T1)
-	fmt.Println(time.Now(), "App elapsed: ", elapsed)
-	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
-	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	fmt.Println(time.Now(), "Leader CoSi")
 
 	Reputation.CurrentRepBlock.Mu.Lock()

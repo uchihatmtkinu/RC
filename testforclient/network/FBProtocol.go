@@ -22,7 +22,10 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "FinalTxB", data)
 		}
 	}
-
+	elapsed := time.Since(gVar.T1)
+	fmt.Println(time.Now(), "App elapsed: ", elapsed)
+	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
+	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	close(StopGetTx)
 }
 
