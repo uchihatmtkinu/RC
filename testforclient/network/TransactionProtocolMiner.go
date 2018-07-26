@@ -341,6 +341,7 @@ func HandleTxBlock(data []byte) error {
 			fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
 			for i := tmp.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < tmp.Height-1-CacheDbRef.PrevHeight; i++ {
 				fmt.Println("Rep prepare: Round", i)
+				fmt.Println(CacheDbRef.RepCache[i])
 				for j := uint32(0); j < gVar.ShardSize; j++ {
 					shard.GlobalGroupMems[shard.ShardToGlobal[tmp.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
 				}
@@ -360,6 +361,8 @@ func HandleTxBlock(data []byte) error {
 				tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
 				copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
 				for i := tmp.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < tmp.Height-CacheDbRef.PrevHeight; i++ {
+					fmt.Println("Rep prepare: Round", i)
+					fmt.Println(CacheDbRef.RepCache[i])
 					for j := uint32(0); j < gVar.ShardSize; j++ {
 						shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
 					}

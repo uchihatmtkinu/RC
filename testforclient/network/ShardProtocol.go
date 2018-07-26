@@ -46,6 +46,7 @@ func ShardProcess() {
 	CacheDbRef.ShardNum = uint32(shard.MyMenShard.Shard)
 	CacheDbRef.Leader = uint32(shard.ShardToGlobal[shard.MyMenShard.Shard][0])
 	CacheDbRef.HistoryShard = append(CacheDbRef.HistoryShard, CacheDbRef.ShardNum)
+	CacheDbRef.TBCache = nil
 	if CurrentEpoch != -1 {
 		CacheDbRef.Clear()
 
