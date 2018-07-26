@@ -260,7 +260,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	if a.Kind != 0 {
 		return fmt.Errorf("Not valid txblock type")
 	}
-	ok, xx := a.Verify(&shard.GlobalGroupMems[d.Leader].RealAccount.Puk)
+	ok, xx := a.Verify(&shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][0]].RealAccount.Puk)
 	if !ok {
 		fmt.Println(xx)
 		return fmt.Errorf("Signature not valid")
