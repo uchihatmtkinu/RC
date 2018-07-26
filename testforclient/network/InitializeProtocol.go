@@ -167,6 +167,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 	}
 	CosiData = make(map[int]cosi.SignaturePart, 1000)
 	rollingChannel = make(chan rollingInfo, gVar.ShardSize)
+	VTDChannel = make(chan rollingInfo, gVar.ShardSize)
 	rollingTxB = make(chan []byte, 1)
 	FBSent = make(chan bool)
 }

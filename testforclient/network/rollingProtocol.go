@@ -51,6 +51,23 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 		LeaderIndex++
 		CacheDbRef.Leader = uint32(shard.ShardToGlobal[CacheDbRef.ShardNum][LeaderIndex])
 		if CacheDbRef.Leader == CacheDbRef.ID {
+			maskVD := make([]bool, gVar.ShardSize)
+			for i := uint32(0); i < gVar.ShardSize; i++ {
+				maskVD[i] = false
+			}
+			maskVD[shard.GlobalGroupMems[MyGlobalID].InShardId] = true
+			tmpCnt := 1
+			for tmpCnt < int(gVar.ShardSize) {
+				select {
+				case tmpVD := <-VTDChannel:
+					xx := shard.GlobalGroupMems[tmpVD.ID].InShardId
+					if tmpVD.Leader == CacheDbRef.Leader && !maskVD[xx] {
+						maskVD[xx] = true
+						tmpCnt++
+					}
+				}
+			}
+			fmt.Println("Get enough td")
 			if CacheDbRef.Badness {
 				tmpData := new([]byte)
 				TBData.Encode(tmpData, 0)
@@ -66,6 +83,8 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				Flag = false
 			}
 		} else {
+			tmpVD := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
+			sendTxMessage(shard.GlobalGroupMems[CacheDbRef.Leader].Address, "VTD", tmpVD.Encode())
 			tmpTxB := <-rollingTxB
 			tmp := new(basic.TxBlock)
 			err := tmp.Decode(&tmpTxB, 0)
@@ -131,6 +150,24 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 			go WaitForFinalBlock(&shard.GlobalGroupMems)
 		}
 	}
+}
+
+//HandleVirtualTD is handling the VTD
+func HandleVirtualTD(data []byte) error {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	tmp := new(rollingInfo)
+
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println("Virtual TD decode error", err)
+		return err
+	}
+	fmt.Println("Get Virtual TD from", tmp.ID, tmp.Epoch, tmp.Leader)
+	if tmp.Epoch == uint32(CurrentEpoch+1) {
+		VTDChannel <- *tmp
+	}
+	return nil
 }
 
 //SendVirtualTDS is to send a virtual tds

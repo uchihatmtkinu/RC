@@ -134,6 +134,8 @@ func StartServer(ID int) {
 			go HandleAndSentTxDecSet(request)
 		case "RollRequest":
 			go HandleRollingMessage(request)
+		case "VTD":
+			go HandleVirtualTD(request)
 		case "VTDS":
 			go HandleVirtualTDS(request)
 		case "TxBR":

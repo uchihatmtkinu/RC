@@ -240,5 +240,6 @@ var TBChan [gVar.NumTxListPerEpoch]chan int
 var TBBChan [gVar.NumTxListPerEpoch]chan int
 var StartSendTx chan bool
 var rollingChannel chan rollingInfo
+var VTDChannel chan rollingInfo
 var rollingTxB chan []byte
 var FBSent chan bool
