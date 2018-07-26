@@ -133,9 +133,9 @@ func (d *DbRef) NewTxList() error {
 //GenerateTxBlock makes the TxBlock
 func (d *DbRef) GenerateTxBlock(good int) error {
 	height := d.TxB.Height
-	d.TxB = new(basic.TxBlock)
 	if good > 0 {
 		if good == 1 {
+			d.TxB = new(basic.TxBlock)
 			d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
 		}
 		d.TxB.Kind = 0
@@ -148,6 +148,7 @@ func (d *DbRef) GenerateTxBlock(good int) error {
 		d.DB.AddBlock(d.TxB)
 		d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	} else {
+		d.TxB = new(basic.TxBlock)
 		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 3, nil, 0)
 	}
 	//d.DB.ShowAccount()
