@@ -85,6 +85,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 			{
 				if syncBlockMessage.Block.VerifyCoSignature(ms) {
 					sbrxflag = false
+					fmt.Println("Get cosi from", k)
 				} else {
 					//aski[k] = (aski[k] + 1) % int(gVar.ShardSize)
 					fmt.Println("Verifyied cosi falied")
@@ -101,6 +102,7 @@ func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 				tbrxflag = false
 				tmpBlock := txBlockMessage.Block
 				CacheDbRef.FB[k] = &tmpBlock
+				fmt.Println("Get FB from", k)
 			} else {
 				fmt.Println("FinalTxBlock verify failed: ", err)
 			}
