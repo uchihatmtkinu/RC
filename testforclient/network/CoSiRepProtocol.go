@@ -72,7 +72,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 		pubKeys[it.InShardId] = it.CosiPub
 		//priKeys[it.InShardId] = it.RealAccount.CosiPri
-		if i != 0 {
+		if shard.ShardToGlobal[shard.MyMenShard.Shard][i] != MyGlobalID {
 			SendCosiMessage(it.Address, "cosiAnnoun", announceMessage)
 		}
 	}
@@ -94,7 +94,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 			}
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
-			for i := uint32(1); i < gVar.ShardSize; i++ {
+			for i := uint32(0); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 				if maskBit(it.InShardId, &cosimask) == cosi.Disabled {
 					fmt.Println(time.Now(), "Resend Cosi Message to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
@@ -120,9 +120,9 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 
 	//sign or challenge
 	cosiResponseCh = make(chan responseInfo, bufferSize)
-	for i := uint32(1); i < gVar.ShardSize; i++ {
+	for i := uint32(0); i < gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		if maskBit(it.InShardId, &cosimask) == cosi.Enabled {
+		if maskBit(it.InShardId, &cosimask) == cosi.Enabled && i != uint32(shard.MyMenShard.InShardId) {
 			SendCosiMessage(it.Address, "cosiChallen", currentChaMessage)
 		}
 	}
@@ -144,7 +144,7 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 			}
 		case <-time.After(timeoutCosi):
 			//resend after 20 seconds
-			for i := uint32(1); i < gVar.ShardSize; i++ {
+			for i := uint32(0); i < gVar.ShardSize; i++ {
 				it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
 				if maskBit(it.InShardId, &responsemask) == cosi.Disabled {
 					fmt.Println(time.Now(), "Resend Cosi Challenge to", shard.ShardToGlobal[shard.MyMenShard.Shard][i])
@@ -164,9 +164,9 @@ func LeaderCoSiRepProcess(ms *[]shard.MemShard, res repInfo) (bool, cosi.Signatu
 	CosiData[currentRepRound+CurrentEpoch*100] = cosiSigMessage.Sig
 
 	//currentSigMessage := cosiSigMessage{pubKeys,cosiSig}
-	for i := uint32(1); i < gVar.ShardSize; i++ {
+	for i := uint32(0); i < gVar.ShardSize; i++ {
 		it = &(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][i]]
-		if maskBit(it.InShardId, &cosimask) == cosi.Enabled {
+		if maskBit(it.InShardId, &cosimask) == cosi.Enabled && i != uint32(shard.MyMenShard.InShardId) {
 			SendCosiMessage(it.Address, "cosiSig", cosiSigMessage)
 		}
 	}

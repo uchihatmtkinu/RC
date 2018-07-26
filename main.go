@@ -101,9 +101,9 @@ func main() {
 		}
 		//test rep
 		//go network.RepProcessLoop(&shard.GlobalGroupMems)
-
+		<-network.RepFinishChan[gVar.NumberRepPerEpoch-1]
 		//test cosi
-		if shard.MyMenShard.Role == shard.RoleLeader {
+		if network.CacheDbRef.Leader == network.CacheDbRef.ID {
 			network.LeaderCosiProcess(&shard.GlobalGroupMems)
 		} else {
 			network.MemberCosiProcess(&shard.GlobalGroupMems)

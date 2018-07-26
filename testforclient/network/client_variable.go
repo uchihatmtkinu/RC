@@ -55,6 +55,13 @@ var readyMemberCh chan readyInfo
 //readyLeaderCh channel used in shard process, indicates the ready of other shards for a new epoch
 var readyLeaderCh chan readyInfo
 
+//------------------- rolling process -------------------------
+type rollingInfo struct {
+	ID     uint32
+	Epoch  uint32
+	Leader uint32
+}
+
 //------------------- rep pow process -------------------------
 //powInfo used in pow
 type powInfo struct {
@@ -232,3 +239,5 @@ var TDSChan [gVar.NumTxListPerEpoch]chan int
 var TBChan [gVar.NumTxListPerEpoch]chan int
 var TBBChan [gVar.NumTxListPerEpoch]chan int
 var StartSendTx chan bool
+var rollingChannel chan rollingInfo
+var rollingTxB chan []byte

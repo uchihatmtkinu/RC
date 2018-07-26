@@ -321,52 +321,61 @@ func HandleTxBlock(data []byte) error {
 		}
 	}
 	flag := true
-	for flag {
-		CacheDbRef.Mu.Lock()
-		err = CacheDbRef.GetTxBlock(tmp)
-		if err != nil {
-			//fmt.Println("txBlock", base58.Encode(tmp.HashID[:]), " error", err)
-		} else {
-			flag = false
+	if tmp.Kind != 3 {
+		for flag {
+			CacheDbRef.Mu.Lock()
+			err = CacheDbRef.GetTxBlock(tmp)
+			if err != nil {
+				//fmt.Println("txBlock", base58.Encode(tmp.HashID[:]), " error", err)
+			} else {
+				flag = false
+			}
+			CacheDbRef.Mu.Unlock()
+			time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
 		}
-		CacheDbRef.Mu.Unlock()
-		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
-	}
 
-	CacheDbRef.Mu.Lock()
-	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
-	if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
-		fmt.Println(CacheDbRef.ID, "start to make repBlock")
-		tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
-		copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
-		//for i := uint32(0); i < gVar.ShardSize; i++ {
-		//	fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
-		//}
-		//fmt.Println()
-		for i := tmp.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < tmp.Height-CacheDbRef.PrevHeight; i++ {
-			//fmt.Println("Rep prepare: Round", i)
-			//fmt.Println(CacheDbRef.RepCache[i])
-			for j := uint32(0); j < gVar.ShardSize; j++ {
-				shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
+		CacheDbRef.Mu.Lock()
+		fmt.Println(time.Now(), CacheDbRef.ID, "gets a txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
+
+		if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
+			fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
+			for i := tmp.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < tmp.Height-1-CacheDbRef.PrevHeight; i++ {
+				fmt.Println("Rep prepare: Round", i)
+				for j := uint32(0); j < gVar.ShardSize; j++ {
+					shard.GlobalGroupMems[shard.ShardToGlobal[tmp.ShardID][j]].Rep += CacheDbRef.RepCache[i][j]
+				}
+			}
+			tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
+			tmpHash := make([][32]byte, len(*CacheDbRef.TBCache))
+			copy(tmpHash, *CacheDbRef.TBCache)
+			*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
+			CurrentRepRound++
+			fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
+
+			go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
+			go WaitForFinalBlock(&shard.GlobalGroupMems)
+		} else {
+			if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
+				fmt.Println(CacheDbRef.ID, "start to make repBlock")
+				tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
+				copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
+				for i := tmp.Height - gVar.NumTxBlockForRep - CacheDbRef.PrevHeight; i < tmp.Height-CacheDbRef.PrevHeight; i++ {
+					for j := uint32(0); j < gVar.ShardSize; j++ {
+						shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][j]].Rep += CacheDbRef.RepCache[i][j]
+					}
+				}
+				tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
+				*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
+				CurrentRepRound++
+				go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
 			}
 		}
-		//for i := uint32(0); i < gVar.ShardSize; i++ {
-		//fmt.Print(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Rep, " ")
-		//}
-		//fmt.Println()
-		tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
-		*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
-		CurrentRepRound++
-		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
-		//startRep <- repInfo{Last: true, Hash: tmp, Rep: tmpRep}
-	}
-	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
-		fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
-		go WaitForFinalBlock(&shard.GlobalGroupMems)
-	}
-	CacheDbRef.Mu.Unlock()
-	if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
-		TBChan[tmp.Height-CacheDbRef.PrevHeight-1] <- CurrentEpoch
+		CacheDbRef.Mu.Unlock()
+		if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+			TBChan[tmp.Height-CacheDbRef.PrevHeight-1] <- CurrentEpoch
+		}
+	} else {
+		RollingProcess(true, false, tmp)
 	}
 	return nil
 }

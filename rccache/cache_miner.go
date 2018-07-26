@@ -96,12 +96,16 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 		return fmt.Errorf("Not related TX")
 	}
 	//d.DB.AddTx(a)
-	d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
-	if d.BandCnt >= gVar.MaxBand {
-		tmp.Visible = true
-		d.BandCnt -= gVar.MaxBand
+	if gVar.BandDiverse {
+		d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
+		if d.BandCnt >= gVar.MaxBand {
+			tmp.Visible = true
+			d.BandCnt -= gVar.MaxBand
+		} else {
+			tmp.Visible = false
+		}
 	} else {
-		tmp.Visible = false
+		tmp.Visible = true
 	}
 	d.TXCache[a.Hash] = tmp
 	return nil
@@ -138,6 +142,9 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 					d.LockTx(tmp.Data)
 				}
 				if !tmp.Visible {
+					res = byte(0)
+				}
+				if gVar.ExperimentBadLevel == 1 {
 					res = byte(0)
 				}
 				d.TLNow.Add(res)
