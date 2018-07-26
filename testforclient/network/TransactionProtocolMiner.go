@@ -276,6 +276,7 @@ func HandleTxBlock(data []byte) error {
 	tmp := new(basic.TxBlock)
 	err := tmp.Decode(&data1, 0)
 	if err != nil {
+		fmt.Println("Error in decoding txblock", err)
 		return err
 	}
 	s := rccache.PreStat{Stat: -2, Valid: nil}
@@ -378,6 +379,7 @@ func HandleTxBlock(data []byte) error {
 			TBChan[tmp.Height-CacheDbRef.PrevHeight-1] <- CurrentEpoch
 		}
 	} else {
+		fmt.Println(time.Now(), CacheDbRef.ID, "gets a bad txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
 		RollingProcess(true, false, tmp)
 	}
 	return nil

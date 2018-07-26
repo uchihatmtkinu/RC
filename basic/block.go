@@ -247,7 +247,7 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 			}
 		}
 	}
-	if a.Kind == 0 {
+	if a.Kind == 0 || a.Kind == 3 {
 		if a.HashID != sha256.Sum256([]byte(GenesisTxBlock)) {
 			err = Decode(buf, &a.Sig)
 			if err != nil {
