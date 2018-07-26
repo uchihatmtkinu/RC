@@ -23,6 +23,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 			tmp := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
 			for i := uint32(0); i < gVar.ShardSize; i++ {
 				if shard.ShardToGlobal[CacheDbRef.ShardNum][i] != int(CacheDbRef.ID) {
+					fmt.Println("Send rolling Message to", shard.ShardToGlobal[CacheDbRef.ShardNum][i], tmp.Epoch, tmp.Leader)
 					SendRollingMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Address, "RollRequest", tmp.Encode())
 				}
 			}
@@ -176,7 +177,7 @@ func HandleRollingMessage(data []byte) error {
 		fmt.Println("RollingMessage decode error", err)
 		return err
 	}
-	//fmt.Println("Get rolling Message from", tmp.ID, tmp.Epoch, tmp.Leader)
+	fmt.Println("Get rolling Message from", tmp.ID, tmp.Epoch, tmp.Leader)
 	if tmp.Epoch == uint32(CurrentEpoch+1) {
 		rollingChannel <- *tmp
 	}
