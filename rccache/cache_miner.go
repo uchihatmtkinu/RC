@@ -263,7 +263,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	ok, xx := a.Verify(&shard.GlobalGroupMems[shard.ShardToGlobal[d.ShardNum][0]].RealAccount.Puk)
 	if !ok {
 		fmt.Println(xx)
-		return fmt.Errorf("Signature not valid")
+		//return fmt.Errorf("Signature not valid")
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
 		_, ok := d.TXCache[a.TxArray[i].Hash]
