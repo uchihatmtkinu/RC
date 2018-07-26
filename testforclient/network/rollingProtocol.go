@@ -41,6 +41,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				if !mask[xx] && tmpRollMeg.Leader == CacheDbRef.Leader {
 					mask[xx] = true
 					cnt++
+					fmt.Println(time.Now(), "Get rolling from", tmpRollMeg.ID, xx, "Total", cnt)
 				}
 			}
 		}
