@@ -75,7 +75,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 			}
 		}
 	}
-
+	fmt.Println("Rolling done, new leader", CacheDbRef.Leader)
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][LeaderIndex]].Address
 	if FirstLeader {
 		CacheDbRef.Mu.Lock()
@@ -135,7 +135,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 //SendVirtualTDS is to send a virtual tds
 func SendVirtualTDS(data []byte) {
 	for i := uint32(0); i < gVar.ShardSize; i++ {
-		if shard.ShardToGlobal[CacheDbRef.ID][i] != MyGlobalID {
+		if shard.ShardToGlobal[CacheDbRef.ShardNum][i] != MyGlobalID {
 			sendTxMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ID][i]].Address, "VTDS", data)
 		}
 	}
