@@ -50,6 +50,13 @@ func (ms *MemShard) CopyTotalRepFromSB(value []int64) {
 	copy(ms.TotalRep, value)
 }
 
+//ClearTotalRep is clear total rep
+func (ms *MemShard) ClearTotalRep() {
+	for i := 0; i < len(ms.TotalRep); i++ {
+		ms.TotalRep[i] = 0
+	}
+}
+
 //SetTotalRep set totalrep
 func (ms *MemShard) SetTotalRep(value int64) {
 	if len(ms.TotalRep) == gVar.SlidingWindows {
