@@ -199,6 +199,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
 	CacheDbRef.Mu.Unlock()
+	fmt.Println("Stat:", s.Stat)
 	if s.Stat > 0 {
 		xx := shard.ShardToGlobal[tmp.ShardIndex][rand.Int()%int(gVar.ShardSize-1)+1]
 		yy := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
@@ -212,7 +213,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 		case <-s.Channel:
 			cnt--
 		case <-time.After(timeoutResentTxmm):
-			if cntTimeout == 8 {
+			if cntTimeout == 5 {
 				fmt.Println("TDS of", tmp.ID, "Round", tmp.Round, "time out")
 				timeoutFlag = false
 			} else {
@@ -224,6 +225,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 			}
 		}
 	}
+	fmt.Println("Stat:", s.Stat)
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
 
 		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- CurrentEpoch
@@ -246,8 +248,8 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	if tmpflag {
-		StartLastTxBlock <- true
 		StopGetTx <- true
+		StartLastTxBlock <- true
 	}
 	return nil
 }
@@ -320,6 +322,9 @@ func HandleTxBlock(data []byte) error {
 				waitFlag = false
 			}
 		}
+	}
+	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
+		<-StartLastTxBlock
 	}
 	flag := true
 	fmt.Println("TxB Kind", tmp.Kind)

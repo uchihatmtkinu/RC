@@ -119,9 +119,11 @@ func (d *DbRef) PreTxDecSet(b *basic.TxDecSet, s *PreStat) error {
 	}
 	if s.Stat == -2 {
 		if shard.GlobalGroupMems[b.ID].Role != 0 {
+			fmt.Println("PreTxDecSet: Not a Leader")
 			return fmt.Errorf("PreTxDecSet: Not a Leader")
 		}
 		if int(b.TxCnt) != len(b.TxArrayX) || int(b.MemCnt) != len(b.MemD) {
+			fmt.Println("PreTxDecSet: TxDecSet parameter not match")
 			return fmt.Errorf("PreTxDecSet: TxDecSet parameter not match")
 		}
 		s.Stat = -1
