@@ -23,7 +23,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 			tmp := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
 			for i := uint32(0); i < gVar.ShardSize; i++ {
 				if shard.ShardToGlobal[CacheDbRef.ShardNum][i] != int(CacheDbRef.ID) {
-					fmt.Println("Send rolling Message to", shard.ShardToGlobal[CacheDbRef.ShardNum][i], tmp.Epoch, tmp.Leader)
+					//fmt.Println("Send rolling Message to", shard.ShardToGlobal[CacheDbRef.ShardNum][i], tmp.Epoch, tmp.Leader)
 					SendRollingMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Address, "RollRequest", tmp.Encode())
 				}
 			}
@@ -42,7 +42,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				if !mask[xx] && tmpRollMeg.Leader == CacheDbRef.Leader {
 					mask[xx] = true
 					cnt++
-					fmt.Println(time.Now(), "Get rolling from", tmpRollMeg.ID, xx, "Total", cnt)
+					//fmt.Println(time.Now(), "Get rolling from", tmpRollMeg.ID, xx, "Total", cnt)
 				}
 			}
 		}
