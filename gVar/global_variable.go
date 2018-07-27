@@ -6,10 +6,10 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 50
+const ShardSize uint32 = 225
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 9
+const ShardCnt uint32 = 8
 
 //used in rep calculation, scaling factor
 const RepTP = 1
@@ -41,11 +41,11 @@ const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
 
-const BandDiverse = false
+const BandDiverse = true
 
 const MyAddress = "172.20.33.255:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 2
+const ExperimentBadLevel = 0
