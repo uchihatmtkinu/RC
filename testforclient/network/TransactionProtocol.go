@@ -347,6 +347,11 @@ func HandleTxLeader() {
 							//fmt.Println(CacheDbRef.ID, "has a error(TxBatch)", i, ": ", err)
 						}
 					}
+					if CacheDbRef.Now.TLS[CacheDbRef.ShardNum].TxCnt > gVar.ShardSize*gVar.NumOfTxForTest {
+						CacheDbRef.Mu.Unlock()
+						time.Sleep(gVar.TxSendInterval * time.Second)
+						CacheDbRef.Mu.Lock()
+					}
 				}
 				//fmt.Println(time.Now(), "TxBatch Finished Total:", tmpCnt, "Bad: ", bad)
 				CacheDbRef.Mu.Unlock()
