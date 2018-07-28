@@ -25,7 +25,7 @@ const SlidingWindows = 20
 const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 3 //10
+const NumTxBlockForRep = 4 //10
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
@@ -33,7 +33,7 @@ const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
 const GensisAccValue = 2147483647
 
-const TxSendInterval = 5
+const TxSendInterval = 10
 
 const NumOfTxForTest = 50
 
