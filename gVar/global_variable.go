@@ -19,13 +19,13 @@ const RepFN = 0
 
 //channel
 
-const SlidingWindows = 10
+const SlidingWindows = 20
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 5 //60
+const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 4 //10
+const NumTxBlockForRep = 3 //10
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
@@ -33,9 +33,9 @@ const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
 const GensisAccValue = 2147483647
 
-const TxSendInterval = 10
+const TxSendInterval = 5
 
-const NumOfTxForTest = 100
+const NumOfTxForTest = 50
 
 const GeneralSleepTime = 50
 
@@ -48,4 +48,4 @@ const MyAddress = "172.18.21.130:9999"
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 2
+const ExperimentBadLevel = 1
