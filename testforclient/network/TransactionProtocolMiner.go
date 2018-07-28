@@ -249,7 +249,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Unlock()
 	if tmpflag {
 		StopGetTx <- true
-		StartLastTxBlock <- true
+		StartLastTxBlock <- CurrentEpoch
 	}
 	return nil
 }
@@ -324,7 +324,13 @@ func HandleTxBlock(data []byte) error {
 		}
 	}
 	if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
-		<-StartLastTxBlock
+		EpochFlag := true
+		for EpochFlag {
+			tmpEpoch := <-StartLastTxBlock
+			if tmpEpoch == CurrentEpoch {
+				EpochFlag = false
+			}
+		}
 	}
 	flag := true
 	fmt.Println("TxB Kind", tmp.Kind)

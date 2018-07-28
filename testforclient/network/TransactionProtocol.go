@@ -107,14 +107,20 @@ func TxListProcess() {
 		TBChan[thisround-CacheDbRef.PrevHeight] <- 1
 	}
 	if tmpflag {
-		StartLastTxBlock <- true
+		StartLastTxBlock <- CurrentEpoch
 	}
 
 }
 
 //TxLastBlock is the txlastblock
 func TxLastBlock() {
-	<-StartLastTxBlock
+	lastFlag := true
+	for lastFlag {
+		tmpEpoch := <-StartLastTxBlock
+		if tmpEpoch == CurrentEpoch {
+			lastFlag = false
+		}
+	}
 	if gVar.ExperimentBadLevel == 0 || !CacheDbRef.Badness {
 		CacheDbRef.Mu.Lock()
 		CacheDbRef.GenerateTxBlock(1)
@@ -440,7 +446,7 @@ func HandleTxDecSetLeader(data []byte) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	if flag {
-		StartLastTxBlock <- true
+		StartLastTxBlock <- CurrentEpoch
 	}
 	return nil
 }

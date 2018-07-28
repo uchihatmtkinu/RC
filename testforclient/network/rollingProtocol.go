@@ -120,7 +120,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 		CacheDbRef.Mu.Unlock()
 		CurrentRepRound++
 		fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
-		StartLastTxBlock <- true
+		//StartLastTxBlock <- CurrentEpoch
 		go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
 		go WaitForFinalBlock(&shard.GlobalGroupMems)
 	} else {

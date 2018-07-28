@@ -150,7 +150,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 	finalSignal = make(chan []byte)
 	startRep = make(chan repInfo, 1)
 	startSync = make(chan bool, 1)
-	StartLastTxBlock = make(chan bool, 1)
+	StartLastTxBlock = make(chan int, 1)
 	StartNewTxlist = make(chan bool, 1)
 	StartSendingTx = make(chan bool, 1)
 	TxBatchCache = make(chan TxBatchInfo, 1000)

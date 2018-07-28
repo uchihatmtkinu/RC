@@ -217,7 +217,7 @@ var waitForFB chan bool
 //FinalTxReadyCh whether the FB is done
 var FinalTxReadyCh chan bool
 
-var StartLastTxBlock chan bool
+var StartLastTxBlock chan int
 var StartNewTxlist chan bool
 var StartSendingTx chan bool
 
