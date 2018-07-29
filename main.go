@@ -96,7 +96,9 @@ func main() {
 			go network.SendLoopLeader(&tmptx)
 			go network.HandleTxLeader()
 		} else {
-			go network.SendLoopMiner(&tmptx)
+			if shard.MyMenShard.InShardId < 50 {
+				go network.SendLoopMiner(&tmptx)
+			}
 			go network.HandleTx()
 		}
 		//test rep

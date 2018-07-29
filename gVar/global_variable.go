@@ -35,7 +35,7 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 10
 
-const NumOfTxForTest = 15
+const NumOfTxForTest = 200
 
 const GeneralSleepTime = 50
 
