@@ -6,10 +6,10 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 225
+const ShardSize uint32 = 300
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 2
+const ShardCnt uint32 = 6
 
 //used in rep calculation, scaling factor
 const RepTP = 1
@@ -35,7 +35,7 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 10
 
-const NumOfTxForTest = 100
+const NumOfTxForTest = 75
 
 const GeneralSleepTime = 50
 
