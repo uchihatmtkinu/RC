@@ -12,8 +12,8 @@ const ShardSize uint32 = 225
 const ShardCnt uint32 = 6
 
 //used in rep calculation, scaling factor
-const RepTP = 1
-const RepTN = 1
+const RepTP = 0
+const RepTN = 0
 const RepFP = 0
 const RepFN = 0
 

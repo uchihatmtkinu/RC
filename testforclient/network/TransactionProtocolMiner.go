@@ -98,7 +98,7 @@ func HandleTxList(data []byte) error {
 		timeoutFlag = false
 	}
 	for timeoutFlag {
-		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
+		time.Sleep(time.Microsecond * gVar.GeneralSleepTime * 4)
 		CacheDbRef.Mu.Lock()
 		if s.Stat == 0 {
 			timeoutFlag = false
