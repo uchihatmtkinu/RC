@@ -112,6 +112,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
 	}
+	fmt.Println("My Global ID:", MyGlobalID)
 	if MyGlobalID == -1 {
 		os.Exit(0)
 	}
