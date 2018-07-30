@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -13,8 +14,10 @@ import (
 func SendTx(x *[]byte) {
 	fmt.Println(time.Now(), CacheDbRef.ID, "sending TxBatch", len(*x))
 	tmp := TxBatchInfo{ID: CacheDbRef.ID, ShardID: CacheDbRef.ShardNum, Epoch: uint32(CurrentEpoch + 1), Round: 0, Data: *x}
+	rand.Seed(time.Now().Unix() * int64(CacheDbRef.ID))
+	tmpx := rand.Perm(int(gVar.ShardSize))
 	for i := 0; i < int(gVar.ShardSize); i++ {
-		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][i]
+		xx := shard.ShardToGlobal[CacheDbRef.ShardNum][tmpx[i]]
 		if xx != int(CacheDbRef.ID) {
 			sendTxMessage(shard.GlobalGroupMems[xx].Address, "TxM", tmp.Encode())
 		}

@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/uchihatmtkinu/RC/basic"
@@ -21,10 +22,12 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 		cnt := 0
 		if NowSent {
 			tmp := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
+			rand.Seed(time.Now().Unix() * int64(CacheDbRef.ID))
+			tmpx := rand.Perm(int(gVar.ShardSize))
 			for i := uint32(0); i < gVar.ShardSize; i++ {
-				if shard.ShardToGlobal[CacheDbRef.ShardNum][i] != int(CacheDbRef.ID) {
+				if shard.ShardToGlobal[CacheDbRef.ShardNum][tmpx[i]] != int(CacheDbRef.ID) {
 					//fmt.Println("Send rolling Message to", shard.ShardToGlobal[CacheDbRef.ShardNum][i], tmp.Epoch, tmp.Leader)
-					SendRollingMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][i]].Address, "RollRequest", tmp.Encode())
+					SendRollingMessage(shard.GlobalGroupMems[shard.ShardToGlobal[CacheDbRef.ShardNum][tmpx[i]]].Address, "RollRequest", tmp.Encode())
 				}
 			}
 			cnt = 1
