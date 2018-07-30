@@ -39,7 +39,7 @@ func NewSynBlock(ms *[]shard.MemShard, prevSyncBlockHash [][32]byte, prevRepBloc
 	//mask := coSignature[64:]
 	//repList = make([][gVar.SlidingWindows]int64, 0)
 	rolling := false
-	if shard.ShardToGlobal[shard.MyMenShard.Shard][0] < 600 && gVar.ExperimentBadLevel == 2 {
+	if gVar.ExperimentBadLevel == 2 {
 		rolling = true
 	}
 	for i := 0; i < int(gVar.ShardSize); i++ {
