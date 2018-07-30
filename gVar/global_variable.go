@@ -12,8 +12,8 @@ const ShardSize uint32 = 225
 const ShardCnt uint32 = 8
 
 //used in rep calculation, scaling factor
-const RepTP = 0
-const RepTN = 0
+const RepTP = 1
+const RepTN = 1
 const RepFP = 0
 const RepFN = 0
 
@@ -48,4 +48,4 @@ const MyAddress = "172.18.21.130:9999"
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 1
+const ExperimentBadLevel = 2
