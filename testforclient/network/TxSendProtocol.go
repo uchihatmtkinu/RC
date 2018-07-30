@@ -28,9 +28,9 @@ func SendTx(x *[]byte) {
 func SendLoopMiner(x *[]basic.Transaction) {
 	<-StartSendingTx
 	fmt.Println(time.Now(), "Prepare for sending TxBatch(Miner)")
-	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch * 2
+	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch
 	//TxBatchLen := len(*x)
-	for i := 0; i < gVar.NumTxListPerEpoch/2; i++ {
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
 		tmp := (*x)[i*TxBatchLen : (i+1)*TxBatchLen]
 		data := new(basic.TransactionBatch)
 		data.New(&tmp)
