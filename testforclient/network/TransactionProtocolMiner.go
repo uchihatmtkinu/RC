@@ -106,7 +106,7 @@ func HandleTxList(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 
-	fmt.Println("TxList Round", tmp.Round, "Stat: ", s.Stat)
+	fmt.Println("TxList Round", tmp.Round, "Stat: ", s.Stat, "PrevHeight:", CacheDbRef.PrevHeight)
 	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
