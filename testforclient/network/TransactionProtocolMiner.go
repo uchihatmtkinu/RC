@@ -106,7 +106,7 @@ func HandleTxList(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 
-	fmt.Println("Stat: ", s.Stat)
+	fmt.Println("TxList Round", tmp.Round, "Stat: ", s.Stat)
 	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
@@ -199,7 +199,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.PreTxDecSet(tmp, &s)
 	CacheDbRef.Mu.Unlock()
-	fmt.Println("Stat:", s.Stat)
+	fmt.Println("TxDecSet Round", tmp.Round, "Stat: ", s.Stat)
 	if s.Stat > 0 {
 		xx := shard.ShardToGlobal[tmp.ShardIndex][rand.Int()%int(gVar.ShardSize-1)+1]
 		yy := txDecRev{ID: CacheDbRef.ID, Round: tmp.Round}
@@ -225,7 +225,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 			}
 		}
 	}
-	fmt.Println("Stat:", s.Stat)
+	fmt.Println("TxDecSet Round", tmp.Round, "New Stat: ", s.Stat)
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
 
 		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- CurrentEpoch

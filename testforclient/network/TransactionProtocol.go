@@ -428,6 +428,7 @@ func HandleTxDecSetLeader(data []byte) error {
 		flag = false
 	}
 	CacheDbRef.Mu.Unlock()
+	fmt.Println("TDS of Shard", tmp.ShardIndex, "Round", tmp.Round, "Stat:", s.Stat)
 	for flag {
 		time.Sleep(time.Microsecond * gVar.GeneralSleepTime)
 		CacheDbRef.Mu.Lock()
@@ -437,6 +438,7 @@ func HandleTxDecSetLeader(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 	flag = false
+	fmt.Println("TDS of Shard", tmp.ShardIndex, "Round", tmp.Round, "New Stat:", s.Stat)
 	CacheDbRef.Mu.Lock()
 	fmt.Println(time.Now(), "Leader", CacheDbRef.ID, "get TDS done from", tmp.ID, "with", tmp.TxCnt, "Txs")
 	CacheDbRef.ProcessTDS(tmp, nil)
