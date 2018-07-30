@@ -51,7 +51,7 @@ func main() {
 	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
-	totalepoch := 20
+	totalepoch := 30
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
 
 	go network.StartServer(ID)
