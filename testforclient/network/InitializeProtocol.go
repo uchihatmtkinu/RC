@@ -49,6 +49,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 	scannerPri.Split(bufio.ScanWords)
 
 	accWallet := make([]basic.AccCache, numCnt)
+	MyGlobalID = -1
 	for i := 0; i < int(numCnt); i++ {
 		//scanner.Scan()
 		acc[i].New(strconv.Itoa(i))
@@ -110,6 +111,9 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 		//map ip+port -> global ID
 		//GlobalAddrMapToInd[IPAddr] = i
 		//dbs[i].New(uint32(i), acc[i].Pri)
+	}
+	if MyGlobalID == -1 {
+		os.Exit(0)
 	}
 	CacheDbRef.New(uint32(*ID), acc[*ID].Pri)
 	if gVar.ExperimentBadLevel != 0 && MyGlobalID < int(numCnt/3) {
