@@ -7,4 +7,4 @@ const Delay int = 10
 const GenesisTxBlock = "First TxBlock"
 
 //SHash is the shortcut length of hash
-const SHash int = 8
+const SHash int = 12
