@@ -117,9 +117,9 @@ func (d *DbRef) Clear() {
 	d.Now = nil
 	d.TLRound += 3
 	d.BandCnt = 0
-	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
-	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
-	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
+	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000000)
+	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 1000000)
+	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 1000000)
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	d.TxCnt = 0
@@ -142,7 +142,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.TxCnt = 0
 	d.BandCnt = 0
 	d.DB.CreateNewBlockchain(strings.Join([]string{strconv.Itoa(int(d.ID)), dbFilex}, ""))
-	d.TXCache = make(map[[32]byte]*CrossShardDec, 100000)
+	d.TXCache = make(map[[32]byte]*CrossShardDec, 1000000)
 	d.TxB = d.DB.LatestTxBlock()
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.FB[i] = d.DB.LatestFinalTxBlock(i)
@@ -151,9 +151,9 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.TDSNotReady = int(gVar.ShardCnt)
 	d.HistoryShard = nil
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
-	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 100000)
+	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 1000000)
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
-	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 100000)
+	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 1000000)
 	d.TBCache = new([][32]byte)
 	d.PrevHeight = 0
 
