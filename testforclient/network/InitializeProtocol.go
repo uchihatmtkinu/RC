@@ -136,6 +136,7 @@ func IntilizeProcess(input string, ID *int, PriIPFile string, initType int) {
 
 	//current epoch = -1
 	CurrentEpoch = -1
+	startDone = true
 
 	//make channel
 	IntialReadyCh = make(chan bool)
