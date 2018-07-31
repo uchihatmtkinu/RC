@@ -39,7 +39,7 @@ func SendStartBlock(ms *[]shard.MemShard) {
 	var data []byte
 	CacheDbRef.TxB.Encode(&data, 1)
 	fmt.Println(time.Now(), CacheDbRef.ID, "startBlock done")
-	CacheDbRef.PrevHeight = CacheDbRef.TxB.Height
+	//CacheDbRef.PrevHeight = CacheDbRef.TxB.Height
 	fmt.Println("PrevHeight:", CacheDbRef.PrevHeight)
 	CacheDbRef.Mu.Unlock()
 	for i := uint32(0); i < gVar.ShardSize; i++ {
@@ -88,7 +88,7 @@ func HandleStartTxBlock(data []byte) error {
 	CacheDbRef.Mu.Lock()
 	CacheDbRef.GetStartTxBlock(tmp)
 	fmt.Println(CacheDbRef.ID, "startBlock done")
-	CacheDbRef.PrevHeight = CacheDbRef.TxB.Height
+	//CacheDbRef.PrevHeight = CacheDbRef.TxB.Height
 	fmt.Println("PrevHeight:", CacheDbRef.PrevHeight)
 	CacheDbRef.Mu.Unlock()
 	return nil
