@@ -41,11 +41,11 @@ const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
 
-const BandDiverse = false
+const BandDiverse = true
 
 const MyAddress = "172.18.21.130:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 2
+const ExperimentBadLevel = 0
