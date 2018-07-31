@@ -22,7 +22,7 @@ const RepFN = 0
 const SlidingWindows = 20
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 10 //60
+const NumTxListPerEpoch = 5 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
 const NumTxBlockForRep = 4 //10
