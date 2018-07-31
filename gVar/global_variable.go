@@ -22,7 +22,7 @@ const RepFN = 0
 const SlidingWindows = 20
 
 //NumTxListPerEpoch is the number of txblocks in one epoch
-const NumTxListPerEpoch = 5 //60
+const NumTxListPerEpoch = 7 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
 const NumTxBlockForRep = 4 //10
@@ -41,11 +41,11 @@ const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
 
-const BandDiverse = true
+const BandDiverse = false
 
 const MyAddress = "172.18.21.130:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 0
+const ExperimentBadLevel = 2
