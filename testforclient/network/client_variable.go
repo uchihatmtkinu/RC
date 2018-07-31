@@ -243,3 +243,4 @@ var rollingChannel chan rollingInfo
 var VTDChannel chan rollingInfo
 var rollingTxB chan []byte
 var FBSent chan bool
+var startDone bool

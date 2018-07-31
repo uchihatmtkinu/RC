@@ -176,6 +176,9 @@ func HandleTxList(data []byte) error {
 
 //HandleTxDecSet when receives a txdecset
 func HandleTxDecSet(data []byte, typeInput int) error {
+	for !startDone {
+		time.Sleep(100 * time.Microsecond)
+	}
 	data1 := make([]byte, len(data))
 	copy(data1, data)
 	tmp := new(basic.TxDecSet)

@@ -29,7 +29,7 @@ func SyncProcess(ms *[]shard.MemShard) {
 
 	CurrentEpoch++
 	fmt.Println("Sync Began")
-
+	startDone = false
 	//waitgroup for all goroutines done
 	var wg sync.WaitGroup
 	aski = make([]int, int(gVar.ShardCnt))
