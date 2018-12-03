@@ -26,6 +26,7 @@ const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
 const NumTxBlockForRep = 4 //10
+const NumNewRep = 20
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 

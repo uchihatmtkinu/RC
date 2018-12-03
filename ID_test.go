@@ -11,13 +11,14 @@ import (
 
 func TestID(t *testing.T) {
 	fileIP, err := os.Open("IpAddr3.txt")
-	ID := 1688
+	ID := 915
 
 	defer fileIP.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	scanner := bufio.NewScanner(fileIP)
 	scanner.Split(bufio.ScanWords)
 	IPCnt := int(gVar.ShardSize * gVar.ShardCnt / 2)
