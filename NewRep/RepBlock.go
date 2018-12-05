@@ -29,6 +29,7 @@ type RepMsg struct {
 
 //GossipFirMsg is the first round gossip data
 type GossipFirMsg struct {
+	ID   uint32
 	Cnt  uint32
 	Data []RepMsg
 }
@@ -45,6 +46,7 @@ type RepSecMsg struct {
 
 //GossipSecMsg is the second round gossip data
 type GossipSecMsg struct {
+	ID   uint32
 	Cnt  uint32
 	Data []RepSecMsg
 }

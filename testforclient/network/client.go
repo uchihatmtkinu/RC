@@ -213,9 +213,18 @@ func StartServer(ID int) {
 			if SyncFlag {
 				go HandleSyncTBMessage(request)
 			}
+		case "GossipFirSend":
+			go HandleGossipFirSend(request)
+		case "GossipFirRev":
+			go HandleGossipFirRev(request)
+		case "GossipSecSend":
+			go HandleGossipSecSend(request)
+		case "GossipSecRev":
+			go HandleGossipSecRev(request)
 		default:
 			fmt.Println("Unknown command!")
 		}
+
 	}
 }
 

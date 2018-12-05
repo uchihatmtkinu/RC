@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	newrep "github.com/uchihatmtkinu/RC/NewRep"
 	"github.com/uchihatmtkinu/RC/base58"
 	"github.com/uchihatmtkinu/RC/gVar"
 
@@ -84,6 +85,14 @@ type DbRef struct {
 	Leader uint32
 	//Statistic function
 	TxCnt uint32
+
+	RepVote   [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]newrep.NewRep
+	RepFirMsg [gVar.NumNewRep][gVar.ShardSize]newrep.RepMsg
+	RepSecMsg [gVar.NumNewRep][gVar.ShardSize]newrep.RepSecMsg
+	Rep       [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]uint64
+	RepByz    [gVar.NumNewRep][gVar.ShardSize]bool
+	RepFirSig [gVar.NumNewRep][gVar.ShardSize]bool
+	RepSecSig [gVar.NumNewRep][gVar.ShardSize]bool
 }
 
 //TLGroup is the group of TL

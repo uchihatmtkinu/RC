@@ -22,7 +22,16 @@ func (a *RepMsg) Make(id uint32, tb [][32]byte, vote []NewRep, round uint32, pri
 //Hash returns the hash of the RepMsg
 func (a *RepMsg) Hash() [32]byte {
 	var tmp []byte
-	a.Encode(&tmp)
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	basic.Encode(&tmp, a.NumTB)
+	basic.Encode(&tmp, a.NumVote)
+	for i := uint32(0); i < a.NumTB; i++ {
+		basic.Encode(&tmp, &a.TBHash[i])
+	}
+	for i := uint32(0); i < a.NumVote; i++ {
+		a.Vote[i].Encode(&tmp)
+	}
 	tmpHash := new([32]byte)
 	basic.DoubleHash256(&tmp, tmpHash)
 	return *tmpHash
@@ -101,32 +110,6 @@ func (v *NewRep) Decode(buf *[]byte) error {
 	return nil
 }
 
-//Encode encode the GossipFirMsg into []byte
-func (g *GossipFirMsg) Encode(tmp *[]byte) {
-	basic.Encode(tmp, g.Cnt)
-	for i := uint32(0); i < g.Cnt; i++ {
-		g.Data[i].Encode(tmp)
-	}
-}
-
-//Decode decode the []byte into GossipFirMsg
-func (g *GossipFirMsg) Decode(buf *[]byte) error {
-	err := basic.Decode(buf, &g.Cnt)
-	if err != nil {
-		return fmt.Errorf("GossipFirMsg Cnt decode failed: %s", err)
-	}
-	for i := uint32(0); i < g.Cnt; i++ {
-		err = g.Data[i].Decode(buf)
-		if err != nil {
-			return fmt.Errorf("GossipFirMsg Data decode failed: %s", err)
-		}
-	}
-	if len(*buf) != 0 {
-		return fmt.Errorf("GossipFirMsg decode failed: With extra bits")
-	}
-	return nil
-}
-
 //Encode encode the RepSecMsg into []byte
 func (a *RepSecMsg) Encode(tmp *[]byte) {
 	basic.Encode(tmp, a.ID)
@@ -176,28 +159,34 @@ func (a *RepSecMsg) Decode(buf *[]byte) error {
 	return nil
 }
 
-//Encode encode the GossipSecMsg into []byte
-func (g *GossipSecMsg) Encode(tmp *[]byte) {
-	basic.Encode(tmp, g.Cnt)
-	for i := uint32(0); i < g.Cnt; i++ {
-		g.Data[i].Encode(tmp)
+//Hash returns the hash of the RepMsg
+func (a *RepSecMsg) Hash() [32]byte {
+	var tmp []byte
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	basic.Encode(&tmp, a.NumData)
+	for i := uint32(0); i < a.NumData; i++ {
+		basic.Encode(&tmp, &a.MsgHash[i])
 	}
+	for i := uint32(0); i < a.NumData; i++ {
+		basic.Encode(&tmp, &a.MsgSig[i])
+	}
+	tmpHash := new([32]byte)
+	basic.DoubleHash256(&tmp, tmpHash)
+	return *tmpHash
 }
 
-//Decode decode the []byte into GossipSecMsg
-func (g *GossipSecMsg) Decode(buf *[]byte) error {
-	err := basic.Decode(buf, &g.Cnt)
-	if err != nil {
-		return fmt.Errorf("GossipSecMsg Cnt Read failed: %s", err)
+//Make generates a new RepSecMsg
+func (a *RepSecMsg) Make(id uint32, g GossipFirMsg, round uint32, prikey *ecdsa.PrivateKey) {
+	a.ID = id
+	a.Round = round
+	a.NumData = g.Cnt
+	a.MsgHash = make([][32]byte, a.NumData)
+	a.MsgSig = make([]basic.RCSign, a.NumData)
+	for i := uint32(0); i < a.NumData; i++ {
+		a.MsgHash[i] = g.Data[i].Hash()
+		a.MsgSig[i] = g.Data[i].Sig
 	}
-	for i := uint32(0); i < g.Cnt; i++ {
-		err = g.Data[i].Decode(buf)
-		if err != nil {
-			return fmt.Errorf("GossipSecMsg Data Read failed: %s", err)
-		}
-	}
-	if len(*buf) != 0 {
-		return fmt.Errorf("GossipSecMsg decode failed: With extra bits")
-	}
-	return nil
+	tmp := a.Hash()
+	a.Sig.Sign(tmp[:], prikey)
 }
