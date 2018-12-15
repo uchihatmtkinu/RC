@@ -27,7 +27,7 @@ func SendFinalBlock(ms *[]shard.MemShard) {
 	fmt.Println(time.Now(), "App elapsed: ", elapsed)
 	tmpStr := fmt.Sprintln("Shard", CacheDbRef.ShardNum, "Leader", CacheDbRef.ID, "TPS:", float64(CacheDbRef.TxCnt)/elapsed.Seconds())
 	sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
-	close(StopGetTx)
+	//close(StopGetTx)
 	FBSent <- true
 }
 
@@ -65,7 +65,7 @@ func WaitForFinalBlock(ms *[]shard.MemShard) error {
 	CacheDbRef.GetFinalTxBlock(tmpTB)
 	CacheDbRef.Mu.Unlock()
 
-	close(StopGetTx)
+	//close(StopGetTx)
 	FBSent <- true
 	return nil
 }

@@ -2,7 +2,6 @@ package rccache
 
 import (
 	"fmt"
-	"math/rand"
 
 	newrep "github.com/uchihatmtkinu/RC/NewRep"
 	"github.com/uchihatmtkinu/RC/gVar"
@@ -33,26 +32,17 @@ func (d *DbRef) GenerateGossipFir(round uint32) (*newrep.GossipFirMsg, int) {
 	tmp.Cnt = 0
 	tmp.Data = nil
 	cnt := 0
+	tmpArr := make([]uint32, 0, gVar.ShardSize)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		if d.RepFirSig[round][i] {
 			tmp.Add(d.RepFirMsg[round][i])
 		} else {
-			cnt++
+			tmpArr = append(tmpArr, i)
 		}
 	}
 	if cnt > 0 {
-		ran := uint32(rand.Intn(cnt))
-		res := -1
-		for i := 0; i < int(gVar.ShardSize); i++ {
-			if !d.RepFirSig[round][i] {
-				if ran == 0 {
-					res = i
-					break
-				}
-				ran--
-			}
-		}
-		return tmp, shard.ShardToGlobal[d.ShardNum][res]
+		ran := d.GetGossipID(1, tmpArr)
+		return tmp, shard.ShardToGlobal[d.ShardNum][ran]
 	}
 	return nil, 0
 
@@ -75,32 +65,24 @@ func (d *DbRef) GenerateGossipSec(round uint32) (*newrep.GossipSecMsg, int) {
 	tmp.Cnt = 0
 	tmp.Data = nil
 	cnt := 0
+	tmpArr := make([]uint32, 0, gVar.ShardSize)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		if d.RepSecSig[round][i] {
 			tmp.Add(d.RepSecMsg[round][i])
 		} else {
-			cnt++
+			tmpArr = append(tmpArr, i)
 		}
 	}
 	if cnt > 0 {
-		ran := uint32(rand.Intn(cnt))
-		res := -1
-		for i := 0; i < int(gVar.ShardSize); i++ {
-			if !d.RepSecSig[round][i] {
-				if ran == 0 {
-					res = i
-					break
-				}
-				ran--
-			}
-		}
-		return tmp, shard.ShardToGlobal[d.ShardNum][res]
+		ran := d.GetGossipID(1, tmpArr)
+		return tmp, shard.ShardToGlobal[d.ShardNum][ran]
 	}
 	return nil, 0
 }
 
 //UpdateGossipFir with the incoming data
 func (d *DbRef) UpdateGossipFir(data newrep.GossipFirMsg) newrep.GossipFirMsg {
+	d.RepVote[d.RepRound][data.ID].Rep++
 	tmpRound := data.Data[0].Round
 	tmp := new(newrep.GossipFirMsg)
 	tmp.ID = d.ID
@@ -136,6 +118,7 @@ func (d *DbRef) UpdateGossipFir(data newrep.GossipFirMsg) newrep.GossipFirMsg {
 
 //UpdateGossipSec with the incoming data
 func (d *DbRef) UpdateGossipSec(data newrep.GossipSecMsg) newrep.GossipSecMsg {
+	d.RepVote[d.RepRound][data.ID].Rep++
 	tmpRound := data.Data[0].Round
 	tmp := new(newrep.GossipSecMsg)
 	tmp.ID = d.ID

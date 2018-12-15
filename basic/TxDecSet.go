@@ -99,6 +99,8 @@ func (a *TxDecSet) Result(index uint32) bool {
 func (a *TxDecSet) Encode(tmp *[]byte) {
 	Encode(tmp, a.ID)
 	Encode(tmp, a.Round)
+	Encode(tmp, a.Level)
+	Encode(tmp, a.Sender)
 	Encode(tmp, &a.HashID)
 	Encode(tmp, a.MemCnt)
 	Encode(tmp, a.TxCnt)
@@ -107,7 +109,7 @@ func (a *TxDecSet) Encode(tmp *[]byte) {
 		a.MemD[i].Encode(tmp)
 	}
 	for i := uint32(0); i < a.TxCnt; i++ {
-		Encode(tmp, &a.TxArrayX[i])
+		Encode(tmp, &a.TxArray[i])
 	}
 	Encode(tmp, &a.Sig)
 }
@@ -121,6 +123,14 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 	err = Decode(buf, &a.Round)
 	if err != nil {
 		return fmt.Errorf("TxDecSet Round decode failed: %s", err)
+	}
+	err = Decode(buf, &a.Level)
+	if err != nil {
+		return fmt.Errorf("TxDecSet Level decode failed: %s", err)
+	}
+	err = Decode(buf, &a.Sender)
+	if err != nil {
+		return fmt.Errorf("TxDecSet Sender decode failed: %s", err)
 	}
 	err = Decode(buf, &a.HashID)
 	if err != nil {
@@ -145,9 +155,9 @@ func (a *TxDecSet) Decode(buf *[]byte) error {
 			return fmt.Errorf("TxDecSet MemDecision decode failed-%d: %s", i, err)
 		}
 	}
-	a.TxArrayX = make([][SHash]byte, a.TxCnt)
+	a.TxArray = make([][32]byte, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = Decode(buf, &a.TxArrayX[i])
+		err = Decode(buf, &a.TxArray[i])
 		if err != nil {
 			return fmt.Errorf("TxDecSet TxArray decode failed-%d: %s", i, err)
 		}

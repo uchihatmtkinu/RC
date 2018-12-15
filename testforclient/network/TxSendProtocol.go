@@ -45,9 +45,9 @@ func SendLoopMiner(x *[]basic.Transaction) {
 
 //SendLoopLeader is the protocol for sending
 func SendLoopLeader(x *[]basic.Transaction) {
-	<-StartSendTx
+	//<-StartSendTx
 	fmt.Println("Prepare for sending TxBatch(Leader)")
-	close(StartSendTx)
+	//close(StartSendTx)
 	TxBatchLen := len(*x) / gVar.NumTxListPerEpoch
 	for i := 0; i < 1; i++ {
 		tmp := (*x)[i*TxBatchLen : (i+1)*TxBatchLen]

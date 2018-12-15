@@ -64,6 +64,7 @@ func NewRepProcess(ms *[]shard.MemShard, round uint32) {
 			timeoutflag = false
 		}
 	}
+	//Generate reputation block
 }
 
 //HandleGossipFirSend handles the firSend data

@@ -229,7 +229,7 @@ var RepFinishChan [gVar.NumberRepPerEpoch]chan bool
 
 var TxBatchCache chan TxBatchInfo
 
-var StopGetTx chan bool
+//var StopGetTx chan bool
 
 var txMCh [gVar.NumTxListPerEpoch]chan txDecRev
 
@@ -240,7 +240,8 @@ var BatchCache [gVar.NumTxListPerEpoch][]TxBatchInfo
 var TDSChan [gVar.NumTxListPerEpoch]chan int
 var TBChan [gVar.NumTxListPerEpoch]chan int
 var TBBChan [gVar.NumTxListPerEpoch]chan int
-var StartSendTx chan bool
+
+//var StartSendTx chan bool
 var rollingChannel chan rollingInfo
 var VTDChannel chan rollingInfo
 var rollingTxB chan []byte

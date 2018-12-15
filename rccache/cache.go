@@ -56,9 +56,9 @@ type DbRef struct {
 	BandCnt      uint32
 	Badness      bool
 
-	TXCache       map[[32]byte]*CrossShardDec
-	HashCache     map[[basic.SHash]byte][][32]byte
-	WaitHashCache map[[basic.SHash]byte]WaitProcess
+	TXCache   map[[32]byte]*CrossShardDec
+	HashCache map[[basic.SHash]byte][][32]byte
+	//WaitHashCache map[[basic.SHash]byte]WaitProcess
 
 	ShardNum uint32
 
@@ -84,15 +84,16 @@ type DbRef struct {
 
 	Leader uint32
 	//Statistic function
-	TxCnt uint32
-
-	RepVote   [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]newrep.NewRep
-	RepFirMsg [gVar.NumNewRep][gVar.ShardSize]newrep.RepMsg
-	RepSecMsg [gVar.NumNewRep][gVar.ShardSize]newrep.RepSecMsg
-	Rep       [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]uint64
-	RepByz    [gVar.NumNewRep][gVar.ShardSize]bool
-	RepFirSig [gVar.NumNewRep][gVar.ShardSize]bool
-	RepSecSig [gVar.NumNewRep][gVar.ShardSize]bool
+	TxCnt      uint32
+	RepRound   uint32
+	RepVote    [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]newrep.NewRep
+	RepFirMsg  [gVar.NumNewRep][gVar.ShardSize]newrep.RepMsg
+	RepSecMsg  [gVar.NumNewRep][gVar.ShardSize]newrep.RepSecMsg
+	Rep        [gVar.NumNewRep][gVar.ShardSize * gVar.ShardCnt]uint64
+	RepByz     [gVar.NumNewRep][gVar.ShardSize]bool
+	RepFirSig  [gVar.NumNewRep][gVar.ShardSize]bool
+	RepSecSig  [gVar.NumNewRep][gVar.ShardSize]bool
+	GossipPool [gVar.ShardSize]int
 }
 
 //TLGroup is the group of TL
@@ -109,7 +110,7 @@ type PreStat struct {
 }
 
 //WaitProcess is the current wait process
-type WaitProcess struct {
+/*type WaitProcess struct {
 	DataTB  []*basic.TxBlock
 	StatTB  []*PreStat
 	IDTB    []int
@@ -119,7 +120,7 @@ type WaitProcess struct {
 	DataTDS []*basic.TxDecSet
 	StatTDS []*PreStat
 	IDTDS   []int
-}
+}*/
 
 //Clear refresh the data for next epoch
 func (d *DbRef) Clear() {
@@ -128,13 +129,22 @@ func (d *DbRef) Clear() {
 	d.BandCnt = 0
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 200000)
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 200000)
-	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
+	//d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	d.TxCnt = 0
 	d.TDSCnt = make([]int, gVar.ShardCnt)
 	d.TDSNotReady = int(gVar.ShardCnt)
 	d.Ready = nil
+	d.RepRound = 0
+	for i := uint32(0); i < gVar.NumNewRep; i++ {
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			d.RepVote[i][j] = newrep.NewRep{j, 0}
+		}
+	}
+	for i := uint32(0); i < gVar.NumOfTxForTest*gVar.NumTxListPerEpoch*10; i++ {
+		d.Ready = append(d.Ready, *GenerateTx(1, 1, 1, 0, i))
+	}
 	if len(*d.TBCache) != 0 {
 		fmt.Println("Miner", d.ID, "Cache clear: TBCache is not empty")
 		for i := 0; i < len(*d.TBCache); i++ {
@@ -160,7 +170,7 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.TDSNotReady = int(gVar.ShardCnt)
 	d.HistoryShard = nil
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
-	d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
+	//d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
 	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 200000)
 	d.TBCache = new([][32]byte)

@@ -52,9 +52,11 @@ func (a *TxList) Encode(tmp *[]byte) {
 	Encode(tmp, a.ID)
 	Encode(tmp, &a.HashID)
 	Encode(tmp, a.Round)
+	Encode(tmp, a.Level)
+	Encode(tmp, a.Sender)
 	Encode(tmp, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		Encode(tmp, a.TxArrayX[i])
+		Encode(tmp, a.TxArray[i])
 	}
 	Encode(tmp, &a.Sig)
 }
@@ -73,13 +75,21 @@ func (a *TxList) Decode(buf *[]byte) error {
 	if err != nil {
 		return fmt.Errorf("TxList Round decode failed: %s", err)
 	}
+	err = Decode(buf, &a.Level)
+	if err != nil {
+		return fmt.Errorf("TxList Level decode failed: %s", err)
+	}
+	err = Decode(buf, &a.Sender)
+	if err != nil {
+		return fmt.Errorf("TxList Sender decode failed: %s", err)
+	}
 	err = Decode(buf, &a.TxCnt)
 	if err != nil {
 		return fmt.Errorf("TxList TxCnt decode failed: %s", err)
 	}
-	a.TxArrayX = make([][SHash]byte, a.TxCnt)
+	a.TxArray = make([][32]byte, a.TxCnt)
 	for i := uint32(0); i < a.TxCnt; i++ {
-		err = Decode(buf, &a.TxArrayX[i])
+		err = Decode(buf, &a.TxArray[i])
 		if err != nil {
 			return fmt.Errorf("TxList Tx decode failed-%d: %s", i, err)
 		}

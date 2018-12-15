@@ -54,8 +54,8 @@ func HandleTx() {
 				CacheDbRef.Mu.Unlock()
 				TBCache = make([]*basic.TransactionBatch, 0)
 			}
-		case <-StopGetTx:
-			flag = false
+			//case <-StopGetTx:
+			//flag = false
 		}
 	}
 
@@ -74,7 +74,7 @@ func HandleTxList(data []byte) error {
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round, base58.Encode(tmp.HashID[:]))
-	s := rccache.PreStat{Stat: -2, Valid: nil}
+	/*s := rccache.PreStat{Stat: -2, Valid: nil}
 	CacheDbRef.Mu.Lock()
 	//fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.PreTxList(tmp, &s)
@@ -84,7 +84,7 @@ func HandleTxList(data []byte) error {
 		fmt.Println("TxList:", base58.Encode(tmp.HashID[:]), "Need waiting, remaining:", s.Stat)
 	}
 	timeoutFlag := true
-	cnt := s.Stat
+	cnt := s.Stat*/
 	/*for timeoutFlag && s.Stat > 0 {
 		select {
 		case <-s.Channel:
@@ -94,7 +94,7 @@ func HandleTxList(data []byte) error {
 			timeoutFlag = false
 		}
 	}*/
-	if s.Stat == 0 {
+	/*if s.Stat == 0 {
 		timeoutFlag = false
 	}
 	for timeoutFlag {
@@ -106,7 +106,7 @@ func HandleTxList(data []byte) error {
 		CacheDbRef.Mu.Unlock()
 	}
 
-	fmt.Println("TxList Round", tmp.Round, "Stat: ", s.Stat, "PrevHeight:", CacheDbRef.PrevHeight)
+	fmt.Println("TxList Round", tmp.Round, "Stat: ", s.Stat, "PrevHeight:", CacheDbRef.PrevHeight)*/
 	//fmt.Println(time.Now(), "Start Process TxList", base58.Encode(tmp.HashID[:]))
 	CacheDbRef.Mu.Lock()
 	tmpBatch := new([]basic.TransactionBatch)
@@ -119,10 +119,10 @@ func HandleTxList(data []byte) error {
 	CacheDbRef.Mu.Unlock()
 	fmt.Println(time.Now(), "Start Sending TxBatch to other shards", base58.Encode(tmp.HashID[:]))
 	sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDec", sent)
-	xx := shard.MyMenShard.InShardId
-	thisRound := tmp.Round - CacheDbRef.PrevHeight
-	BatchCache[thisRound] = make([]TxBatchInfo, gVar.ShardCnt)
-	yy := -1
+	//xx := shard.MyMenShard.InShardId
+	//thisRound := tmp.Round - CacheDbRef.PrevHeight
+	//BatchCache[thisRound] = make([]TxBatchInfo, gVar.ShardCnt)
+	/*yy := -1
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		BatchCache[thisRound][i].Data = (*tmpBatch)[i].Encode()
 		BatchCache[thisRound][i].ID = CacheDbRef.ID
@@ -170,7 +170,7 @@ func HandleTxList(data []byte) error {
 				}
 			}
 		}
-	}
+	}*/
 	return nil
 }
 
@@ -230,7 +230,6 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	}
 	fmt.Println("TxDecSet Round", tmp.Round, "New Stat: ", s.Stat)
 	if tmp.Round < gVar.NumTxListPerEpoch+CacheDbRef.PrevHeight && tmp.ShardIndex == CacheDbRef.ShardNum && tmp.ID == CacheDbRef.Leader {
-
 		TDSChan[tmp.Round-CacheDbRef.PrevHeight] <- CurrentEpoch
 	}
 	tmpflag := false
@@ -251,7 +250,7 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	}
 	CacheDbRef.Mu.Unlock()
 	if tmpflag {
-		StopGetTx <- true
+		//StopGetTx <- true
 		StartLastTxBlock <- CurrentEpoch
 	}
 	return nil
@@ -355,7 +354,7 @@ func HandleTxBlock(data []byte) error {
 
 		if tmp.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch+1 {
 			fmt.Println(time.Now(), CacheDbRef.ID, "waits for FB")
-			for i := tmp.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < tmp.Height-1-CacheDbRef.PrevHeight; i++ {
+			/*(for i := tmp.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < tmp.Height-1-CacheDbRef.PrevHeight; i++ {
 				//fmt.Println("Rep prepare: Round", i)
 				//fmt.Println(CacheDbRef.RepCache[i])
 				for j := uint32(0); j < gVar.ShardSize; j++ {
@@ -364,15 +363,16 @@ func HandleTxBlock(data []byte) error {
 			}
 			tmpRep := shard.ReturnRepData(CacheDbRef.ShardNum)
 			tmpHash := make([][32]byte, len(*CacheDbRef.TBCache))
-			copy(tmpHash, *CacheDbRef.TBCache)
-			*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
-			CurrentRepRound++
-			fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
+			//copy(tmpHash, *CacheDbRef.TBCache)
+			//*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[len(*CacheDbRef.TBCache):]
+			//CurrentRepRound++
+			//fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
 
-			go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
+			//go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
+			*/
 			go WaitForFinalBlock(&shard.GlobalGroupMems)
 		} else {
-			if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
+			/*if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 				fmt.Println(CacheDbRef.ID, "start to make repBlock")
 				tmpHash := make([][32]byte, gVar.NumTxBlockForRep)
 				copy(tmpHash, (*CacheDbRef.TBCache)[0:gVar.NumTxBlockForRep])
@@ -387,7 +387,7 @@ func HandleTxBlock(data []byte) error {
 				*CacheDbRef.TBCache = (*CacheDbRef.TBCache)[gVar.NumTxBlockForRep:]
 				CurrentRepRound++
 				go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: true, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
-			}
+			}*/
 		}
 		CacheDbRef.Mu.Unlock()
 		if tmp.Height <= CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {

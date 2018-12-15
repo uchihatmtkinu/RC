@@ -10,12 +10,12 @@ import (
 
 //MakeTXList is to create TxList given transaction
 func (d *DbRef) MakeTXList(b *basic.Transaction) error {
-	err := d.AddCache(b.Hash)
+	/*err := d.AddCache(b.Hash)
 	if err != nil {
 		return err
-	}
-	tmpPre, okw := d.WaitHashCache[basic.HashCut(b.Hash)]
-	if okw {
+	}*/
+	//tmpPre, okw := d.WaitHashCache[basic.HashCut(b.Hash)]
+	/*if okw {
 		for i := 0; i < len(tmpPre.DataTB); i++ {
 			tmpPre.StatTB[i].Valid[tmpPre.IDTB[i]] = 1
 			tmpPre.StatTB[i].Stat--
@@ -35,9 +35,9 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 			SendingChan(&tmpPre.StatTL[i].Channel)
 		}
 		//fmt.Println(time.Now(), "Sent Chan signal", base58.Encode(b.Hash[:]))
-	}
-	delete(d.WaitHashCache, basic.HashCut(b.Hash))
-	tmp, ok := d.TXCache[b.Hash]
+	}*/
+	//delete(d.WaitHashCache, basic.HashCut(b.Hash))
+	/*tmp, ok := d.TXCache[b.Hash]
 	if !ok {
 		tmp = new(CrossShardDec)
 		tmp.New(b)
@@ -56,11 +56,14 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 	}
 	//d.DB.AddTx(b)
 
-	d.TXCache[b.Hash] = tmp
+	d.TXCache[b.Hash] = tmp*/
 	if d.Now == nil {
 		d.NewTxList()
 	}
-	if tmp.InCheck[d.ShardNum] != -1 {
+	for i := uint32(0); i < gVar.ShardCnt; i++ {
+		d.Now.TLS[i].AddTx(b)
+	}
+	/*if tmp.InCheck[d.ShardNum] != -1 {
 		//fmt.Println("Band:", d.BandCnt)
 		if gVar.BandDiverse {
 			d.BandCnt += uint32(shard.GlobalGroupMems[d.ID].Bandwidth)
@@ -81,7 +84,7 @@ func (d *DbRef) MakeTXList(b *basic.Transaction) error {
 				}
 			}
 		}
-	}
+	}*/
 	return nil
 }
 
@@ -122,6 +125,9 @@ func (d *DbRef) NewTxList() error {
 	}
 	d.BandCnt = 0
 	d.Now = new(TLGroup)
+	for i := 0; i < len(d.Ready); i++ {
+		d.Now.TLS[d.ShardNum].AddTx(&d.Ready[i])
+	}
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		d.Now.TLS[i].ID = d.ID
 		d.Now.TLS[i].Round = d.TLRound
@@ -139,14 +145,14 @@ func (d *DbRef) GenerateTxBlock(good int) error {
 			d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 0, nil, 0)
 		}
 		d.TxB.Kind = 0
-		for i := 0; i < len(d.Ready); i++ {
+		/*for i := 0; i < len(d.Ready); i++ {
 			d.ClearCache(d.Ready[i].Hash)
-		}
-		d.Ready = nil
+		}*/
+		//d.Ready = nil
 		*(d.TBCache) = append(*(d.TBCache), d.TxB.HashID)
 
 		d.DB.AddBlock(d.TxB)
-		d.DB.UpdateUTXO(d.TxB, d.ShardNum)
+		//d.DB.UpdateUTXO(d.TxB, d.ShardNum)
 	} else {
 		d.TxB = new(basic.TxBlock)
 		d.TxB.MakeTxBlock(d.ID, &d.Ready, d.DB.LastTB, &d.prk, height+1, 3, nil, 0)
@@ -211,13 +217,13 @@ func (d *DbRef) UpdateTXCache(a *basic.TxDecision, index *uint32) error {
 	}
 	//fmt.Println("Leader ", d.ID, " process TxDecision: ")
 	for i := uint32(0); i < tmp.TLS[d.ShardNum].TxCnt; i++ {
-		tmpTx, ok := d.TXCache[tmp.TLS[d.ShardNum].TxArray[i]]
+		/*tmpTx, ok := d.TXCache[tmp.TLS[d.ShardNum].TxArray[i]]
 		if !ok {
 			fmt.Println("Not related tx?")
-		}
+		}*/
 		//tmpTx.Print()
-		for j := 0; j < len(tmpTx.ShardRelated); j++ {
-			tmpTD[tmpTx.ShardRelated[j]].Add((a.Decision[x] >> y) & 1)
+		for j := uint32(0); j < gVar.ShardCnt; j++ {
+			tmpTD[j].Add((a.Decision[x] >> y) & 1)
 		}
 		if y < 7 {
 			y++
@@ -296,7 +302,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) {
 		}
 	}
 
-	for i := uint32(0); i < b.TxCnt; i++ {
+	/*for i := uint32(0); i < b.TxCnt; i++ {
 		tmpHash := b.TxArray[i]
 		tmp, ok := d.TXCache[tmpHash]
 		//fmt.Println(tmp.InCheck, " ", tmp.InCheckSum)
@@ -324,7 +330,7 @@ func (d *DbRef) ProcessTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) {
 	if b.ShardIndex == d.ShardNum {
 		b.TxCnt = 0
 		b.TxArray = nil
-	}
+	}*/
 }
 
 //Release delete the first element of the cache

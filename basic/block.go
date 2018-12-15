@@ -141,6 +141,8 @@ func (a *TxBlock) Transform() error {
 //Encode converts the block data into bytes
 func (a *TxBlock) Encode(tmp *[]byte, full int) {
 	Encode(tmp, a.ID)
+	Encode(tmp, a.Level)
+	Encode(tmp, a.Sender)
 	Encode(tmp, &a.PrevHash)
 	Encode(tmp, &a.HashID)
 	Encode(tmp, &a.MerkleRoot)
@@ -182,6 +184,14 @@ func (a *TxBlock) Decode(buf *[]byte, full int) error {
 	err := Decode(buf, &a.ID)
 	if err != nil {
 		return fmt.Errorf("TxBlock ID failed %s", err)
+	}
+	err = Decode(buf, &a.Level)
+	if err != nil {
+		return fmt.Errorf("TxBlock Level failed %s", err)
+	}
+	err = Decode(buf, &a.Sender)
+	if err != nil {
+		return fmt.Errorf("TxBlock Sender failed %s", err)
 	}
 	err = Decode(buf, &a.PrevHash)
 	if err != nil {

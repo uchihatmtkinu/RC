@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/uchihatmtkinu/RC/base58"
-
 	"github.com/uchihatmtkinu/RC/basic"
 	"github.com/uchihatmtkinu/RC/gVar"
 	"github.com/uchihatmtkinu/RC/shard"
@@ -54,7 +52,7 @@ func (d *DbRef) UnlockTx(a *basic.Transaction) error {
 
 //GetTx update the transaction
 func (d *DbRef) GetTx(a *basic.Transaction) error {
-	err := d.AddCache(a.Hash)
+	/*err := d.AddCache(a.Hash)
 	if err != nil {
 		return err
 	}
@@ -107,12 +105,13 @@ func (d *DbRef) GetTx(a *basic.Transaction) error {
 	} else {
 		tmp.Visible = true
 	}
-	d.TXCache[a.Hash] = tmp
+	d.TXCache[a.Hash] = tmp*/
 	return nil
 }
 
 //ProcessTL verify the transactions in the txlist
 func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) error {
+	d.RepVote[d.RepRound][a.Sender].Rep++
 	d.TLNow = new(basic.TxDecision)
 	d.TLNow.Set(d.ID, d.ShardNum, 0)
 	d.TLNow.HashID = a.HashID
@@ -130,7 +129,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	*tmpBatch = make([]basic.TransactionBatch, gVar.ShardCnt)
 	//tmpCnt := 0
 	for i := uint32(0); i < a.TxCnt; i++ {
-		tmp, ok := d.TXCache[a.TxArray[i]]
+		/*tmp, ok := d.TXCache[a.TxArray[i]]
 		if !ok {
 			fmt.Println(d.ID, "Process TList: Tx ", i, "doesn't in cache", base58.Encode(a.TxArray[i][:]))
 			d.TLNow.Add(0)
@@ -155,7 +154,10 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 				}
 			}
 
-		}
+		}*/
+		tmpHash[0] = append(tmpHash[0], a.TxArray[i][:]...)
+		tmpDecision[0].Add(1)
+		d.TLNow.Add(1)
 	}
 	//fmt.Println("--------TxDecision from miner: ", d.ID, ":    ")
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
@@ -175,7 +177,8 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 
 //GetTDS and ready to verify txblock
 func (d *DbRef) GetTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) error {
-	if d.ShardNum == b.ShardIndex {
+	d.RepVote[d.RepRound][b.Sender].Rep++
+	/*if d.ShardNum == b.ShardIndex {
 		x, ok := d.TLSCacheMiner[b.HashID]
 		if !ok {
 			fmt.Print("Miner", d.ID, "doenst have such TxList")
@@ -199,12 +202,6 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) error {
 			//fmt.Println("Result is", b.Result(i))
 			tmpRes = b.Result(i)
 			tmp.UpdateFromOther(b.ShardIndex, tmpRes)
-			/*if tmp.Total == 0 { //Review
-				d.UnlockTx(tmp.Data)
-				delete(d.TXCache, tmpHash)
-			} else {
-				d.TXCache[tmpHash] = tmp
-			}*/
 			d.TXCache[tmpHash] = tmp
 		}
 
@@ -248,13 +245,14 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) error {
 	}
 	if d.ShardNum == b.ShardIndex {
 		delete(d.TLSCacheMiner, b.HashID)
-	}
+	}*/
 	return nil
 }
 
 //GetTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
-	if a.Height != d.TxB.Height+1 {
+	d.RepVote[d.RepRound][a.Sender].Rep++
+	/*if a.Height != d.TxB.Height+1 {
 		return fmt.Errorf("Height not match")
 	}
 	if a.Kind != 0 {
@@ -285,7 +283,7 @@ func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	d.DB.AddBlock(a)
 	d.DB.UpdateUTXO(a, d.ShardNum)
 	//fmt.Println("Account data of", d.ID, ": Hash", base58.Encode(a.HashID[:]))
-	//d.DB.ShowAccount()
+	//d.DB.ShowAccount()*/
 	return nil
 }
 

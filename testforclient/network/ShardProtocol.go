@@ -63,7 +63,7 @@ func ShardProcess() {
 		BatchCache[i] = nil
 	}
 
-	StopGetTx = make(chan bool, 1)
+	//StopGetTx = make(chan bool, 1)
 	close(Reputation.RepPowRxCh)
 	Reputation.RepPowRxCh = make(chan Reputation.RepPowInfo, bufferSize)
 	if shard.MyMenShard.Role == 1 {
@@ -164,8 +164,8 @@ func LeaderReadyProcess(ms *[]shard.MemShard) {
 
 	}
 	fmt.Println("All shards are ready.")
-	StartSendTx = make(chan bool, 1)
-	StartSendTx <- true
+	//StartSendTx = make(chan bool, 1)
+	//StartSendTx <- true
 }
 
 //HandleRequestShardLeaderReady handle the request from other leader

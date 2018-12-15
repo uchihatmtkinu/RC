@@ -93,13 +93,13 @@ func main() {
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
 			go network.TxGeneralLoop()
-			go network.SendLoopLeader(&tmptx)
-			go network.HandleTxLeader()
+			//go network.SendLoopLeader(&tmptx)
+			//go network.HandleTxLeader()
 		} else {
 			//if shard.MyMenShard.InShardId < 50 {
-			go network.SendLoopMiner(&tmptx)
+			//go network.SendLoopMiner(&tmptx)
 			//}
-			go network.HandleTx()
+			//go network.HandleTx()
 		}
 		//test rep
 		//go network.RepProcessLoop(&shard.GlobalGroupMems)

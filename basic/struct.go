@@ -57,9 +57,11 @@ type TxList struct {
 	ID       uint32
 	HashID   [32]byte
 	Round    uint32
+	Level    uint32
 	TxCnt    uint32
 	TxArray  [][32]byte
 	TxArrayX [][SHash]byte
+	Sender   uint32
 	Sig      RCSign
 }
 
@@ -78,6 +80,7 @@ type TxDecision struct {
 type TxDecSet struct {
 	ID         uint32
 	Round      uint32
+	Level      uint32
 	HashID     [32]byte
 	MemCnt     uint32
 	ShardIndex uint32
@@ -85,12 +88,14 @@ type TxDecSet struct {
 	TxCnt      uint32
 	TxArray    [][32]byte
 	TxArrayX   [][SHash]byte
+	Sender     uint32
 	Sig        RCSign
 }
 
 //TxBlock introduce the struct of the transaction block
 type TxBlock struct {
 	ID            uint32
+	Level         uint32
 	PrevHash      [32]byte
 	PrevFinalHash [32]byte
 	ShardID       uint32
@@ -103,6 +108,7 @@ type TxBlock struct {
 	TxArray       []Transaction
 	TxHash        [][32]byte
 	TxArrayX      [][SHash]byte
+	Sender        uint32
 	Sig           RCSign
 }
 
