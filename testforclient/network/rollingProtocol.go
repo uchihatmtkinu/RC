@@ -1,15 +1,6 @@
 package network
 
-import (
-	"fmt"
-	"math/rand"
-	"time"
-
-	"github.com/uchihatmtkinu/RC/basic"
-	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/shard"
-)
-
+/*
 //RollingProcess is handle the rolling
 func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 	NowSent := send
@@ -255,3 +246,4 @@ func (a *rollingInfo) Decode(buf *[]byte) error {
 	}
 	return nil
 }
+*/

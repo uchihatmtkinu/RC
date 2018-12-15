@@ -132,7 +132,7 @@ func StartServer(ID int) {
 		case "TxDecSet":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleAndSentTxDecSet(request)
-		case "RollRequest":
+		/*case "RollRequest":
 			go HandleRollingMessage(request)
 		case "VTD":
 			go HandleVirtualTD(request)
@@ -140,6 +140,7 @@ func StartServer(ID int) {
 			go HandleVirtualTDS(request)
 		case "TxBR":
 			go HandleTxBlockAfterRolling(request)
+		*/
 		case "TxDecSetM":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			if shard.GlobalGroupMems[CacheDbRef.ID].Role == 0 {
@@ -152,11 +153,11 @@ func StartServer(ID int) {
 		case "TxB":
 			//fmt.Printf("%d Received %s command\n", ID, command)
 			go HandleTxBlock(request)
-		case "FinalTxB":
-			//fmt.Printf("%d Received %s command\n", ID, command)
-			go HandleFinalTxBlock(request)
-		case "StartTxB":
-			go HandleStartTxBlock(request)
+		//case "FinalTxB":
+		//fmt.Printf("%d Received %s command\n", ID, command)
+		//go HandleFinalTxBlock(request)
+		//case "StartTxB":
+		//go HandleStartTxBlock(request)
 		//shard
 		case "shardReady":
 			go HandleShardReady(request)
@@ -221,6 +222,12 @@ func StartServer(ID int) {
 			go HandleGossipSecSend(request)
 		case "GossipSecRev":
 			go HandleGossipSecRev(request)
+		case "QTL":
+			go HandleQTL(request)
+		case "QTDS":
+			go HandleQTDS(request)
+		case "QTB":
+			go HandleQTB(request)
 		default:
 			fmt.Println("Unknown command!")
 		}

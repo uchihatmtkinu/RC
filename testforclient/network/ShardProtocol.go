@@ -71,7 +71,7 @@ func ShardProcess() {
 	} else {
 		LeaderReadyProcess(&shard.GlobalGroupMems)
 		if CurrentEpoch != -1 {
-			go SendStartBlock(&shard.GlobalGroupMems)
+			//go SendStartBlock(&shard.GlobalGroupMems)
 		}
 	}
 	fmt.Println("shard finished")

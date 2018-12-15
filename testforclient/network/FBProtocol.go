@@ -1,14 +1,6 @@
 package network
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/uchihatmtkinu/RC/basic"
-	"github.com/uchihatmtkinu/RC/gVar"
-	"github.com/uchihatmtkinu/RC/shard"
-)
-
+/*
 //SendFinalBlock is to send final block
 func SendFinalBlock(ms *[]shard.MemShard) {
 	CacheDbRef.Mu.Lock()
@@ -95,3 +87,4 @@ func HandleStartTxBlock(data []byte) error {
 	CacheDbRef.Mu.Unlock()
 	return nil
 }
+*/

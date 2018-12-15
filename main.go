@@ -89,13 +89,20 @@ func main() {
 
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())
-		go network.RepGossipLoop(&shard.GlobalGroupMems, 20)
+		minute := 20
+		now := time.Now()
+		next := now.Add(0)
+		next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), minute, 0, 0, next.Location())
+		tt := time.NewTimer(next.Sub(now))
+		<-tt.C
+		go network.RepGossipLoop(&shard.GlobalGroupMems, minute+1)
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
 			go network.TxGeneralLoop()
 			//go network.SendLoopLeader(&tmptx)
 			//go network.HandleTxLeader()
 		} else {
+			go network.MinerLoop()
 			//if shard.MyMenShard.InShardId < 50 {
 			//go network.SendLoopMiner(&tmptx)
 			//}

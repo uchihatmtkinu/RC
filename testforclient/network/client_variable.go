@@ -193,6 +193,21 @@ type TxBatchInfo struct {
 	Data    []byte
 }
 
+type QTL struct {
+	ID    uint32
+	Round uint32
+}
+
+type QTDS struct {
+	ID    uint32
+	Round uint32
+}
+
+type QTB struct {
+	ID    uint32
+	Round uint32
+}
+
 //channel used in sync
 //syncCh
 var syncSBCh [gVar.ShardCnt]chan syncSBInfo

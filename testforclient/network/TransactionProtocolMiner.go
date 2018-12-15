@@ -12,6 +12,141 @@ import (
 	"github.com/uchihatmtkinu/RC/shard"
 )
 
+//MinerLoop is the loop of miner
+func MinerLoop() {
+	for i := 0; i < gVar.NumTxListPerEpoch; i++ {
+		time.Sleep(gVar.TxSendInterval * time.Second)
+		go HandleTxLoopMiner(uint32(i))
+	}
+}
+
+//HandleTxLoopMiner is to handle the tx logic
+func HandleTxLoopMiner(round uint32) {
+	flag := true
+	for flag {
+		CacheDbRef.Mu.Lock()
+		if CacheDbRef.TLSCache[round] == nil {
+			go QueryTL(round)
+		} else {
+			flag = false
+		}
+		CacheDbRef.Mu.Unlock()
+		time.Sleep(time.Second)
+	}
+	time.Sleep(gVar.TxSendInterval * time.Second)
+	flag1 := true
+	flag2 := true
+	for flag1 || flag2 {
+		CacheDbRef.Mu.Lock()
+		if CacheDbRef.TDSCache[round] == nil {
+			go QueryTDS(round)
+		} else {
+			flag1 = false
+		}
+		if CacheDbRef.TBBCache[round] == nil {
+			go QueryTB(round)
+		} else {
+			flag2 = false
+		}
+		CacheDbRef.Mu.Unlock()
+		time.Sleep(time.Second)
+	}
+}
+
+//QueryTL queries the txdecset
+func QueryTL(round uint32) {
+	ran := rand.Intn(int(gVar.ShardSize))
+	for ran == int(CacheDbRef.ID) {
+		ran = rand.Intn(int(gVar.ShardSize))
+	}
+	tmpdata := QTL{CacheDbRef.ID, round}
+	tmp := tmpdata.Encode()
+
+	sendTxMessage(shard.GlobalGroupMems[ran].Address, "QueryTL", tmp)
+}
+
+//HandleQTL is handle
+func HandleQTL(data []byte) {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	tmp := new(QTL)
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println("QTL error ")
+	}
+	CacheDbRef.Mu.Lock()
+	if CacheDbRef.TLSCache[tmp.Round] != nil {
+		tmpData := []byte{}
+		(*CacheDbRef.TLSCache[tmp.Round]).Level = 0
+		(*CacheDbRef.TLSCache[tmp.Round]).Sender = CacheDbRef.ID
+		(*CacheDbRef.TLSCache[tmp.Round]).Encode(&tmpData)
+		sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxList", tmpData)
+	}
+	CacheDbRef.Mu.Unlock()
+}
+
+//HandleQTDS is handle
+func HandleQTDS(data []byte) {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	tmp := new(QTDS)
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println("QTDS error ")
+	}
+	CacheDbRef.Mu.Lock()
+	if CacheDbRef.TDSCache[tmp.Round] != nil {
+		tmpData := []byte{}
+		(*CacheDbRef.TDSCache[tmp.Round]).Level = 0
+		(*CacheDbRef.TDSCache[tmp.Round]).Sender = CacheDbRef.ID
+		(*CacheDbRef.TDSCache[tmp.Round]).Encode(&tmpData)
+		sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxDecSetM", tmpData)
+	}
+	CacheDbRef.Mu.Unlock()
+}
+
+//HandleQTB is handle
+func HandleQTB(data []byte) {
+	data1 := make([]byte, len(data))
+	copy(data1, data)
+	tmp := new(QTB)
+	err := tmp.Decode(&data1)
+	if err != nil {
+		fmt.Println("QTB error ")
+	}
+	CacheDbRef.Mu.Lock()
+	if CacheDbRef.TBBCache[tmp.Round] != nil {
+		tmpData := []byte{}
+		(*CacheDbRef.TBBCache[tmp.Round]).Level = 0
+		(*CacheDbRef.TBBCache[tmp.Round]).Sender = CacheDbRef.ID
+		(*CacheDbRef.TBBCache[tmp.Round]).Encode(&tmpData, 0)
+		sendTxMessage(shard.GlobalGroupMems[tmp.ID].Address, "TxB", tmpData)
+	}
+	CacheDbRef.Mu.Unlock()
+}
+
+//QueryTDS queries the txdecset
+func QueryTDS(round uint32) {
+	ran := rand.Intn(int(gVar.ShardSize))
+	for ran == int(CacheDbRef.ID) {
+		ran = rand.Intn(int(gVar.ShardSize))
+	}
+	tmpdata := QTDS{CacheDbRef.ID, round}
+	tmp := tmpdata.Encode()
+	sendTxMessage(shard.GlobalGroupMems[ran].Address, "QueryTDS", tmp)
+}
+
+//QueryTB queries the txdecset
+func QueryTB(round uint32) {
+	ran := rand.Intn(int(gVar.ShardSize))
+	for ran == int(CacheDbRef.ID) {
+		ran = rand.Intn(int(gVar.ShardSize))
+	}
+	tmpdata := QTB{CacheDbRef.ID, round}
+	tmp := tmpdata.Encode()
+	sendTxMessage(shard.GlobalGroupMems[ran].Address, "QueryTB", tmp)
+}
+
 //HandleTx when receives a tx
 func HandleTx() {
 	flag := true
@@ -394,7 +529,7 @@ func HandleTxBlock(data []byte) error {
 
 			//go MemberCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmpHash, Rep: tmpRep, Round: CurrentRepRound})
 			*/
-			go WaitForFinalBlock(&shard.GlobalGroupMems)
+			//		go WaitForFinalBlock(&shard.GlobalGroupMems)
 		} else {
 			/*if len(*CacheDbRef.TBCache) >= gVar.NumTxBlockForRep {
 				fmt.Println(CacheDbRef.ID, "start to make repBlock")
@@ -419,7 +554,76 @@ func HandleTxBlock(data []byte) error {
 		}
 	} else {
 		fmt.Println(time.Now(), CacheDbRef.ID, "gets a bad txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
-		RollingProcess(true, false, tmp)
+		//RollingProcess(true, false, tmp)
+	}
+	return nil
+}
+
+//Encode is encode
+func (a *QTL) Encode() []byte {
+	var tmp []byte
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	return tmp
+}
+
+//Decode is decode
+func (a *QTL) Decode(data *[]byte) error {
+	data1 := make([]byte, len(*data))
+	copy(data1, *data)
+	err := basic.Decode(&data1, &a.ID)
+	if err != nil {
+		return err
+	}
+	err = basic.Decode(&data1, &a.Round)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//Encode is encode
+func (a *QTB) Encode() []byte {
+	var tmp []byte
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	return tmp
+}
+
+//Decode is decode
+func (a *QTB) Decode(data *[]byte) error {
+	data1 := make([]byte, len(*data))
+	copy(data1, *data)
+	err := basic.Decode(&data1, &a.ID)
+	if err != nil {
+		return err
+	}
+	err = basic.Decode(&data1, &a.Round)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//Encode is encode
+func (a *QTDS) Encode() []byte {
+	var tmp []byte
+	basic.Encode(&tmp, a.ID)
+	basic.Encode(&tmp, a.Round)
+	return tmp
+}
+
+//Decode is decode
+func (a *QTDS) Decode(data *[]byte) error {
+	data1 := make([]byte, len(*data))
+	copy(data1, *data)
+	err := basic.Decode(&data1, &a.ID)
+	if err != nil {
+		return err
+	}
+	err = basic.Decode(&data1, &a.Round)
+	if err != nil {
+		return err
 	}
 	return nil
 }

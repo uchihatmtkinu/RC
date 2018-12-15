@@ -125,7 +125,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 	}
 	//fmt.Println(d.ID, "Process TList:")
 	//a.Print()
-	d.TLSCacheMiner[a.HashID] = a
+	d.TLSCache[a.Round] = a
 	*tmpBatch = make([]basic.TransactionBatch, gVar.ShardCnt)
 	//tmpCnt := 0
 	for i := uint32(0); i < a.TxCnt; i++ {
@@ -178,6 +178,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 //GetTDS and ready to verify txblock
 func (d *DbRef) GetTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) error {
 	d.RepVote[d.RepRound][b.Sender].Rep++
+	d.TDSCache[b.Round] = b
 	/*if d.ShardNum == b.ShardIndex {
 		x, ok := d.TLSCacheMiner[b.HashID]
 		if !ok {
@@ -252,6 +253,7 @@ func (d *DbRef) GetTDS(b *basic.TxDecSet, res *[gVar.ShardSize]int64) error {
 //GetTxBlock handle the txblock sent by the leader
 func (d *DbRef) GetTxBlock(a *basic.TxBlock) error {
 	d.RepVote[d.RepRound][a.Sender].Rep++
+	d.TBBCache[a.Height] = a
 	/*if a.Height != d.TxB.Height+1 {
 		return fmt.Errorf("Height not match")
 	}

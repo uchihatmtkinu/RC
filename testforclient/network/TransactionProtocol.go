@@ -56,6 +56,7 @@ func TxListProcess() {
 	data1 := new([]byte)
 	thisround := TLG.TLS[CacheDbRef.ShardNum].Round
 	TLG.TLS[CacheDbRef.ShardNum].Encode(data1)
+	CacheDbRef.TLSCache[thisround] = &TLG.TLS[CacheDbRef.ShardNum]
 	go SendTxList(*data1, gVar.GossipRound)
 	CacheDbRef.NewTxList()
 	CacheDbRef.Mu.Unlock()
@@ -89,6 +90,7 @@ func TxListProcess() {
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		TLG.TDS[i].Encode(&(*data2)[i])
 	}
+	CacheDbRef.TDSCache[thisround] = &TLG.TDS[0]
 	go SendTxDecSet(*data2, thisround-CacheDbRef.PrevHeight, gVar.GossipRound)
 	go TxNormalBlock(thisround - CacheDbRef.PrevHeight)
 
@@ -111,6 +113,7 @@ func TxListProcess() {
 	}
 }
 
+/*
 //TxLastBlock is the txlastblock
 func TxLastBlock() {
 	lastFlag := true
@@ -130,7 +133,7 @@ func TxLastBlock() {
 		CacheDbRef.TxB.Encode(data3, 0)
 		go SendTxBlock(data3, 0, gVar.GossipRound)
 
-		/*for i := CacheDbRef.TxB.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-1-CacheDbRef.PrevHeight; i++ {
+		for i := CacheDbRef.TxB.Height - uint32(len(*CacheDbRef.TBCache)) - CacheDbRef.PrevHeight; i < CacheDbRef.TxB.Height-1-CacheDbRef.PrevHeight; i++ {
 			//fmt.Println("Rep prepare: Round", i)
 			//fmt.Println(CacheDbRef.RepCache[i])
 			for j := uint32(0); j < gVar.ShardSize; j++ {
@@ -145,7 +148,7 @@ func TxLastBlock() {
 		CurrentRepRound++
 		fmt.Println(time.Now(), CacheDbRef.ID, "start to make last repBlock, Round:", CurrentRepRound)
 		go LeaderCoSiRepProcess(&shard.GlobalGroupMems, repInfo{Last: false, Hash: tmp, Rep: tmpRep, Round: CurrentRepRound})
-		*/
+
 		//StopGetTx <- true
 		fmt.Println(time.Now(), CacheDbRef.ID, "start to make FB")
 		go SendFinalBlock(&shard.GlobalGroupMems)
@@ -163,6 +166,7 @@ func TxLastBlock() {
 		RollingProcess(false, true, CacheDbRef.TxB)
 	}
 }
+*/
 
 //TxNormalBlock is the loop of TxBlock
 func TxNormalBlock(round uint32) {
@@ -193,10 +197,11 @@ func TxNormalBlock(round uint32) {
 	}*/
 	data3 := new([]byte)
 	CacheDbRef.TxB.Encode(data3, 0)
+	CacheDbRef.TBBCache[round] = CacheDbRef.TxB
 	go SendTxBlock(data3, 0, gVar.GossipRound)
-	if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
+	/*if CacheDbRef.TxB.Height == CacheDbRef.PrevHeight+gVar.NumTxListPerEpoch {
 		go TxLastBlock()
-	}
+	}*/
 	CacheDbRef.Mu.Unlock()
 	if round < gVar.NumTxListPerEpoch-1 {
 		TBBChan[round] <- 1

@@ -63,12 +63,14 @@ type DbRef struct {
 	ShardNum uint32
 
 	//Leader
-	TLSCacheMiner map[[32]byte]*basic.TxList
-	TLIndex       map[[32]byte]*TLGroup
-	Now           *TLGroup
-	Ready         []basic.Transaction
-	TxB           *basic.TxBlock
-	FB            [gVar.ShardCnt]*basic.TxBlock
+	TLSCache [gVar.NumTxListPerEpoch]*basic.TxList
+	TDSCache [gVar.NumTxListPerEpoch]*basic.TxDecSet
+	TBBCache [gVar.NumTxListPerEpoch]*basic.TxBlock
+	TLIndex  map[[32]byte]*TLGroup
+	Now      *TLGroup
+	Ready    []basic.Transaction
+	TxB      *basic.TxBlock
+	FB       [gVar.ShardCnt]*basic.TxBlock
 
 	TDSCnt      []int
 	TDSNotReady int
@@ -134,7 +136,6 @@ func (d *DbRef) Clear() {
 	d.TXCache = make(map[[32]byte]*CrossShardDec, 200000)
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 200000)
 	//d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
-	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	d.TxCnt = 0
 	d.TDSCnt = make([]int, gVar.ShardCnt)
@@ -145,6 +146,9 @@ func (d *DbRef) Clear() {
 		d.TLCheck[i] = false
 		d.TDSCheck[i] = false
 		d.TBCheck[i] = false
+		d.TLSCache[i] = nil
+		d.TDSCache[i] = nil
+		d.TBBCache[i] = nil
 	}
 	for i := uint32(0); i < gVar.NumNewRep; i++ {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
@@ -180,7 +184,22 @@ func (d *DbRef) New(x uint32, prk ecdsa.PrivateKey) {
 	d.HistoryShard = nil
 	d.TLIndex = make(map[[32]byte]*TLGroup, 100)
 	//d.WaitHashCache = make(map[[basic.SHash]byte]WaitProcess, 200000)
-	d.TLSCacheMiner = make(map[[32]byte]*basic.TxList, 100)
+	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
+		d.TLCheck[i] = false
+		d.TDSCheck[i] = false
+		d.TBCheck[i] = false
+		d.TLSCache[i] = nil
+		d.TDSCache[i] = nil
+		d.TBBCache[i] = nil
+	}
+	for i := uint32(0); i < gVar.NumNewRep; i++ {
+		for j := uint32(0); j < gVar.ShardSize; j++ {
+			d.RepVote[i][j] = newrep.NewRep{j, 0}
+		}
+	}
+	for i := uint32(0); i < gVar.NumOfTxForTest*gVar.NumTxListPerEpoch*10; i++ {
+		d.Ready = append(d.Ready, *GenerateTx(1, 1, 1, 0, i))
+	}
 	d.HashCache = make(map[[basic.SHash]byte][][32]byte, 200000)
 	d.TBCache = new([][32]byte)
 	d.PrevHeight = 0
