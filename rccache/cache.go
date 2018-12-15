@@ -94,6 +94,10 @@ type DbRef struct {
 	RepFirSig  [gVar.NumNewRep][gVar.ShardSize]bool
 	RepSecSig  [gVar.NumNewRep][gVar.ShardSize]bool
 	GossipPool [gVar.ShardSize]int
+	TLCheck    [gVar.NumTxListPerEpoch]bool
+	TDSCheck   [gVar.NumTxListPerEpoch]bool
+	TBCheck    [gVar.NumTxListPerEpoch]bool
+	RepHash    [gVar.NumNewRep][32]byte
 }
 
 //TLGroup is the group of TL
@@ -137,6 +141,11 @@ func (d *DbRef) Clear() {
 	d.TDSNotReady = int(gVar.ShardCnt)
 	d.Ready = nil
 	d.RepRound = 0
+	for i := uint32(0); i < gVar.NumTxListPerEpoch; i++ {
+		d.TLCheck[i] = false
+		d.TDSCheck[i] = false
+		d.TBCheck[i] = false
+	}
 	for i := uint32(0); i < gVar.NumNewRep; i++ {
 		for j := uint32(0); j < gVar.ShardSize; j++ {
 			d.RepVote[i][j] = newrep.NewRep{j, 0}

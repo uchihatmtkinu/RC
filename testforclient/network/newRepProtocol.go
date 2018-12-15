@@ -11,17 +11,23 @@ import (
 )
 
 //RepGossipLoop is the loop of New reputation protocol
-func RepGossipLoop(ms *[]shard.MemShard) {
+func RepGossipLoop(ms *[]shard.MemShard, minute int) {
+	now := time.Now()
+	next := now.Add(0)
+	next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), minute, 0, 0, next.Location())
+	tt := time.NewTimer(next.Sub(now))
+	<-tt.C
 	for i := uint32(0); i < gVar.NumNewRep; i++ {
 		go NewRepProcess(ms, i)
-		time.Sleep(time.Second * 30)
+		time.Sleep(time.Second * 60)
 	}
-	fmt.Println("Start to sync")
-	startSync <- true
+	fmt.Println("Rep Donw")
+	//startSync <- true
 }
 
 //NewRepProcess with gossip
 func NewRepProcess(ms *[]shard.MemShard, round uint32) {
+	fmt.Println("RepProcess Round", round)
 	for i := uint32(0); i < gVar.ShardSize; i++ {
 		CacheDbRef.RepByz[round][i] = false
 		CacheDbRef.RepFirSig[round][i] = false
@@ -64,6 +70,10 @@ func NewRepProcess(ms *[]shard.MemShard, round uint32) {
 			timeoutflag = false
 		}
 	}
+	fmt.Println("RepProcess Round", round, " End")
+	xxx := CacheDbRef.GetRepBlock(round)
+	fmt.Println("RepBlock", xxx.Round, " Hash ", xxx.Hash)
+	fmt.Println(xxx.Rep)
 	//Generate reputation block
 }
 

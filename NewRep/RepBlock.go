@@ -11,6 +11,7 @@ type NewRep struct {
 // RepBlock reputation block
 type RepBlock struct {
 	PrevHash [32]byte
+	Round    uint32
 	TBHash   [][32]byte
 	Rep      []NewRep
 	Hash     [32]byte

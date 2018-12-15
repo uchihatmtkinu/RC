@@ -51,7 +51,7 @@ func main() {
 	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
-	totalepoch := 20
+	totalepoch := 1
 	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
 
 	go network.StartServer(ID)
@@ -89,7 +89,7 @@ func main() {
 
 		gVar.T1 = time.Now()
 		fmt.Println("This time", time.Now())
-
+		go network.RepGossipLoop(&shard.GlobalGroupMems, 20)
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
 			go network.TxGeneralLoop()
@@ -103,16 +103,16 @@ func main() {
 		}
 		//test rep
 		//go network.RepProcessLoop(&shard.GlobalGroupMems)
-		<-network.RepFinishChan[gVar.NumberRepPerEpoch-1]
+		//<-network.RepFinishChan[gVar.NumberRepPerEpoch-1]
 		//test cosi
-		if network.CacheDbRef.Leader == network.CacheDbRef.ID {
+		/*if network.CacheDbRef.Leader == network.CacheDbRef.ID {
 			network.LeaderCosiProcess(&shard.GlobalGroupMems)
 		} else {
 			network.MemberCosiProcess(&shard.GlobalGroupMems)
-		}
+		}*/
 
 		//test sync
-		network.SyncProcess(&shard.GlobalGroupMems)
+		//network.SyncProcess(&shard.GlobalGroupMems)
 		fmt.Println(time.Now(), "Epoch", k, "finished")
 	}
 	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest)/time.Since(timestart).Seconds())

@@ -74,6 +74,14 @@ func HandleTxList(data []byte) error {
 	//fmt.Println(CacheDbRef.ID, "get TxList from", tmp.ID)
 	//fmt.Println("StropGetTx", CacheDbRef.StopGetTx, "TLRound:", CacheDbRef.TLRound, "tmpRound:", tmp.Round)
 	fmt.Println(time.Now(), CacheDbRef.ID, "gets a txlist with", tmp.TxCnt, "Txs", "Current round:", CacheDbRef.TLRound, "its round", tmp.Round, base58.Encode(tmp.HashID[:]))
+	if CacheDbRef.TLCheck[tmp.Round-CacheDbRef.PrevHeight] {
+		return nil
+	}
+	CacheDbRef.TLCheck[tmp.Round-CacheDbRef.PrevHeight] = true
+	data2 := make([]byte, len(data))
+	tmp.Sender = CacheDbRef.ID
+	tmp.Encode(&data2)
+	go SendTxList(data2, tmp.Level-1)
 	/*s := rccache.PreStat{Stat: -2, Valid: nil}
 	CacheDbRef.Mu.Lock()
 	//fmt.Println(time.Now(), "PreProcess TxList:", base58.Encode(tmp.HashID[:]))
@@ -184,6 +192,14 @@ func HandleTxDecSet(data []byte, typeInput int) error {
 	tmp := new(basic.TxDecSet)
 	err := tmp.Decode(&data1)
 	fmt.Println("Get the tds from leader:", tmp.ID, "Round:", tmp.Round)
+	if CacheDbRef.TDSCheck[tmp.Round-CacheDbRef.PrevHeight] {
+		return nil
+	}
+	CacheDbRef.TDSCheck[tmp.Round-CacheDbRef.PrevHeight] = true
+	data2 := make([]byte, len(data))
+	tmp.Sender = CacheDbRef.ID
+	tmp.Encode(&data2)
+	go SendTxDecSetInShard(data2, tmp.Round-CacheDbRef.PrevHeight, tmp.Level-1)
 	if tmp.Round < CacheDbRef.PrevHeight {
 		return fmt.Errorf("Previous epoch packet")
 	}
@@ -283,6 +299,14 @@ func HandleTxBlock(data []byte) error {
 		fmt.Println("Error in decoding txblock", err)
 		return err
 	}
+	if CacheDbRef.TBCheck[tmp.Height-CacheDbRef.PrevHeight] {
+		return nil
+	}
+	CacheDbRef.TBCheck[tmp.Height-CacheDbRef.PrevHeight] = true
+	data2 := make([]byte, len(data))
+	tmp.Sender = CacheDbRef.ID
+	tmp.Encode(&data2, 0)
+	go SendTxDecSetInShard(data2, tmp.Height-CacheDbRef.PrevHeight, tmp.Level-1)
 	s := rccache.PreStat{Stat: -2, Valid: nil}
 	if tmp.Height < CacheDbRef.PrevHeight {
 		return fmt.Errorf("Previous epoch txblock")

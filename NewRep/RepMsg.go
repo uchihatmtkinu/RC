@@ -7,6 +7,22 @@ import (
 	"github.com/uchihatmtkinu/RC/basic"
 )
 
+//GetHash return the hash of the reputation block
+func (a *RepBlock) GetHash() [32]byte {
+	var tmp []byte
+	basic.Encode(&tmp, a.PrevHash)
+	basic.Encode(&tmp, a.Round)
+	for i := 0; i < len(a.TBHash); i++ {
+		basic.Encode(&tmp, &a.TBHash[i])
+	}
+	for i := 0; i < len(a.Rep); i++ {
+		basic.Encode(&tmp, a.Rep[i].Rep)
+	}
+	tmpHash := new([32]byte)
+	basic.DoubleHash256(&tmp, tmpHash)
+	return *tmpHash
+}
+
 //Make create a new RepMsg type
 func (a *RepMsg) Make(id uint32, tb [][32]byte, vote []NewRep, round uint32, prikey *ecdsa.PrivateKey) {
 	a.ID = id

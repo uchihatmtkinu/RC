@@ -230,10 +230,10 @@ func SendTxList(data []byte, level uint32) {
 }
 
 //SendTxDecSetInShard is sending txDecSet to inshard member
-func SendTxDecSetInShard(data [][]byte, round uint32, level uint32) {
+func SendTxDecSetInShard(data []byte, round uint32, level uint32) {
 	var tmp basic.TxDecSet
-	data1 := make([]byte, len(data[CacheDbRef.ShardNum]))
-	copy(data1, data[CacheDbRef.ShardNum])
+	data1 := make([]byte, len(data))
+	copy(data1, data)
 	err := tmp.Decode(&data1)
 	if err != nil {
 		fmt.Println("Error in decoding the sendTxlist")
@@ -258,7 +258,7 @@ func SendTxDecSetInShard(data [][]byte, round uint32, level uint32) {
 
 //SendTxDecSet is sending txDecSet
 func SendTxDecSet(data [][]byte, round uint32, level uint32) {
-	go SendTxDecSetInShard(data, round, level)
+	go SendTxDecSetInShard(data[CacheDbRef.ShardNum], round, level)
 	/*rand.Seed(int64(CacheDbRef.ID)*time.Now().Unix() + rand.Int63())
 	for i := uint32(0); i < gVar.ShardCnt; i++ {
 		xx := rand.Int()%(int(gVar.ShardSize)-1) + 1

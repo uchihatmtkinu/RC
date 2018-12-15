@@ -11,7 +11,18 @@ import (
 //MakeRepMsg generate the newest RepMsg
 func (d *DbRef) MakeRepMsg(round uint32) newrep.RepMsg {
 	mydata := new(newrep.RepMsg)
-	mydata.Make(d.ID, *d.TBCache, d.RepVote[round][:], round, &d.prk)
+	tmpVote := make([]newrep.NewRep, gVar.ShardSize)
+	for i := 0; i < len(tmpVote); i++ {
+		tmpVote[i].ID = uint32(i)
+		xx := uint32(0)
+		if int(round) > gVar.SlidingWindows {
+			xx = round - uint32(gVar.SlidingWindows)
+		}
+		for j := xx; j < round; j++ {
+			tmpVote[i].Rep += d.RepVote[j][i].Rep
+		}
+	}
+	mydata.Make(d.ID, *d.TBCache, tmpVote, round, &d.prk)
 	d.RepFirMsg[round][shard.MyMenShard.InShardId] = *mydata
 	return *mydata
 }
@@ -26,7 +37,9 @@ func (d *DbRef) MakeRepSecMsg(round uint32, g newrep.GossipFirMsg) newrep.RepSec
 
 //GenerateGossipFir gives the data for gossip
 func (d *DbRef) GenerateGossipFir(round uint32) (*newrep.GossipFirMsg, int) {
-	d.MakeRepMsg(round)
+	if d.RepFirMsg[round][shard.MyMenShard.InShardId].ID == 0 {
+		d.MakeRepMsg(round)
+	}
 	tmp := new(newrep.GossipFirMsg)
 	tmp.ID = d.ID
 	tmp.Cnt = 0
@@ -37,6 +50,7 @@ func (d *DbRef) GenerateGossipFir(round uint32) (*newrep.GossipFirMsg, int) {
 		if d.RepFirSig[round][i] {
 			tmp.Add(d.RepFirMsg[round][i])
 		} else {
+			cnt++
 			tmpArr = append(tmpArr, i)
 		}
 	}
@@ -70,6 +84,7 @@ func (d *DbRef) GenerateGossipSec(round uint32) (*newrep.GossipSecMsg, int) {
 		if d.RepSecSig[round][i] {
 			tmp.Add(d.RepSecMsg[round][i])
 		} else {
+			cnt++
 			tmpArr = append(tmpArr, i)
 		}
 	}
@@ -147,4 +162,15 @@ func (d *DbRef) UpdateGossipSec(data newrep.GossipSecMsg) newrep.GossipSecMsg {
 		}
 	}
 	return *tmp
+}
+
+//GetRepBlock gives the reputation block
+func (d *DbRef) GetRepBlock(round uint32) *newrep.RepBlock {
+	var tmp [32]byte
+	if round > 0 {
+		tmp = d.RepHash[round-1]
+	}
+	xxx := newrep.RepBlockMake(d.RepFirMsg[round][:], d.RepSecMsg[round][:], tmp)
+	d.RepHash[round] = xxx.Hash
+	return xxx
 }
