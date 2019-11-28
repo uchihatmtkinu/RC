@@ -1,21 +1,28 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"github.com/uchihatmtkinu/PriRC/basic"
-	"github.com/uchihatmtkinu/PriRC/gVar"
-	"github.com/uchihatmtkinu/PriRC/rccache"
-	"github.com/uchihatmtkinu/PriRC/shard"
-	"github.com/uchihatmtkinu/PriRC/testforclient/network"
 	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/uchihatmtkinu/RC/rccache"
+
+	"github.com/uchihatmtkinu/RC/basic"
+	"github.com/uchihatmtkinu/RC/gVar"
+	"github.com/uchihatmtkinu/RC/shard"
+	"github.com/uchihatmtkinu/RC/testforclient/network"
 )
 
 func main() {
+	//network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte("Test"))
+	//arg, err := strconv.Atoi(os.Args[1])
+	/*if err != nil {
+		log.Panic(err)
+		os.Exit(1)
+	}*/
 	fmt.Println("Get the local ip from", os.Args[1])
 	file, err := os.Open(os.Args[1])
 	initType, initErr := strconv.Atoi(os.Args[3])
@@ -28,28 +35,33 @@ func main() {
 	}
 
 	defer file.Close()
+	fileinfo, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	scannerMyIP := bufio.NewScanner(file)
-	scannerMyIP.Split(bufio.ScanWords)
-	scannerMyIP.Scan()
-	fmt.Println("Local Address:", scannerMyIP.Text())
+	fileSize := fileinfo.Size()
+	buffer := make([]byte, fileSize)
+
+	_, err = file.Read(buffer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Local Address:", string(buffer))
 
 	ID := 0
 	totalepoch := 1
-	network.IntilizeProcess(scannerMyIP.Text(), &ID, os.Args[2], initType)
-	//network.IntilizeProcess("192.168.108.37", &ID, os.Args[2], initType)
+	network.IntilizeProcess(string(buffer), &ID, os.Args[2], initType)
+
 	go network.StartServer(ID)
 	<-network.IntialReadyCh
 	close(network.IntialReadyCh)
-	// ID merkle tree generation
-	network.IDMerkleTreeProcess()
-	// update id
-	network.IDUpdateProcess()
 
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
-
 	numCnt := int(gVar.ShardCnt * gVar.ShardSize)
 	tmptx := make([]basic.Transaction, gVar.NumOfTxForTest*gVar.NumTxListPerEpoch)
+	//cnt := 0
 
 	time.Sleep(time.Second * 20)
 	timestart := time.Now()
@@ -63,6 +75,12 @@ func main() {
 		rand.Seed(int64(network.CacheDbRef.ID*3000) + time.Now().Unix()%3000)
 		for l := 0; l < len(tmptx); l++ {
 			i := rand.Int() % numCnt
+			for true {
+				if basic.ShardIndex(shard.GlobalGroupMems[i].RealAccount.AddrReal) == network.CacheDbRef.ShardNum {
+					break
+				}
+				i = rand.Int() % numCnt
+			}
 			j := rand.Int() % numCnt
 			k := uint32(1)
 			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(l*2000))
@@ -96,17 +114,13 @@ func main() {
 		//test sync
 		network.SyncProcess(&shard.GlobalGroupMems)
 		fmt.Println(time.Now(), "Epoch", k, "finished")
-
 	}
-
 	fmt.Println("Time: ", time.Since(timestart), "TPS:", float64(uint32(totalepoch)*(1+gVar.NumTxListPerEpoch*(gVar.ShardSize-1))*gVar.NumOfTxForTest)/time.Since(timestart).Seconds())
 	fmt.Println(network.CacheDbRef.ID, ": All finished")
 	if network.CacheDbRef.ID == 0 {
 		tmpStr := fmt.Sprint("All finished")
 		network.SendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	}
-
 	time.Sleep(20 * time.Second)
 
-	fmt.Println("Total Epoch:", totalepoch, ". ALL DONE, shut down.")
 }

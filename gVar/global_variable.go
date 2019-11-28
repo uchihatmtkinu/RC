@@ -6,10 +6,10 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 225
+const ShardSize uint32 = 9
 
 //ShardCnt is the number of shards
-const ShardCnt uint32 = 8
+const ShardCnt uint32 = 1
 
 //used in rep calculation, scaling factor
 const RepTP = 1
@@ -25,7 +25,7 @@ const SlidingWindows = 20
 const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 4 //10
+const NumTxBlockForRep = 5 //10
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
@@ -43,7 +43,7 @@ var T1 time.Time = time.Now()
 
 const BandDiverse = true
 
-const MyAddress = "172.18.21.130:9999"
+const MyAddress = "172.31.83.178:9999"
 
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
