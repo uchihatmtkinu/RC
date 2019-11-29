@@ -90,6 +90,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				go SendTxBlockAfterRolling(tmpData)
 				Flag = false
 			}
+			//simulate transaction data
 			time.Sleep(time.Duration(gVar.ShardSize/2) * time.Second)
 		} else {
 			tmpVD := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
