@@ -6,7 +6,7 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 9
+const ShardSize uint32 = 50
 
 //ShardCnt is the number of shards
 const ShardCnt uint32 = 1
@@ -25,7 +25,7 @@ const SlidingWindows = 20
 const NumTxListPerEpoch = 10 //60
 
 //NumTxBlockForRep is the number of blocks for one rep block
-const NumTxBlockForRep = 5 //10
+const NumTxBlockForRep = 4 //10
 
 const NumberRepPerEpoch = NumTxListPerEpoch/NumTxBlockForRep + 1
 
@@ -35,7 +35,7 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 10
 
-const NumOfTxForTest = 1000
+const NumOfTxForTest = 200
 
 const GeneralSleepTime = 50
 

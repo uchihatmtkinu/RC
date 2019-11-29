@@ -35,7 +35,7 @@ func main() {
 	fmt.Println("Local Address:", scannerMyIP.Text())
 
 	ID := 0
-	totalepoch := 5
+	totalepoch := 20
 	network.IntilizeProcess(scannerMyIP.Text(), &ID, os.Args[2], initType)
 	//network.IntilizeProcess("192.168.108.37", &ID, os.Args[2], initType)
 	go network.StartServer(ID)
@@ -65,8 +65,6 @@ func main() {
 			tmptx[l] = *rccache.GenerateTx(i, j, k, rand.Int63(), network.CacheDbRef.ID+uint32(l*2000))
 			//fmt.Println(base58.Encode(tmptx[l].Hash[:]))
 		}
-
-		
 
 		if shard.MyMenShard.Role == shard.RoleLeader {
 			fmt.Println("This is a Leader")
