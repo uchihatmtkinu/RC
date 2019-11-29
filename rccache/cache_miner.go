@@ -144,7 +144,7 @@ func (d *DbRef) ProcessTL(a *basic.TxList, tmpBatch *[]basic.TransactionBatch) e
 				if !tmp.Visible {
 					res = byte(0)
 				}
-				if gVar.ExperimentBadLevel == 1 && d.Badness {
+				if (gVar.ExperimentBadLevel == 1 || gVar.HighRepAttack) && d.Badness {
 					res = byte(0)
 				}
 				d.TLNow.Add(res)
