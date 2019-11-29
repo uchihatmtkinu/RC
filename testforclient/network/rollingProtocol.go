@@ -81,7 +81,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				TBData.Encode(tmpData, 0)
 				go SendVirtualTDS(*tmpData)
 				go SendTxBlockAfterRolling(tmpData)
-				time.Sleep(int(gVar.ShardCnt)*time.Second)
+				time.Sleep(time.Duration(gVar.ShardCnt)*time.Second)
 				NowSent = false
 			} else {
 				TBData.Kind = 0
