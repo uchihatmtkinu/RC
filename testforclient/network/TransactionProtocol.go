@@ -162,7 +162,7 @@ func TxLastBlock() {
 		CacheDbRef.Mu.Unlock()
 		StopGetTx <- true
 		//TODO remove later
-		time.Sleep(time.second*2)
+		time.Sleep(2 * time.Second)
 		RollingProcess(false, true, CacheDbRef.TxB)
 	}
 }
