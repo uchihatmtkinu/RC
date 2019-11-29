@@ -38,6 +38,14 @@ func ShardProcess() {
 	}
 	beginShard.GenerateSeed(&shard.PreviousSyncBlockHash)
 	beginShard.Sharding(&shard.GlobalGroupMems, &shard.ShardToGlobal)
+	if gVar.HighRepAttack {
+		LeaderInd := 0
+		for shard.ShardToGlobal[shard.MyMenShard.Shard][LeaderInd] < int(gVar.ShardSize*gVar.ShardCnt/3) {
+			LeaderInd++
+			//TODO high rep attack on band diverse
+		}
+	}
+
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]
 	fmt.Println(time.Now(), CacheDbRef.ID, "Shard Calculated")
 	LeaderAddr = shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Address
