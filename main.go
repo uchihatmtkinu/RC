@@ -41,10 +41,6 @@ func main() {
 	go network.StartServer(ID)
 	<-network.IntialReadyCh
 	close(network.IntialReadyCh)
-	// ID merkle tree generation
-	network.IDMerkleTreeProcess()
-	// update id
-	network.IDUpdateProcess()
 
 	fmt.Println("MyGloablID: ", network.MyGlobalID)
 
