@@ -395,6 +395,8 @@ func HandleTxBlock(data []byte) error {
 		}
 	} else {
 		fmt.Println(time.Now(), CacheDbRef.ID, "gets a bad txBlock with", tmp.TxCnt, "Txs from", tmp.ID, "Hash", base58.Encode(tmp.HashID[:]), "Height:", tmp.Height)
+		//TODO remove later
+		time.Sleep(time.second*2)
 		RollingProcess(true, false, tmp)
 	}
 	return nil
