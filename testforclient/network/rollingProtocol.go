@@ -81,7 +81,6 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				TBData.Encode(tmpData, 0)
 				go SendVirtualTDS(*tmpData)
 				go SendTxBlockAfterRolling(tmpData)
-				time.Sleep(time.Duration(gVar.ShardCnt)*time.Second)
 				NowSent = false
 			} else {
 				TBData.Kind = 0
@@ -91,6 +90,7 @@ func RollingProcess(send bool, FirstLeader bool, TBData *basic.TxBlock) {
 				go SendTxBlockAfterRolling(tmpData)
 				Flag = false
 			}
+			time.Sleep(time.Duration(gVar.ShardSize/2) * time.Second)
 		} else {
 			tmpVD := rollingInfo{ID: CacheDbRef.ID, Epoch: uint32(CurrentEpoch + 1), Leader: CacheDbRef.Leader}
 			sendTxMessage(shard.GlobalGroupMems[CacheDbRef.Leader].Address, "VTD", tmpVD.Encode())
