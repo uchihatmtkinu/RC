@@ -35,7 +35,7 @@ func main() {
 	fmt.Println("Local Address:", scannerMyIP.Text())
 
 	ID := 0
-	totalepoch := 1
+	totalepoch := 5
 	network.IntilizeProcess(scannerMyIP.Text(), &ID, os.Args[2], initType)
 	//network.IntilizeProcess("192.168.108.37", &ID, os.Args[2], initType)
 	go network.StartServer(ID)
