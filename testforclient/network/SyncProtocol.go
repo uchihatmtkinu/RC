@@ -59,11 +59,42 @@ func SyncProcess(ms *[]shard.MemShard) {
 		close(syncTBCh[i])
 		close(syncNotReadyCh[i])
 	}
-
+	if gVar.HighRepAttack {
+		HighRepAttack(ms)
+	}
 	fmt.Println("Sync Finished")
 	//ShardProcess()
 }
 
+//HighRepAttack attack on high rep node
+func HighRepAttack(ms *[]shard.MemShard) {
+	n:=int(gVar.ShardCnt*gVar.ShardSize)
+	oldID := make([]int, n)
+	oldRep:= make([]int64, n)
+	oldTotalRep:= make([][]int64, n)
+	oldSumRep := make([]int64,n)
+	for i: =0; i < n; i++{
+		oldID = i
+		oldRep = (*ms)[i].Rep
+		oldTotalRep[i] = make([]int64, len((*ms)[i].TotalRep))
+		oldSumRep[i] = (*ms)[i].CalTotalRep()
+		copy(oldTotalRep[i], (*ms)[i].TotalRep)
+	}
+	for i := 0; i < n;i++ {
+		for j := i + 1; j < n; j++ {
+			if oldSumRep[i] < oldSumRep[j] {
+				oldID[i], oldID[j] = oldID[j], oldID[i]
+				oldRep[i], oldRep[j] = oldRep[j], oldRep[i]
+				oldTotalRep[i], oldTotalRep[j] = oldTotalRep[j], oldTotalRep[i]
+				oldSumRep[i], oldSumRep[j] = oldSumRep[j], oldSumRep[i]
+			}
+		}
+	}
+	for i: =0; i < n; i++{
+		(*ms)[i].Rep = oldRep[i]
+		copy((*ms)[i].TotalRep, oldTotalRep[i])
+	}
+}
 //ReceiveSyncProcess listen to the block from shard k
 func ReceiveSyncProcess(k int, wg *sync.WaitGroup, ms *[]shard.MemShard) {
 	fmt.Println("wait for shard", k, " from user", shard.ShardToGlobal[k][aski[k]])
