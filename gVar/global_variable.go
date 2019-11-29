@@ -48,4 +48,5 @@ const MyAddress = "172.31.83.178:9999"
 const MaxBand = 38 * 1024
 const MinBand = 2 * 1024
 
-const ExperimentBadLevel = 0
+const ExperimentBadLevel = 2
+const HighRepAttack = true
