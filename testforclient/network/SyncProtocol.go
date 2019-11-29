@@ -73,7 +73,7 @@ func HighRepAttack(ms *[]shard.MemShard) {
 	oldRep:= make([]int64, n)
 	oldTotalRep:= make([][]int64, n)
 	oldSumRep := make([]int64,n)
-	for i: =0; i < n; i++{
+	for i :=0; i < n; i++{
 		oldID = i
 		oldRep = (*ms)[i].Rep
 		oldTotalRep[i] = make([]int64, len((*ms)[i].TotalRep))
@@ -90,7 +90,7 @@ func HighRepAttack(ms *[]shard.MemShard) {
 			}
 		}
 	}
-	for i: =0; i < n; i++{
+	for i :=0; i < n; i++{
 		(*ms)[i].Rep = oldRep[i]
 		copy((*ms)[i].TotalRep, oldTotalRep[i])
 	}
