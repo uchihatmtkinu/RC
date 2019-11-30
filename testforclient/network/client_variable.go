@@ -244,3 +244,6 @@ var VTDChannel chan rollingInfo
 var rollingTxB chan []byte
 var FBSent chan bool
 var startDone bool
+
+//for high rep attack
+var LeaderBandID int

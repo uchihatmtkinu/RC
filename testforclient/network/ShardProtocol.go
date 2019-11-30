@@ -42,8 +42,10 @@ func ShardProcess() {
 		LeaderInd := 0
 		for shard.ShardToGlobal[shard.MyMenShard.Shard][LeaderInd] < int(gVar.ShardSize*gVar.ShardCnt/3) {
 			LeaderInd++
-			//TODO high rep attack on band diverse
 		}
+		LeaderBandID = shard.ShardToGlobal[shard.MyMenShard.Shard][LeaderInd]
+		shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Bandwidth, shard.GlobalGroupMems[LeaderBandID].Bandwidth =
+			shard.GlobalGroupMems[LeaderBandID].Bandwidth, shard.GlobalGroupMems[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Bandwidth
 	}
 
 	//shard.MyMenShard = &shard.GlobalGroupMems[MyGlobalID]

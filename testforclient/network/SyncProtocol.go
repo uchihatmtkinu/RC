@@ -68,6 +68,8 @@ func SyncProcess(ms *[]shard.MemShard) {
 
 //HighRepAttack attack on high rep node
 func HighRepAttack(ms *[]shard.MemShard) {
+	(*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Bandwidth, (*ms)[LeaderBandID].Bandwidth =
+		(*ms)[LeaderBandID].Bandwidth, (*ms)[shard.ShardToGlobal[shard.MyMenShard.Shard][0]].Bandwidth
 	n := int(gVar.ShardCnt * gVar.ShardSize)
 	oldRep := make([]int64, n)
 	oldTotalRep := make([][]int64, n)
