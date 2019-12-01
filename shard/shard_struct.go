@@ -24,7 +24,6 @@ type MemShard struct {
 	RealAccount    *account.RcAcc
 	PreShard       int
 	Bandwidth      int
-	OriginBand     int
 }
 
 //NewMemShard new a mem shard, addr - ip + port
@@ -38,7 +37,6 @@ func (ms *MemShard) NewMemShard(acc *account.RcAcc, addr string, band int) {
 	ms.Role = 1
 	ms.Rep = 0
 	ms.Bandwidth = band
-	ms.OriginBand = band
 }
 
 //NewTotalRep set a new total rep to 0
