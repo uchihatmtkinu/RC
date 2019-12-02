@@ -91,9 +91,11 @@ func ShardProcess() {
 		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
 			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].CalTotalRep(), " ")
 		}
-		tmpStr = fmt.Sprint("Previous Epoch Band:")
-		for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
-			tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Bandwidth, " ")
+		if gVar.BandDiverse {
+			tmpStr = fmt.Sprint("Previous Epoch Band:")
+			for i := uint32(0); i < gVar.ShardCnt*gVar.ShardSize; i++ {
+				tmpStr = tmpStr + fmt.Sprint(shard.GlobalGroupMems[i].Bandwidth, " ")
+			}
 		}
 		sendTxMessage(gVar.MyAddress, "LogInfo", []byte(tmpStr))
 	}
