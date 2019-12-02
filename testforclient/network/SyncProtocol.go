@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -75,28 +76,68 @@ func HighRepAttack(ms *[]shard.MemShard) {
 	oldTotalRep := make([][]int64, n)
 	oldSumRep := make([]int64, n)
 	oldBand := make([]int, n)
+	oldAdd := make([]string, n)
 	for i := 0; i < n; i++ {
 		oldRep[i] = (*ms)[i].Rep
 		oldTotalRep[i] = make([]int64, len((*ms)[i].TotalRep))
 		oldSumRep[i] = (*ms)[i].CalTotalRep()
 		oldBand[i] = (*ms)[i].Bandwidth
 		copy(oldTotalRep[i], (*ms)[i].TotalRep)
+		oldAdd[i] = (*ms)[i].Address
 	}
-	for i := 0; i < n; i++ {
-		for j := i + 1; j < n; j++ {
-			if oldSumRep[i] < oldSumRep[j] {
-				oldRep[i], oldRep[j] = oldRep[j], oldRep[i]
-				oldTotalRep[i], oldTotalRep[j] = oldTotalRep[j], oldTotalRep[i]
-				oldSumRep[i], oldSumRep[j] = oldSumRep[j], oldSumRep[i]
-				oldBand[i], oldBand[j] = oldBand[j], oldBand[i]
-			}
-		}
-	}
+	AttackSortRep(&oldSumRep, &oldAdd, &oldRep, &oldTotalRep, &oldBand, 0, n-1)
 	for i := 0; i < n; i++ {
 		(*ms)[i].Rep = oldRep[i]
 		(*ms)[i].Bandwidth = oldBand[i]
+		(*ms)[i].Address = oldAdd[i]
 		copy((*ms)[i].TotalRep, oldTotalRep[i])
 	}
+}
+
+//CompareRep returns whether a has a great reputation than b
+func AttackCompareRep(repa int64, repb int64, adda string, addb string) int {
+	if repa > repb {
+		return 1
+	} else if repb > repa {
+		return -1
+	} else {
+		return strings.Compare(adda, addb)
+	}
+}
+
+//AttackSortRep sorts all miners based on their reputation
+func AttackSortRep(oldSumRep *[]int64, oldAdd *[]string, oldRep *[]int64, oldTotalRep *[][]int64, oldBand *[]int, l int, r int) error {
+	oldsumrepx := (*oldSumRep)[(l+r)/2]
+	oldaddx := (*oldAdd)[(l+r)/2]
+	i := l
+	j := r
+	if l >= r {
+		return nil
+	}
+	for i <= j {
+		for i < r && AttackCompareRep((*oldSumRep)[i], oldsumrepx, (*oldAdd)[i], oldaddx) > 0 {
+			i++
+		}
+		for j > 0 && AttackCompareRep(oldsumrepx, (*oldSumRep)[j], oldaddx, (*oldAdd)[j]) > 0 {
+			j--
+		}
+		if i <= j {
+			(*oldRep)[i], (*oldRep)[j] = (*oldRep)[j], (*oldRep)[i]
+			(*oldTotalRep)[i], (*oldTotalRep)[j] = (*oldTotalRep)[j], (*oldTotalRep)[i]
+			(*oldSumRep)[i], (*oldSumRep)[j] = (*oldSumRep)[j], (*oldSumRep)[i]
+			(*oldBand)[i], (*oldBand)[j] = (*oldBand)[j], (*oldBand)[i]
+			(*oldAdd)[i], (*oldAdd)[j] = (*oldAdd)[j], (*oldAdd)[i]
+			i++
+			j--
+		}
+	}
+	if i < r {
+		AttackSortRep(oldSumRep, oldAdd, oldRep, oldTotalRep, oldBand, i, r)
+	}
+	if l < j {
+		AttackSortRep(oldSumRep, oldAdd, oldRep, oldTotalRep, oldBand, l, j)
+	}
+	return nil
 }
 
 //ReceiveSyncProcess listen to the block from shard k
