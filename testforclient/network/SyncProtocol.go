@@ -83,7 +83,7 @@ func HighRepAttack(ms *[]shard.MemShard) {
 		oldSumRep[i] = (*ms)[i].CalTotalRep()
 		oldBand[i] = (*ms)[i].Bandwidth
 		copy(oldTotalRep[i], (*ms)[i].TotalRep)
-		oldAdd[i] = (*ms)[i].Address
+		oldAdd[i] = (*ms)[i].PrivateAddress
 	}
 	AttackSortRep(&oldSumRep, &oldAdd, &oldRep, &oldTotalRep, &oldBand, 0, n-1)
 	for i := 0; i < n; i++ {
