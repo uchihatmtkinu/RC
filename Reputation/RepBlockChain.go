@@ -121,7 +121,6 @@ func (bc *RepBlockchain) AddSyncBlock(ms *[]shard.MemShard, preFBHash [32]byte, 
 
 	CurrentSyncBlock.Mu.Lock()
 	CurrentSyncBlock.Block = NewSynBlock(ms, shard.PreviousSyncBlockHash, lastRepBlockHash, preFBHash, tmpCoSignature)
-	CurrentSyncBlock.Block.Print()
 	CurrentSyncBlock.Epoch++
 	shard.PreviousSyncBlockHash = make([][32]byte, gVar.ShardCnt)
 	shard.PreviousSyncBlockHash[shard.MyMenShard.Shard] = CurrentSyncBlock.Block.Hash
