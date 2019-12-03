@@ -6,7 +6,7 @@ import "time"
 const MagicNumber byte = 66
 
 //ShardSize is the number of miners in one shard
-const ShardSize uint32 = 100
+const ShardSize uint32 = 10
 
 //ShardCnt is the number of shards
 const ShardCnt uint32 = 1
@@ -35,13 +35,13 @@ const GensisAccValue = 2147483647
 
 const TxSendInterval = 10
 
-const NumOfTxForTest = 100
+const NumOfTxForTest = 1000
 
 const GeneralSleepTime = 50
 
 var T1 time.Time = time.Now()
 
-const BandDiverse = true
+const BandDiverse = false
 
 const MyAddress = "172.31.83.178:9999"
 
